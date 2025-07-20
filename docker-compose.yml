@@ -1,0 +1,63 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: loan_db
+      POSTGRES_USER: loan_user
+      POSTGRES_PASSWORD: loan_password
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+
+  # ---- production builds ----
+  api-user:
+    build:
+      context: .
+      dockerfile: apps/api-user/Dockerfile
+      target: prod
+    environment:
+      DATABASE_URL: postgres://loan_user:loan_password@db:5432/loan_db
+    depends_on: [db]
+    ports: ["3100:3000"]
+
+  api-admin:
+    build:
+      context: .
+      dockerfile: apps/api-admin/Dockerfile
+      target: prod
+    environment:
+      DATABASE_URL: postgres://loan_user:loan_password@db:5432/loan_db
+    depends_on: [db]
+    ports: ["3200:3000"]
+
+  # ---- dev (hot-reload) builds ----
+  api-user-dev:
+    build:
+      context: .
+      dockerfile: apps/api-user/Dockerfile
+      target: dev
+    volumes:
+      - .:/app                 # live code
+      - /app/node_modules      # keep container’s node_modules
+    environment:
+      DATABASE_URL: postgres://loan_user:loan_password@db:5432/loan_db
+    depends_on: [ db ]
+    ports: [ "3100:3000" ]
+
+  api-admin-dev:
+    build:
+      context: .
+      dockerfile: apps/api-admin/Dockerfile
+      target: dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      DATABASE_URL: postgres://loan_user:loan_password@db:5432/loan_db
+    depends_on: [ db ]
+    ports: [ "3200:3000" ]
+
+
+volumes:
+  pgdata:

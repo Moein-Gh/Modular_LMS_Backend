@@ -1,0 +1,7 @@
+# .dockerignore
+# ─────────────
+node_modules
+.pnpm-debug.log*
+.env*
+dist
+.git
