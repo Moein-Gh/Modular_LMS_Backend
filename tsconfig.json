@@ -14,7 +14,7 @@
     "skipLibCheck": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
@@ -23,6 +23,12 @@
       ],
       "@app/application/*": [
         "libs/application/src/*"
+      ],
+      "@app/config": [
+        "libs/config/src"
+      ],
+      "@app/config/*": [
+        "libs/config/src/*"
       ],
       "@app/domain": [
         "libs/domain/src"
@@ -35,6 +41,9 @@
       ],
       "@app/infra/*": [
         "libs/infra/src/*"
+      ],
+      "@generated/*": [
+        "generated/*"
       ]
     }
   }

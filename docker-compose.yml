@@ -1,63 +1,48 @@
-version: "3.9"
+version: '3.8'
 
 services:
   db:
-    image: postgres:latest
+    image: postgres:16
     environment:
-      POSTGRES_DB: loan_db
-      POSTGRES_USER: loan_user
-      POSTGRES_PASSWORD: loan_password
-    ports: ["5432:5432"]
-    volumes: ["pgdata:/var/lib/postgresql/data"]
+      POSTGRES_DB:       ${POSTGRES_DB}
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"   # optional host-exposure
 
-  # ---- production builds ----
   api-user:
+    # for prod, swap the build block for an image line:
+    # image: ghcr.io/your-org/api-user:latest
     build:
       context: .
       dockerfile: apps/api-user/Dockerfile
-      target: prod
+      target: ${API_BUILD_TARGET:-dev}  # dev → hot-reload stage
     environment:
-      DATABASE_URL: postgres://loan_user:loan_password@db:5432/loan_db
+      NODE_ENV:     ${NODE_ENV}
+      DATABASE_URL: ${DATABASE_URL}
     depends_on: [db]
-    ports: ["3100:3000"]
+    volumes:
+      - .:/app          # remove in prod
+      - /app/node_modules
+    ports:
+      - "${USER_API_PORT}:3000"
 
   api-admin:
     build:
       context: .
       dockerfile: apps/api-admin/Dockerfile
-      target: prod
+      target: ${API_BUILD_TARGET:-dev}
     environment:
-      DATABASE_URL: postgres://loan_user:loan_password@db:5432/loan_db
+      NODE_ENV:     ${NODE_ENV}
+      DATABASE_URL: ${DATABASE_URL}
     depends_on: [db]
-    ports: ["3200:3000"]
-
-  # ---- dev (hot-reload) builds ----
-  api-user-dev:
-    build:
-      context: .
-      dockerfile: apps/api-user/Dockerfile
-      target: dev
-    volumes:
-      - .:/app                 # live code
-      - /app/node_modules      # keep container’s node_modules
-    environment:
-      DATABASE_URL: postgres://loan_user:loan_password@db:5432/loan_db
-    depends_on: [ db ]
-    ports: [ "3100:3000" ]
-
-  api-admin-dev:
-    build:
-      context: .
-      dockerfile: apps/api-admin/Dockerfile
-      target: dev
     volumes:
       - .:/app
       - /app/node_modules
-    environment:
-      DATABASE_URL: postgres://loan_user:loan_password@db:5432/loan_db
-    depends_on: [ db ]
-    ports: [ "3200:3000" ]
-
+    ports:
+      - "${ADMIN_API_PORT}:3000"
 
 volumes:
   pgdata:
