@@ -72,6 +72,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/infra/tsconfig.lib.json"
       }
+    },
+    "problem-details": {
+      "type": "library",
+      "root": "libs/problem-details",
+      "entryFile": "index",
+      "sourceRoot": "libs/problem-details/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/problem-details/tsconfig.lib.json"
+      }
     }
   }
 }

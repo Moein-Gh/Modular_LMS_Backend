@@ -42,6 +42,12 @@
       "@app/infra/*": [
         "libs/infra/src/*"
       ],
+      "@app/problem-details": [
+        "libs/problem-details/src"
+      ],
+      "@app/problem-details/*": [
+        "libs/problem-details/src/*"
+      ],
       "@generated/*": [
         "generated/*"
       ]
