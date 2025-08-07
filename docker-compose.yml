@@ -3,46 +3,76 @@ version: '3.8'
 services:
   db:
     image: postgres:16
+    # Remove the container_name to allow Docker to generate unique names
+    # container_name: modular_lms_db
     environment:
-      POSTGRES_DB:       ${POSTGRES_DB}
-      POSTGRES_USER:     ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-loan_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"   # optional host-exposure
+      - "${POSTGRES_PORT:-5432}:5432"
 
   api-user:
-    # for prod, swap the build block for an image line:
-    # image: ghcr.io/your-org/api-user:latest
     build:
       context: .
       dockerfile: apps/api-user/Dockerfile
-      target: ${API_BUILD_TARGET:-dev}  # dev → hot-reload stage
+      target: ${API_BUILD_TARGET:-dev}
+    # Remove the container_name
+    # container_name: modular_lms_api_user
     environment:
-      NODE_ENV:     ${NODE_ENV}
-      DATABASE_URL: ${DATABASE_URL}
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/loan_db}
     depends_on: [db]
-    volumes:
-      - .:/app          # remove in prod
-      - /app/node_modules
     ports:
-      - "${USER_API_PORT}:3000"
+      - "${USER_API_PORT:-3001}:3000"
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/api-user/src
+          target: /app/apps/api-user/src
+          ignore:
+            - node_modules/
+            - dist/
+        - action: sync
+          path: ./libs
+          target: /app/libs
+          ignore:
+            - node_modules/
+            - dist/
+        - action: rebuild
+          path: package.json
 
   api-admin:
     build:
       context: .
       dockerfile: apps/api-admin/Dockerfile
       target: ${API_BUILD_TARGET:-dev}
+    # Remove the container_name
+    # container_name: modular_lms_api_admin
     environment:
-      NODE_ENV:     ${NODE_ENV}
-      DATABASE_URL: ${DATABASE_URL}
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/loan_db}
     depends_on: [db]
-    volumes:
-      - .:/app
-      - /app/node_modules
     ports:
-      - "${ADMIN_API_PORT}:3000"
+      - "${ADMIN_API_PORT:-3000}:3000"
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/api-admin/src
+          target: /app/apps/api-admin/src
+          ignore:
+            - node_modules/
+            - dist/
+        - action: sync
+          path: ./libs
+          target: /app/libs
+          ignore:
+            - node_modules/
+            - dist/
+        - action: rebuild
+          path: package.json
 
 volumes:
   pgdata:

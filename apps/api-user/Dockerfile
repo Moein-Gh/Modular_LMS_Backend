@@ -23,4 +23,4 @@ RUN corepack enable && pnpm install
 COPY . .
 ENV NODE_ENV=development
 EXPOSE 3000
-CMD ["pnpm", "nest", "start", "api-user", "--watch"]
+CMD ["pnpm", "run", "start:dev"]

@@ -18,39 +18,31 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@app/application": [
-        "libs/application/src"
-      ],
-      "@app/application/*": [
-        "libs/application/src/*"
-      ],
-      "@app/config": [
-        "libs/config/src"
-      ],
-      "@app/config/*": [
-        "libs/config/src/*"
-      ],
-      "@app/domain": [
-        "libs/domain/src"
-      ],
-      "@app/domain/*": [
-        "libs/domain/src/*"
-      ],
-      "@app/infra": [
-        "libs/infra/src"
-      ],
-      "@app/infra/*": [
-        "libs/infra/src/*"
-      ],
-      "@app/problem-details": [
-        "libs/problem-details/src"
-      ],
-      "@app/problem-details/*": [
-        "libs/problem-details/src/*"
-      ],
-      "@generated/*": [
-        "generated/*"
-      ]
+      "@app/application": ["libs/application/src"],
+      "@app/application/*": ["libs/application/src/*"],
+      "@app/config": ["libs/config/src"],
+      "@app/config/*": ["libs/config/src/*"],
+      "@app/domain": ["libs/domain/src"],
+      "@app/domain/*": ["libs/domain/src/*"],
+      "@app/infra": ["libs/infra/src"],
+      "@app/infra/*": ["libs/infra/src/*"],
+      "@app/problem-details": ["libs/problem-details/src"],
+      "@app/problem-details/*": ["libs/problem-details/src/*"],
+      "@generated/*": ["generated/*"]
     }
+  },
+  "watchOptions": {
+    // Use native file system events for files and directories
+    "watchFile": "useFsEvents",
+    "watchDirectory": "useFsEvents",
+    // Poll files for updates more frequently
+    // when they're updated a lot.
+    "fallbackPolling": "dynamicPriority",
+    // Don't coalesce watch notification
+    "synchronousWatchDirectory": true,
+    // Finally, two additional settings for reducing the amount of possible
+    // files to track  work from these directories
+    "excludeDirectories": ["**/node_modules", "_build"],
+    "excludeFiles": ["build/fileWhichChangesOften.ts"]
   }
 }
