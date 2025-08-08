@@ -4,6 +4,8 @@ import {
   Catch,
   ExceptionFilter,
   Injectable,
+  HttpException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AppLogger } from '../logger.service';
@@ -23,23 +25,22 @@ export class SentryExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const request = ctx.getRequest<Request>();
 
-    // Only report to Sentry if it's initialized
     if (this.sentryProvider.isInitialized()) {
       this.reportToSentry(exception, request);
     }
 
-    // Log the exception locally
-    this.logger.error('Unhandled exception occurred', {
-      error: exception,
+    // Minimal local log
+    this.logger.error('Exception reported to Sentry', {
       requestId: request.headers['x-request-id'] || 'unknown',
       url: request.url,
       method: request.method,
-      userAgent: request.get('User-Agent'),
     });
 
-    // Note: This filter should be registered BEFORE your Problem Details filter
-    // so that Problem Details can handle the actual response formatting
-    throw exception;
+    // Ensure downstream ProblemDetailsFilter gets an HttpException
+    if (exception instanceof HttpException) {
+      throw exception;
+    }
+    throw new InternalServerErrorException('Unexpected error');
   }
 
   private reportToSentry(exception: unknown, request: Request): void {

@@ -6,7 +6,9 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
+import * as Sentry from '@sentry/node';
+import { Request } from 'express';
+import { SentryProvider } from '@app/logger';
 import { ProblemDetailsException } from './problem-details.exception';
 import { ProblemDetails } from './problem-details';
 import {
@@ -26,17 +28,16 @@ interface ErrorResponse {
   [key: string]: any;
 }
 
-/**
- * Global exception filter that converts exceptions to RFC 7807 Problem Details
- */
 @Catch()
 export class ProblemDetailsFilter implements ExceptionFilter {
   private readonly logger = new Logger(ProblemDetailsFilter.name);
 
+  constructor(private readonly sentryProvider: SentryProvider) {}
+
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    const response: import('express').Response = ctx.getResponse();
+    const request: Request = ctx.getRequest();
     const requestPath = request.path;
 
     // Generate the appropriate problem details based on exception type
@@ -48,6 +49,37 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         `Exception: ${problem.detail}`,
         exception instanceof Error ? exception.stack : undefined,
       );
+    }
+
+    const req = ctx.getRequest<Request>();
+
+    // Determine HTTP status (keep your existing logic)
+    const status =
+      exception instanceof HttpException ? exception.getStatus() : 500;
+
+    // Report only unexpected/5xx
+    if (this.sentryProvider.isInitialized() && status >= 500) {
+      Sentry.withScope((scope) => {
+        // requestId
+        const ridHeader = req.headers['x-request-id'];
+        const requestId = Array.isArray(ridHeader)
+          ? ridHeader.join(',')
+          : (ridHeader ?? 'unknown');
+
+        scope.setTag('requestId', requestId);
+        scope.setContext('request', {
+          url: req.url,
+          method: req.method,
+          headers: sanitizeHeaders(req.headers as Record<string, unknown>),
+          query: req.query,
+          body: sanitizeBody(req.body),
+        });
+
+        const user = getUser(req);
+        if (user) scope.setUser(user);
+
+        Sentry.captureException(exception);
+      });
     }
 
     // Send the response
@@ -134,4 +166,35 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     }
     return messages;
   }
+}
+
+function sanitizeHeaders(
+  headers: Record<string, unknown>,
+): Record<string, unknown> {
+  const sensitive = ['authorization', 'cookie', 'x-api-key'];
+  const out = { ...headers };
+  for (const h of sensitive) if (out[h]) out[h] = '[REDACTED]';
+  return out;
+}
+
+function sanitizeBody(body: unknown): unknown {
+  if (!body || typeof body !== 'object') return body;
+  const sensitive = ['password', 'token', 'secret', 'apiKey'];
+  const out = { ...(body as Record<string, unknown>) };
+  for (const f of sensitive) if (out[f]) out[f] = '[REDACTED]';
+  return out;
+}
+
+function getUser(req: Request): { id?: string; email?: string } | undefined {
+  const maybeUser = (req as unknown as { user?: unknown }).user;
+  if (maybeUser && typeof maybeUser === 'object') {
+    const u = maybeUser as Record<string, unknown>;
+    const id =
+      typeof u.id === 'string' || typeof u.id === 'number'
+        ? String(u.id)
+        : undefined;
+    const email = typeof u.email === 'string' ? u.email : undefined;
+    return id || email ? { id, email } : undefined;
+  }
+  return undefined;
 }

@@ -1,15 +1,13 @@
 import { NestFactory } from '@nestjs/core';
-import { ProcessErrorHandlers, SentryExceptionFilter } from '@app/logger';
 import { ApiUserModule } from './api-user.module';
+import { ProcessErrorHandlers } from '@app/logger';
 
 async function bootstrap(): Promise<void> {
   ProcessErrorHandlers.setupProcessHandlers();
 
   const app = await NestFactory.create(ApiUserModule);
 
-  const sentryFilter = app.get(SentryExceptionFilter);
-  app.useGlobalFilters(sentryFilter);
-
+  // ProblemDetailsFilter is registered via ProblemDetailsModule
   await app.listen(process.env.PORT ?? 3000);
 }
 
