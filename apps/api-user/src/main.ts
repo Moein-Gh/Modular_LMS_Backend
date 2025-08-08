@@ -1,12 +1,16 @@
 import { NestFactory } from '@nestjs/core';
+import { ProcessErrorHandlers, SentryExceptionFilter } from '@app/logger';
 import { ApiUserModule } from './api-user.module';
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
+  ProcessErrorHandlers.setupProcessHandlers();
+
   const app = await NestFactory.create(ApiUserModule);
-  await app.listen(process.env.port ?? 3000);
+
+  const sentryFilter = app.get(SentryExceptionFilter);
+  app.useGlobalFilters(sentryFilter);
+
+  await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap().catch((err) => {
-  // Optionally log the error and exit
-  console.error('Error during bootstrap:', err);
-  process.exit(1);
-});
+
+void bootstrap();

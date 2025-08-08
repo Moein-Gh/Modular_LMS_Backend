@@ -31,12 +31,17 @@
     "@nestjs/swagger": "^11.2.0",
     "@prisma/client": "^6.12.0",
     "@scalar/nestjs-api-reference": "^0.5.10",
-    "@sentry/node": "^10.2.0",
+    "@sentry/core": "^10.3.0",
+    "@sentry/node": "^10.3.0",
+    "@sentry/profiling-node": "^10.3.0",
+    "@types/uuid": "^10.0.0",
     "nestjs-pino": "^4.4.0",
     "pino": "^9.8.0",
+    "pino-http": "^10.5.0",
     "pino-pretty": "^13.1.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "uuid": "^11.1.0",
     "zod": "^4.0.5"
   },
   "devDependencies": {
@@ -93,6 +98,7 @@
       "^@app/config(|/.*)$": "<rootDir>/libs/config/src/$1",
       "^@app/domain(|/.*)$": "<rootDir>/libs/domain/src/$1",
       "^@app/infra(|/.*)$": "<rootDir>/libs/infra/src/$1",
+      "^@app/logger(|/.*)$": "<rootDir>/libs/logger/src/$1",
       "^@app/problem-details(|/.*)$": "<rootDir>/libs/problem-details/src/$1"
     }
   },

@@ -1,5 +1,10 @@
 # Copilot Instructions for Modular_LMS_Backend
 
+## General
+
+- always mention the file name that the changes should occure in
+- if the code if for a new file, give the file's name and path
+
 ## Project Architecture
 
 - **Monorepo Structure**: Uses NestJS with multiple apps (`api-admin`, `api-user`) and shared libraries (`application`, `config`, `domain`, `infra`, `problem-details`).
@@ -49,3 +54,9 @@
 ---
 
 If any section is unclear or missing, please provide feedback so instructions can be improved.
+
+## Type safety
+
+- Never use `any` type
+- Always define explicit types for function parameters and return values
+- Use TypeScript interfaces and types to model complex data structures
