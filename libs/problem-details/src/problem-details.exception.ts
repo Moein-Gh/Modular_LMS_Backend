@@ -11,6 +11,7 @@ export class ProblemDetailsException
   readonly instance?: string;
   readonly extensions?: Record<string, any>;
   readonly statusCode: number; // HTTP status code
+  readonly occuredAt: Date;
 
   constructor(problem: ProblemDetails & { status: number }) {
     super(problem, problem.status); // pass real status to base class

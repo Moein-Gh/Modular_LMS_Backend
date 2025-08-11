@@ -5,4 +5,6 @@ export interface ProblemDetails {
   instance?: string;
   extensions?: Record<string, string>;
   statusCode: number;
+  occuredAt: Date;
+  // errors?: Array<{ field: string; message: string }>; Add later
 }

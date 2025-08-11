@@ -2,7 +2,7 @@
 
 ## General
 
-- always mention the file name that the changes should occure in
+- \*\* super important : always mention the file name that the changes should occure in
 - if the code if for a new file, give the file's name and path
 
 ## Project Architecture
