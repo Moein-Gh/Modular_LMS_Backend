@@ -5,8 +5,6 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-  Inject,
-  Optional,
 } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import { isAppError } from '@app/application';
@@ -22,7 +20,6 @@ import {
   HTTP_STATUS_URL_PREFIX,
   DEFAULT_ERROR_MESSAGE,
 } from './index';
-import { PROBLEM_ERROR_MAPPERS, type ProblemErrorMapper } from './error-mapper';
 
 /**
  * Interface for HTTP exception response objects
@@ -36,30 +33,14 @@ interface ErrorResponse {
 export class ProblemDetailsFilter implements ExceptionFilter {
   private readonly logger = new Logger(ProblemDetailsFilter.name);
 
-  constructor(
-    private readonly sentryProvider: SentryProvider,
-    @Optional()
-    @Inject(PROBLEM_ERROR_MAPPERS)
-    private readonly mappers: readonly ProblemErrorMapper[] = [],
-  ) {}
+  constructor(private readonly sentryProvider: SentryProvider) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const http = host.switchToHttp();
     const res = http.getResponse<Response>();
     const req = http.getRequest<Request>();
 
-    // 1) Let registered mappers handle known, app-specific errors
-    const mapper = this.mappers.find((m) => m.canHandle(exception));
-    if (mapper) {
-      const problem = mapper.toProblem(exception, req);
-      res
-        .status(problem.statusCode)
-        .setHeader('Content-Type', PROBLEM_DETAILS_MEDIA_TYPE)
-        .json(problem);
-      return;
-    }
-
-    // 2) Generic mapping for any AppError from the application layer
+    // 1) Generic mapping for any AppError from the application layer
     if (isAppError(exception)) {
       const type =
         exception.type ?? `${HTTP_STATUS_URL_PREFIX}${exception.status}`;

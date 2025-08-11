@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ApiAdminController } from './api-admin.controller';
 import { ApiAdminService } from './api-admin.service';
-import { PrismaService } from '@app/infra/prisma/prisma.module';
+import { PrismaModule } from '@app/infra/prisma/prisma.module';
 import { LoggerModule } from '@app/logger';
 import { ProblemDetailsModule } from '@app/problem-details';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -12,7 +12,7 @@ import { CreateUserUseCase } from '@app/application';
 
 @Module({
   imports: [
-    PrismaService,
+    PrismaModule,
     LoggerModule,
     ProblemDetailsModule,
     ThrottlerModule.forRoot([{ ttl: 60, limit: 100 }]),
