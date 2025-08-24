@@ -10,6 +10,7 @@ import {
 import { Request, Response } from 'express';
 import { AppLogger } from '../logger.service';
 import { SentryProvider } from './sentry.provider';
+import { isAppError } from '@app/application';
 
 @Catch()
 @Injectable()
@@ -36,9 +37,9 @@ export class SentryExceptionFilter implements ExceptionFilter {
       method: request.method,
     });
 
-    // Ensure downstream ProblemDetailsFilter gets an HttpException
-    if (exception instanceof HttpException) {
-      throw exception;
+    // Ensure downstream ProblemDetailsFilter can handle AppError/HttpException
+    if (exception instanceof HttpException || isAppError(exception)) {
+      throw exception as any;
     }
     throw new InternalServerErrorException('Unexpected error');
   }

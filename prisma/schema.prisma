@@ -5,9 +5,9 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x", "windows"]
-  output   = "../generated/prisma"
+  output        = "../generated/prisma"
 }
 
 datasource db {
@@ -15,10 +15,69 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Authorization enums
+enum Effect {
+  allow
+  deny
+}
+
+enum Scope {
+  any
+  own
+}
+
 model User {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) @db.Uuid
   email     String   @unique
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Back-relation: roles assigned to this user
+  RoleAssignments RoleAssignment[]
 }
+
+model Role {
+  id          String  @id @default(uuid()) @db.Uuid
+  key         String  @unique @db.Text
+  name        String  @db.Text
+  description String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Back-relation: users assigned to this role via RoleAssignment
+  RoleAssignments       RoleAssignment[]
+  
+  @@map("role")
+}
+
+model Permission {
+  id          String  @id @default(uuid()) @db.Uuid
+  key         String  @unique @db.Text
+  name        String  @db.Text
+  description String? @db.Text
+
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  
+
+  @@map("permission")
+}
+
+model RoleAssignment {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  roleId     String   @map("role_id") @db.Uuid
+  assignedBy String?  @map("assigned_by")
+  isActive   Boolean  @default(true) @map("is_active")
+  expiresAt  DateTime? @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@map("user_role")
+}
+

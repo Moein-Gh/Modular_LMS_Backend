@@ -9,11 +9,13 @@ import { APP_GUARD } from '@nestjs/core';
 import { UsersController } from './users/users.controller';
 import { UserInfraModule } from '@app/infra';
 import { CreateUserUseCase } from '@app/application';
+import { AccessModule } from './access/access.module';
 
 @Module({
   imports: [
     PrismaModule,
     LoggerModule,
+    AccessModule,
     ProblemDetailsModule,
     ThrottlerModule.forRoot([{ ttl: 60, limit: 100 }]),
     UserInfraModule,
