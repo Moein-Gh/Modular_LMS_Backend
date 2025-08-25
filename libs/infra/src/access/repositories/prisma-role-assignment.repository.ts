@@ -34,7 +34,6 @@ type RoleAssignmentModel = {
   isActive: boolean;
 };
 
-// Minimal models for included relations
 type UserModel = {
   id: string;
   email: string;
