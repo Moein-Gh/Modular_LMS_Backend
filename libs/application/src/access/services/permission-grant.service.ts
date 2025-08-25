@@ -1,0 +1,48 @@
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  PERMISSION_GRANT_REPOSITORY,
+  type PermissionGrantRepository,
+  type CreatePermissionGrantInput,
+  type UpdatePermissionGrantInput,
+  type ListPermissionGrantsParams,
+  type ListPermissionGrantsResult,
+} from '@app/domain';
+import type { DomainPermissionGrant } from '@app/domain';
+import { NotFoundError } from '@app/application/errors/not-found.error';
+
+@Injectable()
+export class PermissionGrantService {
+  constructor(
+    @Inject(PERMISSION_GRANT_REPOSITORY)
+    private readonly permissionGrants: PermissionGrantRepository,
+  ) {}
+
+  create(input: CreatePermissionGrantInput): Promise<DomainPermissionGrant> {
+    return this.permissionGrants.create(input);
+  }
+
+  async getById(id: string): Promise<DomainPermissionGrant> {
+    const grant = await this.permissionGrants.findById(id);
+    if (!grant) {
+      throw new NotFoundError('PermissionGrant', 'id', id);
+    }
+    return grant;
+  }
+
+  list(
+    params: ListPermissionGrantsParams,
+  ): Promise<ListPermissionGrantsResult> {
+    return this.permissionGrants.list(params);
+  }
+
+  update(
+    id: string,
+    data: UpdatePermissionGrantInput,
+  ): Promise<DomainPermissionGrant> {
+    return this.permissionGrants.update(id, data);
+  }
+
+  delete(id: string): Promise<void> {
+    return this.permissionGrants.delete(id);
+  }
+}

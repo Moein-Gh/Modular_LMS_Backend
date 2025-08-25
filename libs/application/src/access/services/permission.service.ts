@@ -8,7 +8,7 @@ import {
   type ListPermissionsResult,
 } from '@app/domain';
 import type { DomainPermission } from '@app/domain';
-import { ensureFound } from '../../utils/ensure-found';
+import { NotFoundError } from '@app/application/errors/not-found.error';
 
 @Injectable()
 export class PermissionService {
@@ -21,20 +21,20 @@ export class PermissionService {
     return this.permissions.create(input);
   }
 
-  getById(id: string): Promise<DomainPermission> {
-    return this.permissions
-      .findById(id)
-      .then((p) =>
-        ensureFound(p, { entity: 'Permission', by: 'id', value: id }),
-      );
+  async getById(id: string): Promise<DomainPermission> {
+    const permission = await this.permissions.findById(id);
+    if (!permission) {
+      throw new NotFoundError('Permission', 'id', id);
+    }
+    return permission;
   }
 
-  getByKey(key: string): Promise<DomainPermission> {
-    return this.permissions
-      .findByKey(key)
-      .then((p) =>
-        ensureFound(p, { entity: 'Permission', by: 'key', value: key }),
-      );
+  async getByKey(key: string): Promise<DomainPermission> {
+    const permission = await this.permissions.findByKey(key);
+    if (!permission) {
+      throw new NotFoundError('Permission', 'key', key);
+    }
+    return permission;
   }
 
   list(params: ListPermissionsParams): Promise<ListPermissionsResult> {

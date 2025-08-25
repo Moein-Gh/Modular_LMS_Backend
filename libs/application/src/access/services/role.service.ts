@@ -8,7 +8,7 @@ import {
   type ListRolesResult,
 } from '@app/domain';
 import type { DomainRole } from '@app/domain';
-import { ensureFound } from '../../utils/ensure-found';
+import { NotFoundError } from '@app/application/errors/not-found.error';
 
 @Injectable()
 export class RoleService {
@@ -22,12 +22,18 @@ export class RoleService {
 
   async getById(id: string): Promise<DomainRole> {
     const role = await this.roles.findById(id);
-    return ensureFound(role, { entity: 'Role', by: 'id', value: id });
+    if (!role) {
+      throw new NotFoundError('Role', 'id', id);
+    }
+    return role;
   }
 
   async getByKey(key: string): Promise<DomainRole> {
     const role = await this.roles.findByKey(key);
-    return ensureFound(role, { entity: 'Role', by: 'key', value: key });
+    if (!role) {
+      throw new NotFoundError('Role', 'key', key);
+    }
+    return role;
   }
 
   list(params: ListRolesParams): Promise<ListRolesResult> {

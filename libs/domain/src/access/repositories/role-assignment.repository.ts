@@ -8,6 +8,7 @@ export interface CreateRoleAssignmentInput {
 }
 
 export interface UpdateRoleAssignmentInput {
+  isActive?: boolean;
   assignedBy?: string;
   expiresAt?: Date;
 }
@@ -18,6 +19,9 @@ export interface ListRoleAssignmentsParams {
   take?: number;
   orderBy?: 'createdAt' | 'assignedBy' | 'expiresAt';
   orderDir?: 'asc' | 'desc';
+  userId?: string;
+  includeUser?: boolean;
+  includeRole?: boolean;
 }
 
 export interface ListRoleAssignmentsResult {

@@ -1,19 +1,19 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
-  PERMISSION_REPOSITORY,
   type RoleAssignmentRepository,
   type CreateRoleAssignmentInput,
   type UpdateRoleAssignmentInput,
   type ListRoleAssignmentsParams,
   type ListRoleAssignmentsResult,
+  ROLE_ASSIGNMENT_REPOSITORY,
 } from '@app/domain';
 import type { DomainRoleAssignment } from '@app/domain';
-import { ensureFound } from '../../utils/ensure-found';
+import { NotFoundError } from '@app/application/errors/not-found.error';
 
 @Injectable()
 export class RoleAssignmentService {
   constructor(
-    @Inject(PERMISSION_REPOSITORY)
+    @Inject(ROLE_ASSIGNMENT_REPOSITORY)
     private readonly roleAssignment: RoleAssignmentRepository,
   ) {}
 
@@ -21,12 +21,12 @@ export class RoleAssignmentService {
     return this.roleAssignment.create(input);
   }
 
-  getById(id: string): Promise<DomainRoleAssignment> {
-    return this.roleAssignment
-      .findById(id)
-      .then((p) =>
-        ensureFound(p, { entity: 'RoleAssignment', by: 'id', value: id }),
-      );
+  async getById(id: string): Promise<DomainRoleAssignment> {
+    const roleAssignment = await this.roleAssignment.findById(id);
+    if (!roleAssignment) {
+      throw new NotFoundError('RoleAssignment', 'id', id);
+    }
+    return roleAssignment;
   }
 
   list(params: ListRoleAssignmentsParams): Promise<ListRoleAssignmentsResult> {
