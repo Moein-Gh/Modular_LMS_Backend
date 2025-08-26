@@ -1,7 +1,7 @@
 import {
   DomainIdentity,
-  DomainIdentityInput,
   IdentityRepository,
+  CreateIdentityInput,
 } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.module';
 import { Prisma } from '@generated/prisma';
@@ -33,21 +33,20 @@ function toDomain(model: IdentityModel): DomainIdentity {
   return {
     id: model.id,
     phone: model.phone,
-    name: model.name ?? undefined,
-    countryCode: model.countryCode ?? undefined,
-    nationalCode: model.nationalCode ?? undefined,
-    email: model.email ?? undefined,
+    name: model.name || null,
+    countryCode: model.countryCode || null,
+    nationalCode: model.nationalCode || null,
+    email: model.email || null,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
   };
 }
 
 @Injectable()
-@Injectable()
 export class PrismaIdentityRepository implements IdentityRepository {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  async create(data: DomainIdentityInput): Promise<DomainIdentity> {
+  async create(data: CreateIdentityInput): Promise<DomainIdentity> {
     const created: IdentityModel = await this.prisma.identity.create({
       data: {
         phone: data.phone,
