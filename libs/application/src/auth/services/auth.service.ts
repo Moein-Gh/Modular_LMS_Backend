@@ -1,20 +1,25 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@app/infra/prisma/prisma.module';
 import { ConfigService } from '@app/config';
-import type { RequestSmsCodeDto } from './dtos/request-sms-code.dto';
-import type { VerifySmsCodeDto } from './dtos/verify-sms-code.dto';
-import type { RefreshTokenDto } from './dtos/refresh-token.dto';
-import type { LogoutDto } from './dtos/logout.dto';
-import type { AuthPayload } from '@app/domain/auth/entities/auth-payload.entity';
+import type { RequestSmsCodeDto } from '../dtos/request-sms-code.dto';
+import type { VerifySmsCodeDto } from '../dtos/verify-sms-code.dto';
+import type { RefreshTokenDto } from '../dtos/refresh-token.dto';
+import type { LogoutDto } from '../dtos/logout.dto';
 import * as crypto from 'crypto';
-import { LogoutResult, RequestSmsCodeResult } from './dtos/auth.responses';
-import { InvalidOrExpiredCodeError } from './errors/invalid-or-expired-code.error';
+import { LogoutResult, RequestSmsCodeResult } from '../dtos/auth.responses';
+import { InvalidOrExpiredCodeError } from '../errors/invalid-or-expired-code.error';
+import { AccessToken, DomainPayload, RefreshToken } from '@app/domain';
+import { IdentityService } from './identity.service';
+import { NotFoundError } from '@app/application/errors/not-found.error';
+import { UsersService } from '@app/application/user/services/users.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly identityService: IdentityService,
+    private readonly usersService: UsersService,
   ) {}
 
   // 1. Request SMS code
@@ -27,6 +32,11 @@ export class AuthService {
     console.log(`Sending SMS code ${code} to ${cmd.phone}`);
     console.log('---------------');
     // Save code to DB (prisma.smsCode)
+
+    const SMS_CODE_EXPIRES_IN = this.config.get('SMS_CODE_EXPIRES_IN')
+      ? Number(this.config.get('SMS_CODE_EXPIRES_IN'))
+      : 300;
+
     await this.prisma.smsCode.create({
       data: {
         phone: cmd.phone,
@@ -34,7 +44,7 @@ export class AuthService {
         purpose: cmd.purpose,
         attempts: 0,
         maxAttempts: 5,
-        expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 min
+        expiresAt: new Date(Date.now() + SMS_CODE_EXPIRES_IN * 1000),
       },
     });
     // TODO: Integrate with real SMS provider here
@@ -43,7 +53,7 @@ export class AuthService {
   }
 
   // 2. Verify SMS code and issue tokens
-  public async verifySmsCode(cmd: VerifySmsCodeDto): Promise<AuthPayload> {
+  public async verifySmsCode(cmd: VerifySmsCodeDto): Promise<DomainPayload> {
     // Find active code
     const sms = await this.prisma.smsCode.findFirst({
       where: {
@@ -64,54 +74,56 @@ export class AuthService {
       data: { consumedAt: new Date() },
     });
 
-    // Find or create user/identity
-    let identity = await this.prisma.identity.findUnique({
-      where: { phone: cmd.phone },
-    });
+    // Find or create identity/user
+    const identity = await this.identityService.findByPhone(cmd.phone);
+    let user;
+
     if (!identity) {
-      const user = await this.prisma.user.create({ data: {} });
-      identity = await this.prisma.identity.create({
-        data: { userId: user.id, phone: cmd.phone },
-      });
+      throw new NotFoundError('Identity not found', 'phone number', cmd.phone);
+    } else {
+      user = await this.usersService.findByIdentityId(identity.id);
+      if (!user) {
+        user = await this.usersService.create({ identityId: identity.id });
+      }
     }
 
-    // Create refresh token
-    const refreshToken = crypto.randomBytes(32).toString('hex');
-    const tokenHash = crypto
-      .createHash('sha256')
-      .update(refreshToken)
-      .digest('hex');
+    // Create refresh token value object
     const refreshTokenExpiresIn = this.config.get('REFRESH_TOKEN_EXPIRES_IN')
       ? Number(this.config.get('REFRESH_TOKEN_EXPIRES_IN'))
       : 2592000; // fallback 30 days
     const accessTokenExpiresIn = this.config.get('ACCESS_TOKEN_EXPIRES_IN')
       ? Number(this.config.get('ACCESS_TOKEN_EXPIRES_IN'))
       : 900; // fallback 15 min
+    const refreshTokenVO = RefreshToken.create(refreshTokenExpiresIn);
     await this.prisma.refreshToken.create({
       data: {
-        userId: identity.userId,
-        tokenHash,
-        expiresAt: new Date(Date.now() + refreshTokenExpiresIn * 1000),
+        userId: user.id,
+        tokenHash: refreshTokenVO.hash,
+        expiresAt: refreshTokenVO.expiresAt,
       },
     });
 
-    // Create access token (JWT)
+    // Create access token value object
     const jwtSecret = this.config.get('JWT_SECRET') || 'dev_secret';
-    const payload = { sub: identity.userId, phone: identity.phone };
-    const accessToken = this.signJwt(payload, jwtSecret, accessTokenExpiresIn);
+    const payload = { sub: user.id, phone: identity.phone };
+    const accessTokenVO = AccessToken.create(
+      payload,
+      jwtSecret,
+      accessTokenExpiresIn,
+    );
 
     return {
-      accessToken,
-      refreshToken,
+      accessToken: accessTokenVO.value,
+      refreshToken: refreshTokenVO.value,
       expiresIn: accessTokenExpiresIn,
       accessTokenExpiresIn,
       refreshTokenExpiresIn,
-      userId: identity.userId,
+      userId: user.id,
     };
   }
 
   // 3. Refresh tokens
-  public async refresh(cmd: RefreshTokenDto): Promise<AuthPayload> {
+  public async refresh(cmd: RefreshTokenDto): Promise<DomainPayload> {
     const tokenHash = crypto
       .createHash('sha256')
       .update(cmd.refreshToken)
@@ -121,45 +133,50 @@ export class AuthService {
     });
     if (!session) throw new Error('Invalid or expired refresh token');
 
-    // Rotate refresh token
-    const newRefreshToken = crypto.randomBytes(32).toString('hex');
-    const newTokenHash = crypto
-      .createHash('sha256')
-      .update(newRefreshToken)
-      .digest('hex');
-    await this.prisma.refreshToken.update({
-      where: { id: session.id },
-      data: { revoked: true, revokedAt: new Date(), replacedByTokenId: null },
-    });
+    // Rotate refresh token using value object
     const refreshTokenExpiresIn = this.config.get('REFRESH_TOKEN_EXPIRES_IN')
       ? Number(this.config.get('REFRESH_TOKEN_EXPIRES_IN'))
       : 2592000;
     const accessTokenExpiresIn = this.config.get('ACCESS_TOKEN_EXPIRES_IN')
       ? Number(this.config.get('ACCESS_TOKEN_EXPIRES_IN'))
       : 900;
+
+    const newRefreshTokenVO = RefreshToken.create(refreshTokenExpiresIn);
+    await this.prisma.refreshToken.update({
+      where: { id: session.id },
+      data: { revoked: true, revokedAt: new Date(), replacedByTokenId: null },
+    });
     await this.prisma.refreshToken.create({
       data: {
         userId: session.userId,
-        tokenHash: newTokenHash,
-        expiresAt: new Date(Date.now() + refreshTokenExpiresIn * 1000),
+        tokenHash: newRefreshTokenVO.hash,
+        expiresAt: newRefreshTokenVO.expiresAt,
       },
     });
 
-    // Issue new access token
-    const identity = await this.prisma.identity.findFirst({
-      where: { userId: session.userId },
+    // Issue new access token value object
+    const user = await this.prisma.user.findUnique({
+      where: { id: session.userId },
+      include: { identity: true },
     });
+    if (!user) {
+      throw new Error('User not found');
+    }
     const jwtSecret = this.config.get('JWT_SECRET') || 'dev_secret';
-    const payload = { sub: session.userId, phone: identity?.phone };
-    const accessToken = this.signJwt(payload, jwtSecret, accessTokenExpiresIn);
+    const payload = { sub: user.id, phone: user.identity?.phone };
+    const accessTokenVO = AccessToken.create(
+      payload,
+      jwtSecret,
+      accessTokenExpiresIn,
+    );
 
     return {
-      accessToken,
-      refreshToken: newRefreshToken,
+      accessToken: accessTokenVO.value,
+      refreshToken: newRefreshTokenVO.value,
       expiresIn: accessTokenExpiresIn,
       accessTokenExpiresIn,
       refreshTokenExpiresIn,
-      userId: session.userId,
+      userId: user.id,
     };
   }
 
@@ -172,23 +189,5 @@ export class AuthService {
     return { success: true };
   }
 
-  // Helper: sign JWT (minimal, replace with real lib in prod)
-  private signJwt(payload: any, secret: string, expiresInSec: number): string {
-    // This is a stub. Use @nestjs/jwt or jsonwebtoken in production.
-    // Here, just base64-encode the payload for demo purposes.
-    const header = Buffer.from(
-      JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
-    ).toString('base64url');
-    const body = Buffer.from(
-      JSON.stringify({
-        ...payload,
-        exp: Math.floor(Date.now() / 1000) + expiresInSec,
-      }),
-    ).toString('base64url');
-    const sig = crypto
-      .createHmac('sha256', secret)
-      .update(`${header}.${body}`)
-      .digest('base64url');
-    return `${header}.${body}.${sig}`;
-  }
+  // Token logic is now encapsulated in value objects
 }

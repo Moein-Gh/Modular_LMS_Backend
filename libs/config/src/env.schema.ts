@@ -47,6 +47,7 @@ export const envSchema = z.object({
   // Token expiry times (in seconds)
   ACCESS_TOKEN_EXPIRES_IN: z.coerce.number().int().positive().default(900), // 15 minutes
   REFRESH_TOKEN_EXPIRES_IN: z.coerce.number().int().positive().default(2592000), // 30 days
+  SMS_CODE_EXPIRES_IN: z.coerce.number().int().positive().default(300), // 5 minutes
 });
 
 export type EnvVars = z.infer<typeof envSchema>;

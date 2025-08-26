@@ -16,10 +16,13 @@ export * from './access/services/role_assignment.service';
 export * from './access/services/permission-grant.service';
 
 // AUTH
-export * from './auth/auth.service';
+export * from './auth/services/auth.service';
+export * from './auth/auth-application.module';
+export * from './auth/use-cases/register-user.usecase';
 export * from './auth/dtos/request-sms-code.dto';
 export * from './auth/dtos/verify-sms-code.dto';
 export * from './auth/dtos/refresh-token.dto';
 export * from './auth/dtos/logout.dto';
 export * from './auth/dtos/auth.responses';
 export * from './auth/errors/invalid-or-expired-code.error';
+export * from './auth/dtos/register-user.usecase.dto';

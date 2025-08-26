@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { USER_REPOSITORY, type IUserRepository } from '@app/domain';
-import type { CreateUserResult } from '../dtos/create-user.dto';
+import { DomainUser, USER_REPOSITORY, type IUserRepository } from '@app/domain';
+import { CreateUserInput } from '../dtos/create-user.dto';
+import { Prisma } from '@generated/prisma';
 
 @Injectable()
 export class UsersService {
@@ -8,8 +9,19 @@ export class UsersService {
     @Inject(USER_REPOSITORY) private readonly users: IUserRepository,
   ) {}
 
-  async create(): Promise<CreateUserResult> {
-    const created = await this.users.createUser();
-    return { id: created.id, isActive: created.isActive };
+  async create(
+    input: CreateUserInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainUser> {
+    const created = await this.users.createUser(input, tx);
+    return created;
+  }
+
+  async findByIdentityId(
+    identityId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainUser | null> {
+    const user = await this.users.findByIdentityId(identityId, tx);
+    return user;
   }
 }

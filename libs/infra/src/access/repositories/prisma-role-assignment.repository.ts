@@ -36,6 +36,7 @@ type RoleAssignmentModel = {
 
 type UserModel = {
   id: string;
+  identityId: string;
   isActive: boolean;
 };
 
@@ -51,6 +52,7 @@ type RoleModel = {
 function toDomainUser(model: UserModel): DomainUser {
   return {
     id: model.id,
+    identityId: model.identityId,
     isActive: model.isActive,
   };
 }

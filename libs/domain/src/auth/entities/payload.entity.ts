@@ -1,8 +1,7 @@
-// AuthPayload: returned on successful login/refresh
-export interface AuthPayload {
+export interface DomainPayload {
   accessToken: string;
   refreshToken: string;
-  expiresIn: number; // seconds
+  expiresIn: number;
   accessTokenExpiresIn: number;
   refreshTokenExpiresIn: number;
   userId: string;

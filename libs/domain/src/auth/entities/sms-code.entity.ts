@@ -1,5 +1,4 @@
-// SmsCode entity: represents a one-time code for phone verification/login
-export interface SmsCode {
+export interface DomainSmsCode {
   id: string;
   phone: string;
   code: string;

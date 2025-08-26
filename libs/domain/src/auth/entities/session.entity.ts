@@ -1,5 +1,4 @@
-// AuthSession entity: represents a login session with access/refresh tokens
-export interface AuthSession {
+export interface DomainSession {
   id: string;
   userId: string;
   refreshTokenHash: string;

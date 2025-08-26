@@ -1,30 +1,60 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { IUserRepository, DomainUser } from '@app/domain';
 import { PrismaService } from '../../prisma/prisma.module';
-import type { PrismaClient } from '@generated/prisma';
+import type { Prisma } from '@generated/prisma';
+import { CreateUserInput } from '@app/application';
 
 @Injectable()
 export class PrismaUserRepository implements IUserRepository {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaClient) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: Prisma.TransactionClient,
+  ) {}
 
-  public async createUser(): Promise<DomainUser> {
-    const prisma = this.prisma;
-    const user = await prisma.user.create({ data: {} });
-    return { id: user.id, isActive: user.isActive };
+  public async createUser(
+    input: CreateUserInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainUser> {
+    const prisma = tx ?? this.prisma;
+
+    const user = await prisma.user.create({
+      data: {
+        identityId: input.identityId,
+        isActive: true,
+      },
+    });
+    return user;
   }
 
-  public async findById(id: string): Promise<DomainUser | null> {
-    const prisma = this.prisma;
+  public async findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainUser | null> {
+    const prisma = tx ?? this.prisma;
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) return null;
-    return { id: user.id, isActive: user.isActive };
+    return user;
   }
 
-  public async setActive(userId: string, isActive: boolean): Promise<void> {
-    const prisma = this.prisma;
+  public async setActive(
+    userId: string,
+    isActive: boolean,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const prisma = tx ?? this.prisma;
     await prisma.user.update({
       where: { id: userId },
       data: { isActive },
     });
+  }
+
+  public async findByIdentityId(
+    identityId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainUser | null> {
+    const prisma = tx ?? this.prisma;
+    const user = await prisma.user.findFirst({
+      where: { identityId },
+    });
+    return user;
   }
 }
