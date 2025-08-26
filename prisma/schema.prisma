@@ -28,13 +28,16 @@ enum Scope {
 
 model User {
   id        String   @id @default(uuid()) @db.Uuid
-  email     String   @unique
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Back-relation: roles assigned to this user
   RoleAssignments RoleAssignment[]
+
+  // Back-relations: identity and refresh tokens
+  identity      Identity?
+  refreshTokens RefreshToken[]
 }
 
 model Role {
@@ -93,4 +96,59 @@ model PermissionGrant {
   updatedAt    DateTime @updatedAt
 
   @@map("permission_grant")
+}
+
+// Stores primary identity information per user (phone-first auth)
+model Identity {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @unique @db.Uuid @map("user_id")
+  phone           String   @unique @db.Text
+  email           String?  @unique @db.Text
+  name            String?  @db.Text @map("name")
+  countryCode     String?  @db.Text @map("country_code")
+  nationalCode    String?  @db.Text @map("national_code")
+  lastLoginAt     DateTime? @map("last_login_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("identity")
+}
+
+// Persisted refresh tokens (store only hashes) for session continuity
+model RefreshToken {
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @db.Uuid @map("user_id")
+  tokenHash          String   @db.Text @map("token_hash")
+  revoked            Boolean  @default(false)
+  expiresAt          DateTime @map("expires_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+  revokedAt          DateTime? @map("revoked_at")
+  replacedByTokenId  String?  @db.Uuid @map("replaced_by_token_id")
+  userAgent          String?  @db.Text @map("user_agent")
+  ipAddress          String?  @db.Text @map("ip_address")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tokenHash], map: "refresh_token_user_hash_unique")
+  @@index([userId], map: "refresh_token_user_idx")
+  @@map("refresh_token")
+}
+
+// One-time SMS codes for phone verification and login
+model SmsCode {
+  id          String   @id @default(uuid()) @db.Uuid
+  phone       String   @db.Text
+  code        String   @db.Text
+  purpose     String   @db.Text
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(5) @map("max_attempts")
+  expiresAt   DateTime @map("expires_at")
+  consumedAt  DateTime? @map("consumed_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([phone], map: "sms_code_phone_idx")
+  @@index([phone, code], map: "sms_code_phone_code_idx")
+  @@map("sms_code")
 }

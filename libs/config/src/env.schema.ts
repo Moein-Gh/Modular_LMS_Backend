@@ -39,6 +39,14 @@ export const envSchema = z.object({
     .string()
     .regex(/^0(\.\d+)?$|^1(\.0+)?$/)
     .optional(),
+  /* Auth Module */
+  JWT_SECRET: z.string().min(32),
+  SMS_API_KEY: z.string().nonempty(),
+  SMS_API_SECRET: z.string().nonempty(),
+  SMS_SENDER_ID: z.string().nonempty(),
+  // Token expiry times (in seconds)
+  ACCESS_TOKEN_EXPIRES_IN: z.coerce.number().int().positive().default(900), // 15 minutes
+  REFRESH_TOKEN_EXPIRES_IN: z.coerce.number().int().positive().default(2592000), // 30 days
 });
 
 export type EnvVars = z.infer<typeof envSchema>;

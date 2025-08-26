@@ -36,7 +36,6 @@ type RoleAssignmentModel = {
 
 type UserModel = {
   id: string;
-  email: string;
   isActive: boolean;
 };
 
@@ -52,7 +51,6 @@ type RoleModel = {
 function toDomainUser(model: UserModel): DomainUser {
   return {
     id: model.id,
-    email: model.email,
     isActive: model.isActive,
   };
 }
@@ -144,7 +142,6 @@ export class PrismaRoleAssignmentRepository
       include.user = {
         select: {
           id: true,
-          email: true,
           isActive: true,
         },
       };

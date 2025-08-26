@@ -1,15 +1,14 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { CreateUserUseCase, type CreateUserCommand } from '@app/application';
-import { CreateUserDto } from './dtos/create-user.dto';
+import { UsersService } from '@app/application';
+import type { CreateUserResult } from '@app/application';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly createUser: CreateUserUseCase) {}
+  constructor(private readonly usersService: UsersService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() body: CreateUserDto) {
-    const cmd: CreateUserCommand = { email: body.email };
-    return this.createUser.execute(cmd);
+  async create(): Promise<CreateUserResult> {
+    return await this.usersService.create();
   }
 }

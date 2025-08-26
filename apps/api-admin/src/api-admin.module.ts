@@ -8,8 +8,10 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { UsersController } from './users/users.controller';
 import { UserInfraModule } from '@app/infra';
-import { CreateUserUseCase } from '@app/application';
+import { AuthService, UsersService } from '@app/application';
+import { ConfigModule } from '@app/config';
 import { AccessModule } from './access/access.module';
+import { AuthController } from './auth/auth.controller';
 
 @Module({
   imports: [
@@ -19,11 +21,13 @@ import { AccessModule } from './access/access.module';
     ProblemDetailsModule,
     ThrottlerModule.forRoot([{ ttl: 60, limit: 100 }]),
     UserInfraModule,
+    ConfigModule,
   ],
-  controllers: [ApiAdminController, UsersController],
+  controllers: [ApiAdminController, UsersController, AuthController],
   providers: [
     ApiAdminService,
-    CreateUserUseCase,
+    AuthService,
+    UsersService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })

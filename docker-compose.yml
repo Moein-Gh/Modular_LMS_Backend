@@ -19,6 +19,8 @@ services:
       target: ${API_BUILD_TARGET:-dev}
     # Remove the container_name
     # container_name: modular_lms_api_user
+    env_file:
+      - .env
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/loan_db}
@@ -49,6 +51,8 @@ services:
       target: ${API_BUILD_TARGET:-dev}
     # Remove the container_name
     # container_name: modular_lms_api_admin
+    env_file:
+      - .env
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/loan_db}

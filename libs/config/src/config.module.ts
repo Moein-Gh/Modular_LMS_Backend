@@ -3,6 +3,10 @@ import { Module } from '@nestjs/common';
 import { ConfigModule as NestConfig } from '@nestjs/config';
 import { envSchema } from './env.schema';
 
+import { ConfigService as NestConfigService } from '@nestjs/config';
+import { ConfigService } from './config.service';
+import type { EnvVars } from './env.schema';
+
 @Module({
   imports: [
     NestConfig.forRoot({
@@ -17,5 +21,14 @@ import { envSchema } from './env.schema';
       },
     }),
   ],
+  providers: [
+    {
+      provide: ConfigService,
+      useFactory: (nestConfig: NestConfigService<EnvVars, true>) =>
+        new ConfigService(nestConfig),
+      inject: [NestConfigService],
+    },
+  ],
+  exports: [ConfigService],
 })
 export class ConfigModule {}

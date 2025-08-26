@@ -7,25 +7,17 @@ import type { PrismaClient } from '@generated/prisma';
 export class PrismaUserRepository implements IUserRepository {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaClient) {}
 
-  public async createUser(params: { email: string }): Promise<DomainUser> {
+  public async createUser(): Promise<DomainUser> {
     const prisma = this.prisma;
-    const user = await prisma.user.create({
-      data: { email: params.email },
-    });
-    return { id: user.id, email: user.email, isActive: user.isActive };
-  }
-
-  public async findByEmail(email: string): Promise<DomainUser | null> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) return null;
-    return { id: user.id, email: user.email, isActive: user.isActive };
+    const user = await prisma.user.create({ data: {} });
+    return { id: user.id, isActive: user.isActive };
   }
 
   public async findById(id: string): Promise<DomainUser | null> {
     const prisma = this.prisma;
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) return null;
-    return { id: user.id, email: user.email, isActive: user.isActive };
+    return { id: user.id, isActive: user.isActive };
   }
 
   public async setActive(userId: string, isActive: boolean): Promise<void> {

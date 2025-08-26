@@ -1,9 +1,6 @@
-export interface CreateUserCommand {
-  email: string;
-}
+export type CreateUserCommand = object;
 
 export interface CreateUserResult {
   id: string;
-  email: string;
   isActive: boolean;
 }

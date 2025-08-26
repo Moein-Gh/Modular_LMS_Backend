@@ -207,7 +207,7 @@ function sanitizeBody(body: unknown): unknown {
   return out;
 }
 
-function getUser(req: Request): { id?: string; email?: string } | undefined {
+function getUser(req: Request): { id?: string } | undefined {
   const maybeUser = (req as unknown as { user?: unknown }).user;
   if (maybeUser && typeof maybeUser === 'object') {
     const u = maybeUser as Record<string, unknown>;
@@ -215,8 +215,7 @@ function getUser(req: Request): { id?: string; email?: string } | undefined {
       typeof u.id === 'string' || typeof u.id === 'number'
         ? String(u.id)
         : undefined;
-    const email = typeof u.email === 'string' ? u.email : undefined;
-    return id || email ? { id, email } : undefined;
+    return id ? { id } : undefined;
   }
   return undefined;
 }

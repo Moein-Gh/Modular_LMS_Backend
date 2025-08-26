@@ -16,3 +16,10 @@ export * from './access/repositories/role.repository';
 export * from './access/repositories/permission.repository';
 export * from './access/repositories/role-assignment.repository';
 export * from './access/repositories/permission-grant.repository';
+
+// AUTH
+export * from './auth/entities/auth-payload.entity';
+export * from './auth/repositories/auth-session.repository';
+export * from './auth/repositories/sms-code.repository';
+export * from './auth/value-objects/access-token.vo';
+export * from './auth/value-objects/refresh-token.vo';

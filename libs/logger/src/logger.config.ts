@@ -28,8 +28,10 @@ export const createLoggerConfig = (): Params => {
             target: 'pino-pretty',
             options: {
               colorize: true,
-              translateTime: 'SYS:standard',
-              ignore: 'pid,hostname',
+              // Show only date and hour:minute, no seconds or timezone
+              translateTime: 'yyyy-mm-dd HH:MM',
+              // Remove timestamp and log level from pretty output
+              ignore: 'pid,hostname,time,level,req,res,responseTime',
             },
           }
         : undefined,
@@ -43,8 +45,21 @@ export const createLoggerConfig = (): Params => {
       res.setHeader(REQUEST_ID_HEADER, newId);
       return newId;
     },
+    customSuccessMessage: (req: IncomingMessage, res: ServerResponse) => {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      return `\n——————————————————————————————————————————————————\n${yyyy}-${mm}-${dd} ${hh}:${min}  ✅ ${res.statusCode} ${req.method} ${req.url}\n——————————————————————————————————————————————————`;
+    },
     redact: {
       paths: [
+        // Remove verbose top-level pino-http objects from success logs
+        'req',
+        'res',
+        'responseTime',
         'req.headers.authorization',
         'req.headers.cookie',
         'req.headers.cookies',
@@ -62,21 +77,9 @@ export const createLoggerConfig = (): Params => {
         return ignorePaths.some((path) => (req.url ?? '').startsWith(path));
       },
     },
-    customProps: (req: IncomingMessage) => {
-      const idVal = (req as IncomingMessage & { id?: unknown }).id;
-      const requestId =
-        typeof idVal === 'string' || typeof idVal === 'number'
-          ? String(idVal)
-          : undefined;
-
-      return {
-        service: process.env.SERVICE_NAME || 'lms-backend',
-        env: process.env.NODE_ENV || 'development',
-        requestId,
-        userId: (req as IncomingMessage & { user?: { id?: string } }).user?.id,
-        tenantId: (req as IncomingMessage & { user?: { tenantId?: string } })
-          .user?.tenantId,
-      };
+    customProps: () => {
+      // Keep extra props minimal to avoid expanding logs.
+      return {};
     },
   };
 
