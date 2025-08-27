@@ -24,4 +24,12 @@ export class UsersService {
     const user = await this.users.findByIdentityId(identityId, tx);
     return user;
   }
+
+  async findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainUser | null> {
+    const user = await this.users.findById(id, tx);
+    return user;
+  }
 }

@@ -25,3 +25,6 @@ export * from './auth/dtos/logout.dto';
 export * from './auth/dtos/auth.responses';
 export * from './auth/errors/invalid-or-expired-code.error';
 export * from './auth/dtos/register-user.usecase.dto';
+export * from './auth/types/access-token-payload';
+export * from './auth/guards/access-token.guard';
+export * from './auth/decorators/current-user.decorator';

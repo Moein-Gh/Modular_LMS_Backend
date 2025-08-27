@@ -6,9 +6,10 @@ import {
   Param,
   Post,
   Query,
-  ParseUUIDPipe, // add
+  ParseUUIDPipe,
+  UseGuards, // add
 } from '@nestjs/common';
-import { RoleService } from '@app/application';
+import { AccessTokenGuard, RoleService } from '@app/application';
 import type { DomainRole } from '@app/domain';
 import { CreateRoleDto } from './dtos/create-role.dto';
 
@@ -20,6 +21,7 @@ type ListRolesQuery = {
   orderDir?: 'asc' | 'desc';
 };
 
+@UseGuards(AccessTokenGuard)
 @Controller('roles')
 export class RolesController {
   constructor(private readonly roleService: RoleService) {}
