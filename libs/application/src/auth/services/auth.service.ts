@@ -1,9 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@app/infra/prisma/prisma.module';
 import { ConfigService } from '@app/config';
 import type { RequestSmsCodeDto } from '../dtos/request-sms-code.dto';
 import type { VerifySmsCodeDto } from '../dtos/verify-sms-code.dto';
-import type { RefreshTokenDto } from '../dtos/refresh-token.dto';
 import type { LogoutDto } from '../dtos/logout.dto';
 import * as crypto from 'crypto';
 import { LogoutResult, RequestSmsCodeResult } from '../dtos/auth.responses';
@@ -26,17 +25,29 @@ export class AuthService {
   public async requestSmsCode(
     cmd: RequestSmsCodeDto,
   ): Promise<RequestSmsCodeResult> {
+    // Find identity by phone number
+    const identity = await this.identityService.findByPhone(cmd.phone);
+    if (!identity) {
+      throw new NotFoundError('Identity', 'phone number', cmd.phone);
+    }
+    const user = await this.usersService.findByIdentityId(identity.id);
+    if (!user) {
+      throw new NotFoundError('User', 'identity ID', identity.id);
+    }
+    if (!user.isActive) {
+      throw new BadRequestException('User is not active');
+    }
+
     // Generate a random 6-digit code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     console.log('---------------');
     console.log(`Sending SMS code ${code} to ${cmd.phone}`);
     console.log('---------------');
-    // Save code to DB (prisma.smsCode)
 
     const SMS_CODE_EXPIRES_IN = this.config.get('SMS_CODE_EXPIRES_IN')
       ? Number(this.config.get('SMS_CODE_EXPIRES_IN'))
       : 300;
-
+    // Add SMS code to DB
     await this.prisma.smsCode.create({
       data: {
         phone: cmd.phone,
@@ -54,7 +65,19 @@ export class AuthService {
 
   // 2. Verify SMS code and issue tokens
   public async verifySmsCode(cmd: VerifySmsCodeDto): Promise<DomainPayload> {
-    // Find active code
+    const identity = await this.identityService.findByPhone(cmd.phone);
+    if (!identity) {
+      throw new NotFoundError('Identity', 'phone number', cmd.phone);
+    }
+
+    const user = await this.usersService.findByIdentityId(identity.id);
+    if (!user) {
+      throw new NotFoundError('User', 'identity ID', identity.id);
+    }
+    if (!user.isActive) {
+      throw new BadRequestException('User is not active');
+    }
+
     const sms = await this.prisma.smsCode.findFirst({
       where: {
         phone: cmd.phone,
@@ -65,35 +88,22 @@ export class AuthService {
         attempts: { lt: 5 },
       },
     });
+
     if (!sms) {
       throw new InvalidOrExpiredCodeError();
     }
-    // Mark as consumed
-    await this.prisma.smsCode.update({
+    // Delete SMS code
+    await this.prisma.smsCode.delete({
       where: { id: sms.id },
-      data: { consumedAt: new Date() },
     });
 
-    // Find or create identity/user
-    const identity = await this.identityService.findByPhone(cmd.phone);
-    let user;
-
-    if (!identity) {
-      throw new NotFoundError('Identity not found', 'phone number', cmd.phone);
-    } else {
-      user = await this.usersService.findByIdentityId(identity.id);
-      if (!user) {
-        user = await this.usersService.create({ identityId: identity.id });
-      }
-    }
-
     // Create refresh token value object
-    const refreshTokenExpiresIn = this.config.get('REFRESH_TOKEN_EXPIRES_IN')
-      ? Number(this.config.get('REFRESH_TOKEN_EXPIRES_IN'))
-      : 2592000; // fallback 30 days
-    const accessTokenExpiresIn = this.config.get('ACCESS_TOKEN_EXPIRES_IN')
-      ? Number(this.config.get('ACCESS_TOKEN_EXPIRES_IN'))
-      : 900; // fallback 15 min
+    const refreshTokenExpiresIn = Number(
+      this.config.get('REFRESH_TOKEN_EXPIRES_IN') ?? 2592000,
+    );
+    const accessTokenExpiresIn = Number(
+      this.config.get('ACCESS_TOKEN_EXPIRES_IN') ?? 900,
+    );
     const refreshTokenVO = RefreshToken.create(refreshTokenExpiresIn);
     await this.prisma.refreshToken.create({
       data: {
@@ -123,11 +133,15 @@ export class AuthService {
   }
 
   // 3. Refresh tokens
-  public async refresh(cmd: RefreshTokenDto): Promise<DomainPayload> {
+  public async refresh(refreshToken: string): Promise<DomainPayload> {
+    if (!refreshToken) {
+      throw new BadRequestException('Refresh token is required');
+    }
     const tokenHash = crypto
       .createHash('sha256')
-      .update(cmd.refreshToken)
+      .update(refreshToken)
       .digest('hex');
+
     const session = await this.prisma.refreshToken.findFirst({
       where: { tokenHash, revoked: false, expiresAt: { gt: new Date() } },
     });

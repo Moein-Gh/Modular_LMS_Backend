@@ -31,4 +31,13 @@ export class IdentityService {
     }
     return identity;
   }
+
+  public async findOne(
+    where: Prisma.IdentityWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainIdentity | null> {
+    const prisma = tx ?? this.prisma;
+    const identity = await prisma.identity.findFirst({ where });
+    return identity ?? null;
+  }
 }

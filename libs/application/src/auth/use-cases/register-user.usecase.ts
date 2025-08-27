@@ -6,6 +6,7 @@ import {
   RegisterUserInput,
   RegisterUserResult,
 } from '../dtos/register-user.usecase.dto';
+import { IdentityAlreadyExistsError } from '../errors/identityAlreadyExists';
 
 @Injectable()
 export class RegisterUserUseCase {
@@ -17,10 +18,25 @@ export class RegisterUserUseCase {
 
   async execute(input: RegisterUserInput): Promise<RegisterUserResult> {
     return this.prisma.$transaction(async (tx) => {
-      let identity = await this.identityService.findByPhone(input.phone, tx);
-      if (!identity) {
-        identity = await this.identityService.createIdentity(input, tx);
+      const conditions: Array<object> = [
+        { phone: input.phone, countryCode: input.countryCode },
+        { nationalCode: input.nationalCode },
+      ];
+
+      if (input.email) {
+        conditions.push({ email: input.email });
       }
+
+      let identity = await this.identityService.findOne(
+        {
+          OR: conditions,
+        },
+        tx,
+      );
+      if (identity) {
+        throw new IdentityAlreadyExistsError();
+      }
+      identity = await this.identityService.createIdentity(input, tx);
 
       let user = await this.usersService.findByIdentityId(identity.id, tx);
       if (!user) {

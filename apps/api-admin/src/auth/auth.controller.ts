@@ -1,7 +1,8 @@
 import {
   AuthService,
   LogoutDto,
-  RefreshTokenDto,
+  RegisterUserInput,
+  RegisterUserUseCase,
   RequestSmsCodeDto,
   VerifySmsCodeDto,
 } from '@app/application';
@@ -12,12 +13,33 @@ import {
   HttpStatus,
   Post,
   Res,
+  Req,
+  BadRequestException,
 } from '@nestjs/common';
-import { Response } from 'express';
+import type { Request, Response } from 'express';
+
+function getCookie(req: Request, name: string): string | undefined {
+  const header = req.headers?.cookie ?? '';
+  if (!header) return undefined;
+  for (const part of header.split(';')) {
+    const [k, ...rest] = part.trim().split('=');
+    if (k === name) return decodeURIComponent(rest.join('='));
+  }
+  return undefined;
+}
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly registerUserUseCase: RegisterUserUseCase,
+  ) {}
+
+  @Post('register-user')
+  @HttpCode(HttpStatus.CREATED)
+  registerUser(@Body() body: RegisterUserInput) {
+    return this.registerUserUseCase.execute(body);
+  }
 
   @Post('request-sms')
   @HttpCode(HttpStatus.OK)
@@ -54,10 +76,14 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(
-    @Body() body: RefreshTokenDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.auth.refresh(body);
+    const refreshToken = getCookie(req, 'refreshToken');
+    if (!refreshToken) {
+      throw new BadRequestException('Refresh token cookie not found');
+    }
+    const result = await this.auth.refresh(refreshToken);
     res.cookie('accessToken', result.accessToken, {
       httpOnly: true,
       secure: true,

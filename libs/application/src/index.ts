@@ -21,7 +21,6 @@ export * from './auth/auth-application.module';
 export * from './auth/use-cases/register-user.usecase';
 export * from './auth/dtos/request-sms-code.dto';
 export * from './auth/dtos/verify-sms-code.dto';
-export * from './auth/dtos/refresh-token.dto';
 export * from './auth/dtos/logout.dto';
 export * from './auth/dtos/auth.responses';
 export * from './auth/errors/invalid-or-expired-code.error';

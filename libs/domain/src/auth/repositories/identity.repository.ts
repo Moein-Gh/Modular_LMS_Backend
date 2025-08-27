@@ -1,11 +1,11 @@
 import type { DomainIdentity } from '../entities/identity.entity';
 
 export type CreateIdentityInput = {
+  name: string;
+  countryCode: string;
   phone: string;
-  name?: string;
-  countryCode?: string;
-  nationalCode?: string;
-  email?: string;
+  nationalCode: string;
+  email: string | null;
 };
 
 export interface IdentityRepository {
