@@ -1,4 +1,4 @@
-import { RoleAssignmentService } from '@app/application';
+import { AccessTokenGuard, RoleAssignmentService } from '@app/application';
 import { DomainRoleAssignment } from '@app/domain';
 import {
   Body,
@@ -9,10 +9,11 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateRoleAssignmentDto } from './dtos/create-role-assignment.dto';
 import { ListRoleAssignmentQueryDto } from './dtos/list-role-assignment-query.dto';
-
+@UseGuards(AccessTokenGuard)
 @Controller('role-assignments')
 export class RoleAssignmentsController {
   constructor(private readonly roleAssignmentService: RoleAssignmentService) {}

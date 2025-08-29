@@ -7,13 +7,15 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   CreatePermissionGrantDto,
   UpdatePermissionGrantDto,
 } from './dtos/create-permission-grant.dto';
-import { PermissionGrantService } from '@app/application';
+import { AccessTokenGuard, PermissionGrantService } from '@app/application';
 
+@UseGuards(AccessTokenGuard)
 @Controller('permission-grants')
 export class PermissionGrantsController {
   constructor(

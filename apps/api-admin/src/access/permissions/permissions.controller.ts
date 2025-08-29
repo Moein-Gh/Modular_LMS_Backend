@@ -6,9 +6,10 @@ import {
   Param,
   Post,
   Query,
-  ParseUUIDPipe, // add
+  ParseUUIDPipe,
+  UseGuards, // add
 } from '@nestjs/common';
-import { PermissionService } from '@app/application';
+import { AccessTokenGuard, PermissionService } from '@app/application';
 import type { DomainPermission } from '@app/domain';
 import { CreatePermissionDto } from './dtos/create-permission.dto';
 
@@ -20,6 +21,7 @@ type ListPermissionsQuery = {
   orderDir?: 'asc' | 'desc';
 };
 
+@UseGuards(AccessTokenGuard)
 @Controller('permissions')
 export class PermissionsController {
   constructor(private readonly permissionService: PermissionService) {}
