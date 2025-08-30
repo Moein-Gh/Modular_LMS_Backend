@@ -10,16 +10,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AccessTokenGuard, RoleService } from '@app/application';
-import type { DomainRole } from '@app/domain';
+import { OrderDirection, type DomainRole } from '@app/domain';
 import { CreateRoleDto } from './dtos/create-role.dto';
-
-type ListRolesQuery = {
-  search?: string;
-  skip?: number;
-  take?: number;
-  orderBy?: 'createdAt' | 'name' | 'key';
-  orderDir?: 'asc' | 'desc';
-};
+import { ListRolesQuery } from './dtos/list-role.dto';
 
 @UseGuards(AccessTokenGuard)
 @Controller('roles')
@@ -38,7 +31,7 @@ export class RolesController {
       skip: q.skip ?? 0,
       take: q.take ?? 20,
       orderBy: q.orderBy ?? 'createdAt',
-      orderDir: q.orderDir ?? 'desc',
+      orderDir: q.orderDir ?? OrderDirection.DESC,
     });
   }
 

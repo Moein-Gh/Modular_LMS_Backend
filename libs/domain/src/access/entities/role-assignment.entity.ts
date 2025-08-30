@@ -5,8 +5,8 @@ export interface DomainRoleAssignment {
   id: string;
   userId: string;
   roleId: string;
-  assignedBy?: string | null;
-  expiresAt?: Date | null;
+  assignedBy?: string;
+  expiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   isActive: boolean;

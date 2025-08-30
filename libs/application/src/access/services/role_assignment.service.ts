@@ -1,15 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   type RoleAssignmentRepository,
-  type CreateRoleAssignmentInput,
-  type UpdateRoleAssignmentInput,
-  type ListRoleAssignmentsParams,
-  type ListRoleAssignmentsResult,
   ROLE_ASSIGNMENT_REPOSITORY,
 } from '@app/domain';
-import type { DomainRoleAssignment } from '@app/domain';
+import type { BaseListResult, DomainRoleAssignment } from '@app/domain';
 import { NotFoundError } from '@app/application/errors/not-found.error';
 import { Prisma } from '@generated/prisma';
+import {
+  CreateRoleAssignmentInput,
+  ListRoleAssignmentsParams,
+} from '@app/domain/access/types/role-assignment.type';
 
 @Injectable()
 export class RoleAssignmentService {
@@ -39,13 +39,13 @@ export class RoleAssignmentService {
   findAll(
     params: ListRoleAssignmentsParams,
     tx?: Prisma.TransactionClient,
-  ): Promise<ListRoleAssignmentsResult> {
+  ): Promise<BaseListResult<DomainRoleAssignment>> {
     return this.roleAssignment.findAll(params, tx);
   }
 
   update(
     id: string,
-    data: UpdateRoleAssignmentInput,
+    data: DomainRoleAssignment,
     tx?: Prisma.TransactionClient,
   ): Promise<DomainRoleAssignment> {
     return this.roleAssignment.update(id, data, tx);

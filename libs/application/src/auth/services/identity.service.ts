@@ -1,11 +1,11 @@
 import {
-  CreateIdentityInput,
   DomainIdentity,
   IdentityRepository,
   IDENTITY_REPOSITORY,
 } from '@app/domain';
 import { Injectable, Inject } from '@nestjs/common';
 import type { Prisma } from '@generated/prisma';
+import { CreateIdentityInput } from '@app/domain/auth/types/identity.type';
 
 @Injectable()
 export class IdentityService {
@@ -40,7 +40,7 @@ export class IdentityService {
 
   public async update(
     id: string,
-    data: CreateIdentityInput,
+    data: DomainIdentity,
     tx?: Prisma.TransactionClient,
   ): Promise<DomainIdentity> {
     const identity = await this.identityRepository.update(id, data, tx);

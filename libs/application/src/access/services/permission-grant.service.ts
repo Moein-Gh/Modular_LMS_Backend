@@ -2,12 +2,14 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   PERMISSION_GRANT_REPOSITORY,
   type PermissionGrantRepository,
-  type CreatePermissionGrantInput,
   type UpdatePermissionGrantInput,
   type ListPermissionGrantsParams,
-  type ListPermissionGrantsResult,
 } from '@app/domain';
-import type { DomainPermissionGrant } from '@app/domain';
+import type {
+  BaseListResult,
+  CreatePermissionGrantInput,
+  DomainPermissionGrant,
+} from '@app/domain';
 import { NotFoundError } from '@app/application/errors/not-found.error';
 
 @Injectable()
@@ -31,7 +33,7 @@ export class PermissionGrantService {
 
   findAll(
     params: ListPermissionGrantsParams,
-  ): Promise<ListPermissionGrantsResult> {
+  ): Promise<BaseListResult<DomainPermissionGrant>> {
     return this.permissionGrants.findAll(params);
   }
 

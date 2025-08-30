@@ -5,9 +5,12 @@ import {
   CreatePermissionGrantInput,
   UpdatePermissionGrantInput,
   ListPermissionGrantsParams,
-  ListPermissionGrantsResult,
 } from '@app/domain';
-import type { DomainPermissionGrant } from '@app/domain';
+import type {
+  BaseListResult,
+  DomainPermissionGrant,
+  GrantType,
+} from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 
 const permissionGrantSelect: Prisma.PermissionGrantSelect = {
@@ -25,7 +28,7 @@ const permissionGrantSelect: Prisma.PermissionGrantSelect = {
 
 type PermissionGrant = {
   id: string;
-  granteeType: 'user' | 'role';
+  granteeType: GrantType;
   granteeId: string;
   permissionId: string;
   grantedBy: string;
@@ -67,7 +70,7 @@ export class PrismaPermissionGrantRepository
 
   async findAll(
     params: ListPermissionGrantsParams,
-  ): Promise<ListPermissionGrantsResult> {
+  ): Promise<BaseListResult<DomainPermissionGrant>> {
     const {
       granteeType,
       granteeId,

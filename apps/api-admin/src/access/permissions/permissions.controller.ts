@@ -7,19 +7,12 @@ import {
   Post,
   Query,
   ParseUUIDPipe,
-  UseGuards, // add
+  UseGuards,
 } from '@nestjs/common';
 import { AccessTokenGuard, PermissionService } from '@app/application';
-import type { DomainPermission } from '@app/domain';
+import { OrderDirection, type DomainPermission } from '@app/domain';
 import { CreatePermissionDto } from './dtos/create-permission.dto';
-
-type ListPermissionsQuery = {
-  search?: string;
-  skip?: number;
-  take?: number;
-  orderBy?: 'createdAt' | 'name' | 'key';
-  orderDir?: 'asc' | 'desc';
-};
+import { ListPermissionsQuery } from './dtos/list-permission.dto';
 
 @UseGuards(AccessTokenGuard)
 @Controller('permissions')
@@ -34,11 +27,11 @@ export class PermissionsController {
   @Get()
   findAll(@Query() q: ListPermissionsQuery) {
     return this.permissionService.findAll({
-      search: q.search,
+      ...q,
       skip: q.skip ?? 0,
       take: q.take ?? 20,
       orderBy: q.orderBy ?? 'createdAt',
-      orderDir: q.orderDir ?? 'desc',
+      orderDir: q.orderDir ?? OrderDirection.DESC,
     });
   }
 

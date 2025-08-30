@@ -2,14 +2,13 @@ import {
   CreateRoleAssignmentInput,
   DomainRoleAssignment,
   ListRoleAssignmentsParams,
-  ListRoleAssignmentsResult,
+  OrderDirection,
   RoleAssignmentRepository,
-  UpdateRoleAssignmentInput,
 } from '@app/domain';
 import { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 import type { PrismaClient } from '@generated/prisma';
-import type { DomainUser, DomainRole } from '@app/domain';
+import type { DomainUser, DomainRole, BaseListResult } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 
 const roleAssignmentSelect: Prisma.RoleAssignmentSelect = {
@@ -135,7 +134,7 @@ export class PrismaRoleAssignmentRepository
   async findAll(
     params: ListRoleAssignmentsParams,
     tx: Prisma.TransactionClient,
-  ): Promise<ListRoleAssignmentsResult> {
+  ): Promise<BaseListResult<DomainRoleAssignment>> {
     const prisma = tx ?? this.prisma;
     const { userId, skip, take, orderBy, orderDir, includeUser, includeRole } =
       params;
@@ -147,7 +146,12 @@ export class PrismaRoleAssignmentRepository
     const orderByClause:
       | Prisma.RoleAssignmentOrderByWithRelationInput
       | undefined = orderBy
-      ? { [orderBy]: orderDir === 'desc' ? 'desc' : 'asc' }
+      ? {
+          [orderBy]:
+            orderDir === OrderDirection.DESC
+              ? OrderDirection.DESC
+              : OrderDirection.ASC,
+        }
       : undefined;
 
     const include: Prisma.RoleAssignmentInclude = {};
@@ -182,7 +186,7 @@ export class PrismaRoleAssignmentRepository
 
   async update(
     id: string,
-    data: UpdateRoleAssignmentInput,
+    data: DomainRoleAssignment,
     tx: Prisma.TransactionClient,
   ): Promise<DomainRoleAssignment> {
     const prisma = tx ?? this.prisma;

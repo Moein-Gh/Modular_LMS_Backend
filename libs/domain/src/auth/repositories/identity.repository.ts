@@ -1,13 +1,6 @@
 import { Prisma } from '@generated/prisma';
 import type { DomainIdentity } from '../entities/identity.entity';
-
-export type CreateIdentityInput = {
-  name: string;
-  countryCode: string;
-  phone: string;
-  nationalCode: string;
-  email: string | null;
-};
+import { CreateIdentityInput } from '../types/identity.type';
 
 export interface IdentityRepository {
   create(
@@ -16,7 +9,7 @@ export interface IdentityRepository {
   ): Promise<DomainIdentity>;
   update(
     id: string,
-    data: CreateIdentityInput,
+    data: DomainIdentity,
     tx?: Prisma.TransactionClient,
   ): Promise<DomainIdentity>;
   findOne(

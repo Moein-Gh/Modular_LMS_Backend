@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { USER_REPOSITORY, type IUserRepository } from '@app/domain';
-import type { CreateUserResult } from '../dtos/create-user.dto';
+import type { CreateUserResult } from '../types/create-user.type';
 
 @Injectable()
 export class CreateUserUseCase {

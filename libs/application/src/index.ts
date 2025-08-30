@@ -5,7 +5,7 @@ export * from './errors/not-found.error';
 
 // USER
 export * from './user/services/users.service';
-export * from './user/dtos/create-user.dto';
+export * from './user/types/create-user.type';
 export * from './user/errors/user-already-exists.error';
 
 // ACCESS

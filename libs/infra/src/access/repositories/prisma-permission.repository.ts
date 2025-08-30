@@ -3,11 +3,9 @@ import type { PrismaClient, Prisma } from '@generated/prisma';
 import {
   type PermissionRepository,
   type CreatePermissionInput,
-  type UpdatePermissionInput,
   type ListPermissionsParams,
-  type ListPermissionsResult,
 } from '@app/domain';
-import type { DomainPermission } from '@app/domain';
+import type { BaseListResult, DomainPermission } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 
 const permissionSelect = {
@@ -70,7 +68,7 @@ export class PrismaPermissionRepository implements PermissionRepository {
   async findAll(
     params: ListPermissionsParams,
     tx?: Prisma.TransactionClient,
-  ): Promise<ListPermissionsResult> {
+  ): Promise<BaseListResult<DomainPermission>> {
     const prisma = tx ?? this.prisma;
     const {
       search,
@@ -130,7 +128,7 @@ export class PrismaPermissionRepository implements PermissionRepository {
 
   async update(
     id: string,
-    data: UpdatePermissionInput,
+    data: DomainPermission,
     tx: Prisma.TransactionClient,
   ): Promise<DomainPermission> {
     const prisma = tx ?? this.prisma;

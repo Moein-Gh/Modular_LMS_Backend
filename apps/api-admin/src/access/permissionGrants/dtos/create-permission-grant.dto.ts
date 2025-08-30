@@ -1,28 +1,74 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import {
+  IsEnum,
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsDate,
+  IsUUID,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { GrantType } from '@app/domain';
 
 export class CreatePermissionGrantDto {
-  @ApiProperty({ enum: ['user', 'role'] })
-  granteeType: 'user' | 'role';
+  @IsEnum([GrantType])
+  granteeType: GrantType;
 
-  @ApiProperty()
+  @IsString()
+  @IsUUID()
   granteeId: string;
 
-  @ApiProperty()
+  @IsString()
+  @IsUUID()
   permissionId: string;
 
-  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  @IsUUID()
   grantedBy?: string;
 
-  @ApiProperty({ required: false, default: true })
-  isGranted?: boolean = true;
+  @IsBoolean()
+  isGranted: boolean = true;
 
-  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
   reason?: string;
 
-  @ApiProperty({ required: false, type: String, format: 'date-time' })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
   expiresAt?: Date;
 }
 
-export class UpdatePermissionGrantDto extends PartialType(
-  CreatePermissionGrantDto,
-) {}
+export class UpdatePermissionGrantDto {
+  @IsOptional()
+  @IsEnum([GrantType])
+  granteeType?: GrantType;
+
+  @IsOptional()
+  @IsString()
+  @IsUUID()
+  granteeId?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsUUID()
+  permissionId?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsUUID()
+  grantedBy?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isGranted?: boolean;
+
+  @IsOptional()
+  @IsString()
+  reason?: string;
+
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  expiresAt?: Date;
+}

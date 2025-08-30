@@ -1,7 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DomainUser, USER_REPOSITORY, type IUserRepository } from '@app/domain';
-import { CreateUserInput } from '../dtos/create-user.dto';
+import { CreateUserInput } from '../types/create-user.type';
 import { Prisma } from '@generated/prisma';
+import { UpdateUserInput } from '../types/update-user.type';
 
 @Injectable()
 export class UsersService {
@@ -21,7 +22,7 @@ export class UsersService {
     identityId: string,
     tx?: Prisma.TransactionClient,
   ): Promise<DomainUser | null> {
-    const user = await this.users.findByIdentityId(identityId, tx);
+    const user = await this.users.findByIdentityId(identityId, true, tx);
     return user;
   }
 
@@ -29,7 +30,7 @@ export class UsersService {
     id: string,
     tx?: Prisma.TransactionClient,
   ): Promise<DomainUser | null> {
-    const user = await this.users.findById(id, tx);
+    const user = await this.users.findById(id, true, tx);
     return user;
   }
   async setActive(
@@ -44,8 +45,19 @@ export class UsersService {
     await this.users.deleteUser(id, tx);
   }
 
-  async findAll(tx?: Prisma.TransactionClient): Promise<DomainUser[]> {
-    const users = await this.users.findAll(tx);
+  async findAll(
+    include: boolean,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainUser[]> {
+    const users = await this.users.findAll(include, tx);
     return users;
+  }
+  async updateUser(
+    id: string,
+    update: UpdateUserInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainUser | null> {
+    await this.users.setActive(id, update.isActive, tx);
+    return this.findById(id, tx);
   }
 }

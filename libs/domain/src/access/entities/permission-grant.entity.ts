@@ -1,6 +1,11 @@
+export enum GrantType {
+  USER = 'user',
+  ROLE = 'role',
+}
+
 export interface DomainPermissionGrant {
   id: string;
-  granteeType: 'user' | 'role';
+  granteeType: GrantType;
   granteeId: string;
   permissionId: string;
   grantedBy?: string;

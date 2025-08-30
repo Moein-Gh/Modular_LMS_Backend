@@ -10,10 +10,12 @@ export interface IUserRepository {
   ): Promise<DomainUser>;
   findById(
     id: string,
+    include: boolean,
     tx?: Prisma.TransactionClient,
   ): Promise<DomainUser | null>;
   findByIdentityId(
     identityId: string,
+    include: boolean,
     tx?: Prisma.TransactionClient,
   ): Promise<DomainUser | null>;
   setActive(
@@ -22,5 +24,8 @@ export interface IUserRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<void>;
   deleteUser(id: string, tx?: Prisma.TransactionClient): Promise<void>;
-  findAll(tx?: Prisma.TransactionClient): Promise<DomainUser[]>;
+  findAll(
+    include: boolean,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainUser[]>;
 }

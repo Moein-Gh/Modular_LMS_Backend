@@ -3,11 +3,9 @@ import {
   PERMISSION_REPOSITORY,
   type PermissionRepository,
   type CreatePermissionInput,
-  type UpdatePermissionInput,
   type ListPermissionsParams,
-  type ListPermissionsResult,
 } from '@app/domain';
-import type { DomainPermission } from '@app/domain';
+import type { BaseListResult, DomainPermission } from '@app/domain';
 import { NotFoundError } from '@app/application/errors/not-found.error';
 
 @Injectable()
@@ -37,15 +35,22 @@ export class PermissionService {
     return permission;
   }
 
-  findAll(params: ListPermissionsParams): Promise<ListPermissionsResult> {
+  async findAll(
+    params: ListPermissionsParams,
+  ): Promise<BaseListResult<DomainPermission>> {
     return this.permissions.findAll(params);
   }
 
-  update(id: string, data: UpdatePermissionInput): Promise<DomainPermission> {
-    return this.permissions.update(id, data);
+  async update(id: string, data: DomainPermission): Promise<DomainPermission> {
+    const existingPermission = await this.permissions.findById(id);
+    if (!existingPermission) {
+      throw new NotFoundError('Permission', 'id', id);
+    }
+    Object.assign(existingPermission, data);
+    return this.permissions.update(id, existingPermission);
   }
 
-  delete(id: string): Promise<void> {
+  async delete(id: string): Promise<void> {
     return this.permissions.delete(id);
   }
 }

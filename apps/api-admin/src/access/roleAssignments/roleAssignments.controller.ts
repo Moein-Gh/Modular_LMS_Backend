@@ -1,5 +1,5 @@
 import { AccessTokenGuard, RoleAssignmentService } from '@app/application';
-import { DomainRoleAssignment } from '@app/domain';
+import { DomainRoleAssignment, OrderDirection } from '@app/domain';
 import {
   Body,
   Controller,
@@ -29,11 +29,11 @@ export class RoleAssignmentsController {
   @Get()
   async findAll(@Query() query: ListRoleAssignmentQueryDto) {
     return this.roleAssignmentService.findAll({
-      search: query.search,
+      ...query,
       skip: query.skip ?? 0,
       take: query.take ?? 20,
       orderBy: query.orderBy ?? 'createdAt',
-      orderDir: query.orderDir ?? 'desc',
+      orderDir: query.orderDir ?? OrderDirection.DESC,
       userId: query.userId,
       includeUser: query.includeUser,
       includeRole: query.includeRole,

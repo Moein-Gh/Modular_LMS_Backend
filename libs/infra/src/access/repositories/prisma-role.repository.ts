@@ -4,11 +4,9 @@ import { Prisma } from '@generated/prisma';
 import {
   type RoleRepository,
   type CreateRoleInput,
-  type UpdateRoleInput,
   type ListRolesParams,
-  type ListRolesResult,
 } from '@app/domain';
-import type { DomainRole } from '@app/domain';
+import type { BaseListResult, DomainRole } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 
 // Use a structural type that matches the Prisma Role model
@@ -83,7 +81,7 @@ export class PrismaRoleRepository implements RoleRepository {
   async findAll(
     params: ListRolesParams,
     tx?: Prisma.TransactionClient,
-  ): Promise<ListRolesResult> {
+  ): Promise<BaseListResult<DomainRole>> {
     const prisma = tx ?? this.prisma;
     const {
       search,
@@ -142,7 +140,7 @@ export class PrismaRoleRepository implements RoleRepository {
 
   async update(
     id: string,
-    data: UpdateRoleInput,
+    data: DomainRole,
     tx?: Prisma.TransactionClient,
   ): Promise<DomainRole> {
     const prisma = tx ?? this.prisma;

@@ -27,10 +27,14 @@ export class PrismaUserRepository implements IUserRepository {
 
   public async findById(
     id: string,
+    include: boolean,
     tx?: Prisma.TransactionClient,
   ): Promise<DomainUser | null> {
     const prisma = tx ?? this.prisma;
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: { identity: include },
+    });
     if (!user) return null;
     return user;
   }
@@ -49,18 +53,25 @@ export class PrismaUserRepository implements IUserRepository {
 
   public async findByIdentityId(
     identityId: string,
+    include: boolean,
     tx?: Prisma.TransactionClient,
   ): Promise<DomainUser | null> {
     const prisma = tx ?? this.prisma;
-    const user = await prisma.user.findFirst({
+    const user = await prisma.user.findUnique({
       where: { identityId },
+      include: { identity: include },
     });
     return user;
   }
 
-  public async findAll(tx?: Prisma.TransactionClient): Promise<DomainUser[]> {
+  public async findAll(
+    include: boolean,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainUser[]> {
     const prisma = tx ?? this.prisma;
-    const users = await prisma.user.findMany();
+    const users = await prisma.user.findMany({
+      include: { identity: include },
+    });
     return users;
   }
 

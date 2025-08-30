@@ -1,8 +1,5 @@
-import {
-  DomainIdentity,
-  IdentityRepository,
-  CreateIdentityInput,
-} from '@app/domain';
+import { DomainIdentity, IdentityRepository } from '@app/domain';
+import { CreateIdentityInput } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';

@@ -1,34 +1,10 @@
 import { Prisma } from '@generated/prisma';
 import type { DomainRoleAssignment } from '../entities/role-assignment.entity';
-
-export interface CreateRoleAssignmentInput {
-  userId: string;
-  roleId: string;
-  assignedBy?: string;
-  expiresAt?: Date;
-}
-
-export interface UpdateRoleAssignmentInput {
-  isActive?: boolean;
-  assignedBy?: string;
-  expiresAt?: Date;
-}
-
-export interface ListRoleAssignmentsParams {
-  search?: string;
-  skip?: number;
-  take?: number;
-  orderBy?: 'createdAt' | 'assignedBy' | 'expiresAt';
-  orderDir?: 'asc' | 'desc';
-  userId?: string;
-  includeUser?: boolean;
-  includeRole?: boolean;
-}
-
-export interface ListRoleAssignmentsResult {
-  items: DomainRoleAssignment[];
-  total: number;
-}
+import {
+  CreateRoleAssignmentInput,
+  ListRoleAssignmentsParams,
+} from '../types/role-assignment.type';
+import { BaseListResult } from '@app/domain/common/baseListResult.type';
 
 export interface RoleAssignmentRepository {
   findById(
@@ -38,14 +14,14 @@ export interface RoleAssignmentRepository {
   findAll(
     params: ListRoleAssignmentsParams,
     tx?: Prisma.TransactionClient,
-  ): Promise<ListRoleAssignmentsResult>;
+  ): Promise<BaseListResult<DomainRoleAssignment>>;
   create(
     data: CreateRoleAssignmentInput,
     tx?: Prisma.TransactionClient,
   ): Promise<DomainRoleAssignment>;
   update(
     id: string,
-    data: UpdateRoleAssignmentInput,
+    data: DomainRoleAssignment,
     tx?: Prisma.TransactionClient,
   ): Promise<DomainRoleAssignment>;
   delete(id: string, tx?: Prisma.TransactionClient): Promise<void>;

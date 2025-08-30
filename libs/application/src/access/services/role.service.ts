@@ -1,14 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  ROLE_REPOSITORY,
-  type RoleRepository,
-  type CreateRoleInput,
-  type UpdateRoleInput,
-  type ListRolesParams,
-  type ListRolesResult,
-} from '@app/domain';
-import type { DomainRole } from '@app/domain';
+import { ROLE_REPOSITORY, type RoleRepository } from '@app/domain';
+import type { BaseListResult, DomainRole } from '@app/domain';
 import { NotFoundError } from '@app/application/errors/not-found.error';
+import {
+  CreateRoleInput,
+  ListRolesParams,
+} from '@app/domain/access/types/role.type';
 
 @Injectable()
 export class RoleService {
@@ -36,11 +33,11 @@ export class RoleService {
     return role;
   }
 
-  findAll(params: ListRolesParams): Promise<ListRolesResult> {
+  findAll(params: ListRolesParams): Promise<BaseListResult<DomainRole>> {
     return this.roles.findAll(params);
   }
 
-  update(id: string, data: UpdateRoleInput): Promise<DomainRole> {
+  update(id: string, data: DomainRole): Promise<DomainRole> {
     return this.roles.update(id, data);
   }
 
