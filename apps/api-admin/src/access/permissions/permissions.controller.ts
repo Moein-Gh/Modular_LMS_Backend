@@ -6,13 +6,13 @@ import {
   Param,
   Post,
   Query,
-  ParseUUIDPipe,
   UseGuards,
 } from '@nestjs/common';
 import { AccessTokenGuard, PermissionService } from '@app/application';
 import { OrderDirection, type DomainPermission } from '@app/domain';
 import { CreatePermissionDto } from './dtos/create-permission.dto';
 import { ListPermissionsQuery } from './dtos/list-permission.dto';
+import { UUID_V4_PIPE } from '../../common/pipes/UUID.pipe';
 
 @UseGuards(AccessTokenGuard)
 @Controller('permissions')
@@ -36,12 +36,12 @@ export class PermissionsController {
   }
 
   @Get(':id')
-  getById(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  getById(@Param('id', UUID_V4_PIPE) id: string) {
     return this.permissionService.getById(id);
   }
 
   @Delete(':id')
-  delete(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  delete(@Param('id', UUID_V4_PIPE) id: string) {
     return this.permissionService.delete(id);
   }
 }

@@ -6,13 +6,13 @@ import {
   Param,
   Post,
   Query,
-  ParseUUIDPipe,
   UseGuards,
 } from '@nestjs/common';
 import { AccessTokenGuard, RoleService } from '@app/application';
 import { OrderDirection, type DomainRole } from '@app/domain';
 import { CreateRoleDto } from './dtos/create-role.dto';
 import { ListRolesQuery } from './dtos/list-role.dto';
+import { UUID_V4_PIPE } from '../../common/pipes/UUID.pipe';
 
 @UseGuards(AccessTokenGuard)
 @Controller('roles')
@@ -36,12 +36,12 @@ export class RolesController {
   }
 
   @Get(':id')
-  getById(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  getById(@Param('id', UUID_V4_PIPE) id: string) {
     return this.roleService.getById(id);
   }
 
   @Delete(':id')
-  delete(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  delete(@Param('id', UUID_V4_PIPE) id: string) {
     return this.roleService.delete(id);
   }
 }

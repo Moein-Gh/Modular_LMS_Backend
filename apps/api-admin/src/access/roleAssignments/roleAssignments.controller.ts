@@ -6,13 +6,13 @@ import {
   Delete,
   Get,
   Param,
-  ParseUUIDPipe,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { CreateRoleAssignmentDto } from './dtos/create-role-assignment.dto';
 import { ListRoleAssignmentQueryDto } from './dtos/list-role-assignment-query.dto';
+import { UUID_V4_PIPE } from '../../common/pipes/UUID.pipe';
 @UseGuards(AccessTokenGuard)
 @Controller('role-assignments')
 export class RoleAssignmentsController {
@@ -41,12 +41,12 @@ export class RoleAssignmentsController {
   }
 
   @Get(':id')
-  getById(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  getById(@Param('id', UUID_V4_PIPE) id: string) {
     return this.roleAssignmentService.getById(id);
   }
 
   @Delete(':id')
-  delete(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  delete(@Param('id', UUID_V4_PIPE) id: string) {
     return this.roleAssignmentService.delete(id);
   }
 }

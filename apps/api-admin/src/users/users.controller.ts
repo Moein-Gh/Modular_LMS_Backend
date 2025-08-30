@@ -6,11 +6,13 @@ import {
   Body,
   NotFoundException,
 } from '@nestjs/common';
+
 import { IdentityService, NotFoundError, UsersService } from '@app/application';
 import { ListUsersDto } from './dtos/list-users.dto';
 import { GetUserDto } from './dtos/get-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { DomainUser } from '@app/domain';
+import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 
 @Controller('users')
 export class UsersController {
@@ -51,7 +53,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<GetUserDto> {
+  async findOne(@Param('id', UUID_V4_PIPE) id: string): Promise<GetUserDto> {
     const user = await this.findUserAndIdentity(id);
     return {
       id: user.id,
@@ -63,7 +65,7 @@ export class UsersController {
 
   @Patch(':id')
   async update(
-    @Param('id') id: string,
+    @Param('id', UUID_V4_PIPE) id: string,
     @Body() dto: UpdateUserDto,
   ): Promise<GetUserDto> {
     const user = await this.findUserAndIdentity(id);
