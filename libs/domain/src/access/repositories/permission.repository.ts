@@ -1,3 +1,4 @@
+import { Prisma } from '@generated/prisma';
 import type { DomainPermission } from '../entities/permission.entity';
 
 export interface CreatePermissionInput {
@@ -25,12 +26,28 @@ export interface ListPermissionsResult {
 }
 
 export interface PermissionRepository {
-  findById(id: string): Promise<DomainPermission | null>;
-  findByKey(key: string): Promise<DomainPermission | null>;
-  list(params: ListPermissionsParams): Promise<ListPermissionsResult>;
-  create(data: CreatePermissionInput): Promise<DomainPermission>;
-  update(id: string, data: UpdatePermissionInput): Promise<DomainPermission>;
-  delete(id: string): Promise<void>;
+  findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainPermission | null>;
+  findByKey(
+    key: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainPermission | null>;
+  findAll(
+    params: ListPermissionsParams,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ListPermissionsResult>;
+  create(
+    data: CreatePermissionInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainPermission>;
+  update(
+    id: string,
+    data: UpdatePermissionInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainPermission>;
+  delete(id: string, tx?: Prisma.TransactionClient): Promise<void>;
 }
 
 export const PERMISSION_REPOSITORY = Symbol('PERMISSION_REPOSITORY');

@@ -32,8 +32,8 @@ export class RolesController {
   }
 
   @Get()
-  list(@Query() q: ListRolesQuery) {
-    return this.roleService.list({
+  findAll(@Query() q: ListRolesQuery) {
+    return this.roleService.findAll({
       search: q.search,
       skip: q.skip ?? 0,
       take: q.take ?? 20,

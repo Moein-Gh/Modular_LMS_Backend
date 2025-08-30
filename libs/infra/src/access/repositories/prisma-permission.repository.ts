@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.module';
 import type { PrismaClient, Prisma } from '@generated/prisma';
 import {
   type PermissionRepository,
@@ -9,6 +8,7 @@ import {
   type ListPermissionsResult,
 } from '@app/domain';
 import type { DomainPermission } from '@app/domain';
+import { PrismaService } from '@app/infra/prisma/prisma.service';
 
 const permissionSelect = {
   id: true,
@@ -43,23 +43,35 @@ function toDomain(model: PermissionModel): DomainPermission {
 export class PrismaPermissionRepository implements PermissionRepository {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaClient) {}
 
-  async findById(id: string): Promise<DomainPermission | null> {
-    const model = await this.prisma.permission.findUnique({
+  async findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainPermission | null> {
+    const prisma = tx ?? this.prisma;
+    const model = await prisma.permission.findUnique({
       where: { id },
       select: permissionSelect,
     });
     return model ? toDomain(model as PermissionModel) : null;
   }
 
-  async findByKey(key: string): Promise<DomainPermission | null> {
-    const model = await this.prisma.permission.findUnique({
+  async findByKey(
+    key: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainPermission | null> {
+    const prisma = tx ?? this.prisma;
+    const model = await prisma.permission.findUnique({
       where: { key },
       select: permissionSelect,
     });
     return model ? toDomain(model as PermissionModel) : null;
   }
 
-  async list(params: ListPermissionsParams): Promise<ListPermissionsResult> {
+  async findAll(
+    params: ListPermissionsParams,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ListPermissionsResult> {
+    const prisma = tx ?? this.prisma;
     const {
       search,
       skip = 0,
@@ -85,16 +97,15 @@ export class PrismaPermissionRepository implements PermissionRepository {
           ? { key: orderDir }
           : { createdAt: orderDir };
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.permission.findMany({
-        where,
-        skip,
-        take,
-        orderBy: order,
-        select: permissionSelect,
-      }),
-      this.prisma.permission.count({ where }),
-    ]);
+    const items = await prisma.permission.findMany({
+      where,
+      skip,
+      take,
+      orderBy: order,
+      select: permissionSelect,
+    });
+
+    const total = await prisma.permission.count({ where });
 
     return {
       items: items.map((i) => toDomain(i as PermissionModel)),
@@ -102,8 +113,11 @@ export class PrismaPermissionRepository implements PermissionRepository {
     };
   }
 
-  async create(data: CreatePermissionInput): Promise<DomainPermission> {
-    const created = await this.prisma.permission.create({
+  async create(
+    data: CreatePermissionInput,
+    tx: Prisma.TransactionClient,
+  ): Promise<DomainPermission> {
+    const created = await tx.permission.create({
       data: {
         key: data.key,
         name: data.name,
@@ -117,8 +131,10 @@ export class PrismaPermissionRepository implements PermissionRepository {
   async update(
     id: string,
     data: UpdatePermissionInput,
+    tx: Prisma.TransactionClient,
   ): Promise<DomainPermission> {
-    const updated = await this.prisma.permission.update({
+    const prisma = tx ?? this.prisma;
+    const updated = await prisma.permission.update({
       where: { id },
       data: {
         name: data.name,
@@ -129,7 +145,7 @@ export class PrismaPermissionRepository implements PermissionRepository {
     return toDomain(updated as PermissionModel);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.permission.delete({ where: { id } });
+  async delete(id: string, tx: Prisma.TransactionClient): Promise<void> {
+    await tx.permission.delete({ where: { id } });
   }
 }

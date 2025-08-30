@@ -32,8 +32,8 @@ export class PermissionsController {
   }
 
   @Get()
-  list(@Query() q: ListPermissionsQuery) {
-    return this.permissionService.list({
+  findAll(@Query() q: ListPermissionsQuery) {
+    return this.permissionService.findAll({
       search: q.search,
       skip: q.skip ?? 0,
       take: q.take ?? 20,

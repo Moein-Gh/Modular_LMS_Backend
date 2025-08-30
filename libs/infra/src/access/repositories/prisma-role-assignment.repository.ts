@@ -6,11 +6,11 @@ import {
   RoleAssignmentRepository,
   UpdateRoleAssignmentInput,
 } from '@app/domain';
-import { PrismaService } from '@app/infra/prisma/prisma.module';
 import { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 import type { PrismaClient } from '@generated/prisma';
 import type { DomainUser, DomainRole } from '@app/domain';
+import { PrismaService } from '@app/infra/prisma/prisma.service';
 
 const roleAssignmentSelect: Prisma.RoleAssignmentSelect = {
   id: true,
@@ -90,9 +90,14 @@ export class PrismaRoleAssignmentRepository
   implements RoleAssignmentRepository
 {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaClient) {}
-  async findById(id: string): Promise<DomainRoleAssignment | null> {
+
+  async findById(
+    id: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<DomainRoleAssignment | null> {
+    const prisma = tx ?? this.prisma;
     try {
-      const model = await this.prisma.roleAssignment.findUnique({
+      const model = await prisma.roleAssignment.findUnique({
         where: { id },
         select: roleAssignmentSelect,
       });
@@ -109,8 +114,12 @@ export class PrismaRoleAssignmentRepository
     }
   }
 
-  async create(data: CreateRoleAssignmentInput): Promise<DomainRoleAssignment> {
-    const created = await this.prisma.roleAssignment.create({
+  async create(
+    data: CreateRoleAssignmentInput,
+    tx: Prisma.TransactionClient,
+  ): Promise<DomainRoleAssignment> {
+    const prisma = tx ?? this.prisma;
+    const created = await prisma.roleAssignment.create({
       data: {
         userId: data.userId,
         roleId: data.roleId,
@@ -123,9 +132,11 @@ export class PrismaRoleAssignmentRepository
     return toDomain(created as RoleAssignmentModel);
   }
 
-  async list(
+  async findAll(
     params: ListRoleAssignmentsParams,
+    tx: Prisma.TransactionClient,
   ): Promise<ListRoleAssignmentsResult> {
+    const prisma = tx ?? this.prisma;
     const { userId, skip, take, orderBy, orderDir, includeUser, includeRole } =
       params;
 
@@ -153,14 +164,14 @@ export class PrismaRoleAssignmentRepository
     }
 
     const [items, total] = await Promise.all([
-      this.prisma.roleAssignment.findMany({
+      prisma.roleAssignment.findMany({
         where,
         skip,
         take,
         orderBy: orderByClause,
         include: Object.keys(include).length > 0 ? include : undefined,
       }),
-      this.prisma.roleAssignment.count({ where }),
+      prisma.roleAssignment.count({ where }),
     ]);
 
     return {
@@ -172,8 +183,10 @@ export class PrismaRoleAssignmentRepository
   async update(
     id: string,
     data: UpdateRoleAssignmentInput,
+    tx: Prisma.TransactionClient,
   ): Promise<DomainRoleAssignment> {
-    const updated = await this.prisma.roleAssignment.update({
+    const prisma = tx ?? this.prisma;
+    const updated = await prisma.roleAssignment.update({
       where: { id },
       data: {
         assignedBy: data.assignedBy ?? null,
@@ -184,8 +197,9 @@ export class PrismaRoleAssignmentRepository
     return toDomain(updated as RoleAssignmentModel);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.roleAssignment.delete({
+  async delete(id: string, tx: Prisma.TransactionClient): Promise<void> {
+    const prisma = tx ?? this.prisma;
+    await prisma.roleAssignment.delete({
       where: { id },
     });
   }

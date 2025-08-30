@@ -27,8 +27,8 @@ export class RoleAssignmentsController {
   }
 
   @Get()
-  async list(@Query() query: ListRoleAssignmentQueryDto) {
-    return this.roleAssignmentService.list({
+  async findAll(@Query() query: ListRoleAssignmentQueryDto) {
+    return this.roleAssignmentService.findAll({
       search: query.search,
       skip: query.skip ?? 0,
       take: query.take ?? 20,

@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PrismaService } from '@app/infra/prisma/prisma.module';
 import { ConfigService } from '@app/config';
 import type { RequestSmsCodeDto } from '../dtos/request-sms-code.dto';
 import type { VerifySmsCodeDto } from '../dtos/verify-sms-code.dto';
@@ -11,6 +10,7 @@ import { AccessToken, DomainPayload, RefreshToken } from '@app/domain';
 import { IdentityService } from './identity.service';
 import { NotFoundError } from '@app/application/errors/not-found.error';
 import { UsersService } from '@app/application/user/services/users.service';
+import { PrismaService } from '@app/infra/prisma/prisma.service';
 
 @Injectable()
 export class AuthService {

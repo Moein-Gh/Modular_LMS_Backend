@@ -21,4 +21,6 @@ export interface IUserRepository {
     isActive: boolean,
     tx?: Prisma.TransactionClient,
   ): Promise<void>;
+  deleteUser(id: string, tx?: Prisma.TransactionClient): Promise<void>;
+  findAll(tx?: Prisma.TransactionClient): Promise<DomainUser[]>;
 }

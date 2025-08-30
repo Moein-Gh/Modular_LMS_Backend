@@ -34,7 +34,9 @@ export interface ListPermissionGrantsResult {
 
 export interface PermissionGrantRepository {
   findById(id: string): Promise<DomainPermissionGrant | null>;
-  list(params: ListPermissionGrantsParams): Promise<ListPermissionGrantsResult>;
+  findAll(
+    params: ListPermissionGrantsParams,
+  ): Promise<ListPermissionGrantsResult>;
   create(input: CreatePermissionGrantInput): Promise<DomainPermissionGrant>;
   update(
     id: string,

@@ -1,5 +1,4 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.module';
 import type { PrismaClient, Prisma } from '@generated/prisma';
 import {
   PermissionGrantRepository,
@@ -9,6 +8,7 @@ import {
   ListPermissionGrantsResult,
 } from '@app/domain';
 import type { DomainPermissionGrant } from '@app/domain';
+import { PrismaService } from '@app/infra/prisma/prisma.service';
 
 const permissionGrantSelect: Prisma.PermissionGrantSelect = {
   id: true,
@@ -65,7 +65,7 @@ export class PrismaPermissionGrantRepository
     return model ? toDomain(model as PermissionGrant) : null;
   }
 
-  async list(
+  async findAll(
     params: ListPermissionGrantsParams,
   ): Promise<ListPermissionGrantsResult> {
     const {

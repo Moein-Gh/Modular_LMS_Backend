@@ -1,4 +1,5 @@
 import {
+  AccessTokenGuard,
   AuthService,
   LogoutDto,
   RegisterUserInput,
@@ -15,6 +16,7 @@ import {
   Res,
   Req,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 
@@ -35,6 +37,7 @@ export class AuthController {
     private readonly registerUserUseCase: RegisterUserUseCase,
   ) {}
 
+  @UseGuards(AccessTokenGuard)
   @Post('register-user')
   @HttpCode(HttpStatus.CREATED)
   registerUser(@Body() body: RegisterUserInput) {
@@ -101,6 +104,7 @@ export class AuthController {
     return { success: true, userId: result.userId };
   }
 
+  @UseGuards(AccessTokenGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(

@@ -3,7 +3,7 @@ import {
   IdentityRepository,
   CreateIdentityInput,
 } from '@app/domain';
-import { PrismaService } from '@app/infra/prisma/prisma.module';
+import { PrismaService } from '@app/infra/prisma/prisma.service';
 import { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -58,5 +58,35 @@ export class PrismaIdentityRepository implements IdentityRepository {
       select: identitySelect,
     });
     return toDomain(created);
+  }
+  async update(id: string, data: CreateIdentityInput): Promise<DomainIdentity> {
+    const updated: IdentityModel = await this.prisma.identity.update({
+      where: { id },
+      data: {
+        phone: data.phone,
+        name: data.name,
+        countryCode: data.countryCode,
+        nationalCode: data.nationalCode,
+        email: data.email,
+      },
+      select: identitySelect,
+    });
+    return toDomain(updated);
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prisma.identity.delete({
+      where: { id },
+    });
+  }
+
+  async findOne(
+    where: Prisma.IdentityWhereInput,
+  ): Promise<DomainIdentity | null> {
+    const identity = await this.prisma.identity.findFirst({
+      where,
+      select: identitySelect,
+    });
+    return identity ? toDomain(identity) : null;
   }
 }

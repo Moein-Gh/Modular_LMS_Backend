@@ -33,8 +33,8 @@ export class PermissionGrantsController {
   }
 
   @Get()
-  list(@Query() query: Record<string, any>) {
-    return this.permissionGrantService.list(query);
+  findAll(@Query() query: Record<string, any>) {
+    return this.permissionGrantService.findAll(query);
   }
 
   @Put(':id')

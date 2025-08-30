@@ -29,10 +29,10 @@ export class PermissionGrantService {
     return grant;
   }
 
-  list(
+  findAll(
     params: ListPermissionGrantsParams,
   ): Promise<ListPermissionGrantsResult> {
-    return this.permissionGrants.list(params);
+    return this.permissionGrants.findAll(params);
   }
 
   update(

@@ -1,6 +1,9 @@
 export * from './domain.module';
 export * from './domain.service';
 
+// COMMON
+export * from './common/transactional-repository.interface';
+
 // USER
 export * from './user/tokens';
 export * from './user/value-objects/email.vo';

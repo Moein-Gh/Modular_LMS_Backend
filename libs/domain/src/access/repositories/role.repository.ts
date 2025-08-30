@@ -1,3 +1,4 @@
+import { Prisma } from '@generated/prisma';
 import type { DomainRole } from '../entities/role.entity';
 
 export interface CreateRoleInput {
@@ -25,12 +26,28 @@ export interface ListRolesResult {
 }
 
 export interface RoleRepository {
-  findById(id: string): Promise<DomainRole | null>;
-  findByKey(key: string): Promise<DomainRole | null>;
-  list(params: ListRolesParams): Promise<ListRolesResult>;
-  create(data: CreateRoleInput): Promise<DomainRole>;
-  update(id: string, data: UpdateRoleInput): Promise<DomainRole>;
-  delete(id: string): Promise<void>;
+  findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainRole | null>;
+  findByKey(
+    key: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainRole | null>;
+  findAll(
+    params: ListRolesParams,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ListRolesResult>;
+  create(
+    data: CreateRoleInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainRole>;
+  update(
+    id: string,
+    data: UpdateRoleInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainRole>;
+  delete(id: string, tx?: Prisma.TransactionClient): Promise<void>;
 }
 
 export const ROLE_REPOSITORY = Symbol('ROLE_REPOSITORY');

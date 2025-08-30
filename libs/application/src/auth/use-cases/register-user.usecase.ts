@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@app/infra/prisma/prisma.module';
 import { IdentityService } from '../services/identity.service';
 import { UsersService } from '../../user/services/users.service';
 import {
@@ -7,17 +6,18 @@ import {
   RegisterUserResult,
 } from '../dtos/register-user.usecase.dto';
 import { IdentityAlreadyExistsError } from '../errors/identityAlreadyExists';
+import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
 
 @Injectable()
 export class RegisterUserUseCase {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly identityService: IdentityService,
     private readonly usersService: UsersService,
+    private readonly transactionalRepository: PrismaTransactionalRepository,
   ) {}
 
   async execute(input: RegisterUserInput): Promise<RegisterUserResult> {
-    return this.prisma.$transaction(async (tx) => {
+    return this.transactionalRepository.withTransaction(async (tx) => {
       const conditions: Array<object> = [
         { phone: input.phone, countryCode: input.countryCode },
         { nationalCode: input.nationalCode },

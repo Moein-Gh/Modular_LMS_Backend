@@ -1,20 +1,24 @@
-import { CreateIdentityInput, DomainIdentity } from '@app/domain';
-import { PrismaService } from '@app/infra/prisma/prisma.module';
-import { Injectable } from '@nestjs/common';
+import {
+  CreateIdentityInput,
+  DomainIdentity,
+  IdentityRepository,
+  IDENTITY_REPOSITORY,
+} from '@app/domain';
+import { Injectable, Inject } from '@nestjs/common';
 import type { Prisma } from '@generated/prisma';
 
 @Injectable()
 export class IdentityService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(IDENTITY_REPOSITORY)
+    private readonly identityRepository: IdentityRepository,
+  ) {}
 
   public async createIdentity(
     input: CreateIdentityInput,
     tx?: Prisma.TransactionClient,
   ): Promise<DomainIdentity> {
-    const prisma = tx ?? this.prisma;
-    const identity = await prisma.identity.create({
-      data: input,
-    });
+    const identity = await this.identityRepository.create(input, tx);
     return identity;
   }
 
@@ -22,22 +26,24 @@ export class IdentityService {
     phone: string,
     tx?: Prisma.TransactionClient,
   ): Promise<DomainIdentity | null> {
-    const prisma = tx ?? this.prisma;
-    const identity = await prisma.identity.findUnique({
-      where: { phone },
-    });
-    if (!identity) {
-      return null;
-    }
-    return identity;
+    const identity = await this.identityRepository.findOne({ phone }, tx);
+    return identity ?? null;
   }
 
   public async findOne(
     where: Prisma.IdentityWhereInput,
     tx?: Prisma.TransactionClient,
   ): Promise<DomainIdentity | null> {
-    const prisma = tx ?? this.prisma;
-    const identity = await prisma.identity.findFirst({ where });
+    const identity = await this.identityRepository.findOne(where, tx);
     return identity ?? null;
+  }
+
+  public async update(
+    id: string,
+    data: CreateIdentityInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainIdentity> {
+    const identity = await this.identityRepository.update(id, data, tx);
+    return identity;
   }
 }

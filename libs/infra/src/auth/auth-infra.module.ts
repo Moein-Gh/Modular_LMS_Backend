@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
+import { IDENTITY_REPOSITORY } from '@app/domain';
 import { PrismaModule } from '../prisma/prisma.module';
 import { PrismaIdentityRepository } from './repositories/prisma-identity.repository';
-import { IDENTITY_REPOSITORY } from '@app/domain';
+import { Module } from '@nestjs/common';
 
 const identityRepositoryProvider = {
   provide: IDENTITY_REPOSITORY,
@@ -10,7 +10,7 @@ const identityRepositoryProvider = {
 
 @Module({
   imports: [PrismaModule],
-  providers: [identityRepositoryProvider],
+  providers: [PrismaIdentityRepository, identityRepositoryProvider],
   exports: [identityRepositoryProvider],
 })
-export class AccessInfraModule {}
+export class AuthInfraModule {}

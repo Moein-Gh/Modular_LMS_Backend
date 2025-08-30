@@ -36,8 +36,8 @@ export class RoleService {
     return role;
   }
 
-  list(params: ListRolesParams): Promise<ListRolesResult> {
-    return this.roles.list(params);
+  findAll(params: ListRolesParams): Promise<ListRolesResult> {
+    return this.roles.findAll(params);
   }
 
   update(id: string, data: UpdateRoleInput): Promise<DomainRole> {

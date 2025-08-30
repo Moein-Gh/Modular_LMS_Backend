@@ -32,4 +32,20 @@ export class UsersService {
     const user = await this.users.findById(id, tx);
     return user;
   }
+  async setActive(
+    userId: string,
+    isActive: boolean,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    await this.users.setActive(userId, isActive, tx);
+  }
+
+  async deleteUser(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+    await this.users.deleteUser(id, tx);
+  }
+
+  async findAll(tx?: Prisma.TransactionClient): Promise<DomainUser[]> {
+    const users = await this.users.findAll(tx);
+    return users;
+  }
 }

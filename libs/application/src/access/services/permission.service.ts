@@ -37,8 +37,8 @@ export class PermissionService {
     return permission;
   }
 
-  list(params: ListPermissionsParams): Promise<ListPermissionsResult> {
-    return this.permissions.list(params);
+  findAll(params: ListPermissionsParams): Promise<ListPermissionsResult> {
+    return this.permissions.findAll(params);
   }
 
   update(id: string, data: UpdatePermissionInput): Promise<DomainPermission> {

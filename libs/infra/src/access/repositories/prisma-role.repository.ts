@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.module';
 import type { PrismaClient } from '@generated/prisma';
 import { Prisma } from '@generated/prisma';
 import {
@@ -10,6 +9,7 @@ import {
   type ListRolesResult,
 } from '@app/domain';
 import type { DomainRole } from '@app/domain';
+import { PrismaService } from '@app/infra/prisma/prisma.service';
 
 // Use a structural type that matches the Prisma Role model
 type RoleModel = {
@@ -45,9 +45,13 @@ function toDomain(model: RoleModel): DomainRole {
 export class PrismaRoleRepository implements RoleRepository {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaClient) {}
 
-  async findById(id: string): Promise<DomainRole | null> {
+  async findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainRole | null> {
     try {
-      const model = await this.prisma.role.findUnique({
+      const prisma = tx ?? this.prisma;
+      const model = await prisma.role.findUnique({
         where: { id },
         select: roleSelect,
       });
@@ -64,15 +68,23 @@ export class PrismaRoleRepository implements RoleRepository {
     }
   }
 
-  async findByKey(key: string): Promise<DomainRole | null> {
-    const model = await this.prisma.role.findUnique({
+  async findByKey(
+    key: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainRole | null> {
+    const prisma = tx ?? this.prisma;
+    const model = await prisma.role.findUnique({
       where: { key },
       select: roleSelect,
     });
     return model ? toDomain(model as RoleModel) : null;
   }
 
-  async list(params: ListRolesParams): Promise<ListRolesResult> {
+  async findAll(
+    params: ListRolesParams,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ListRolesResult> {
+    const prisma = tx ?? this.prisma;
     const {
       search,
       skip = 0,
@@ -98,8 +110,8 @@ export class PrismaRoleRepository implements RoleRepository {
           ? { key: orderDir }
           : { createdAt: orderDir };
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.role.findMany({
+    const [items, total] = await Promise.all([
+      prisma.role.findMany({
         where,
         skip,
         take,
@@ -112,8 +124,12 @@ export class PrismaRoleRepository implements RoleRepository {
     return { items: items.map((i) => toDomain(i as RoleModel)), total };
   }
 
-  async create(data: CreateRoleInput): Promise<DomainRole> {
-    const created = await this.prisma.role.create({
+  async create(
+    data: CreateRoleInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainRole> {
+    const prisma = tx ?? this.prisma;
+    const created = await prisma.role.create({
       data: {
         key: data.key,
         name: data.name,
@@ -124,8 +140,13 @@ export class PrismaRoleRepository implements RoleRepository {
     return toDomain(created as RoleModel);
   }
 
-  async update(id: string, data: UpdateRoleInput): Promise<DomainRole> {
-    const updated = await this.prisma.role.update({
+  async update(
+    id: string,
+    data: UpdateRoleInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<DomainRole> {
+    const prisma = tx ?? this.prisma;
+    const updated = await prisma.role.update({
       where: { id },
       data: {
         name: data.name,
@@ -136,7 +157,8 @@ export class PrismaRoleRepository implements RoleRepository {
     return toDomain(updated as RoleModel);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.role.delete({ where: { id } });
+  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const prisma = tx ?? this.prisma;
+    await prisma.role.delete({ where: { id } });
   }
 }
