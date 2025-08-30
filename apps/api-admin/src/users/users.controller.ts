@@ -24,7 +24,6 @@ export class UsersController {
   async findUserAndIdentity(id: string): Promise<DomainUser> {
     const user = await this.usersService.findById(id);
     if (!user) throw new NotFoundException('User not found');
-    if (!user.isActive) throw new NotFoundException('User is not active');
 
     const identity = await this.identityService.findOne({
       id: user.identityId,
