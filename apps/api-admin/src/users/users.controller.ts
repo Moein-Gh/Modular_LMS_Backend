@@ -5,9 +5,20 @@ import {
   Patch,
   Body,
   NotFoundException,
+  UseGuards,
+  Post,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 
-import { IdentityService, NotFoundError, UsersService } from '@app/application';
+import {
+  AccessTokenGuard,
+  IdentityService,
+  NotFoundError,
+  RegisterUserInput,
+  RegisterUserUseCase,
+  UsersService,
+} from '@app/application';
 import { ListUsersDto } from './dtos/list-users.dto';
 import { GetUserDto } from './dtos/get-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
@@ -19,6 +30,7 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly identityService: IdentityService,
+    private readonly registerUserUseCase: RegisterUserUseCase,
   ) {}
 
   async findUserAndIdentity(id: string): Promise<DomainUser> {
@@ -39,6 +51,14 @@ export class UsersController {
     };
   }
 
+  @UseGuards(AccessTokenGuard)
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  registerUser(@Body() body: RegisterUserInput) {
+    return this.registerUserUseCase.execute(body);
+  }
+
+  @UseGuards(AccessTokenGuard)
   @Get()
   async findAll(): Promise<ListUsersDto[]> {
     const users = await this.usersService.findAll(true);
@@ -51,6 +71,7 @@ export class UsersController {
     }));
   }
 
+  @UseGuards(AccessTokenGuard)
   @Get(':id')
   async findOne(@Param('id', UUID_V4_PIPE) id: string): Promise<GetUserDto> {
     const user = await this.findUserAndIdentity(id);
@@ -62,6 +83,7 @@ export class UsersController {
     };
   }
 
+  @UseGuards(AccessTokenGuard)
   @Patch(':id')
   async update(
     @Param('id', UUID_V4_PIPE) id: string,

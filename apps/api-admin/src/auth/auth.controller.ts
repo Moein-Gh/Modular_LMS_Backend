@@ -2,7 +2,6 @@ import {
   AccessTokenGuard,
   AuthService,
   LogoutDto,
-  RegisterUserInput,
   RegisterUserUseCase,
   RequestSmsCodeDto,
   VerifySmsCodeDto,
@@ -36,13 +35,6 @@ export class AuthController {
     private readonly auth: AuthService,
     private readonly registerUserUseCase: RegisterUserUseCase,
   ) {}
-
-  @UseGuards(AccessTokenGuard)
-  @Post('register-user')
-  @HttpCode(HttpStatus.CREATED)
-  registerUser(@Body() body: RegisterUserInput) {
-    return this.registerUserUseCase.execute(body);
-  }
 
   @Post('request-sms')
   @HttpCode(HttpStatus.OK)
