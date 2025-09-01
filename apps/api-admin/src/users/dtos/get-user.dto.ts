@@ -1,8 +1,8 @@
-import { DomainIdentity } from '@app/domain';
+import { Identity } from '@app/domain';
 
 export class GetUserDto {
   id: string;
   isActive: boolean;
   identityId: string;
-  identity: DomainIdentity;
+  identity: Identity;
 }

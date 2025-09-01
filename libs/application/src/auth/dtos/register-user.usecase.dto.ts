@@ -1,4 +1,4 @@
-import { DomainIdentity, DomainUser } from '@app/domain';
+import { Identity, User } from '@app/domain';
 import {
   IsOptional,
   IsString,
@@ -31,5 +31,5 @@ export class RegisterUserInput {
 }
 
 export type RegisterUserResult = {
-  user: DomainUser & { identity: DomainIdentity };
+  user: User & { identity: Identity };
 };

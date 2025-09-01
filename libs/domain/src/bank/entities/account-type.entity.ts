@@ -1,8 +1,6 @@
-export interface Role {
+export interface AccountType {
   id: string;
   name: string;
-  key: string;
-  description?: string;
   createdAt: Date;
   updatedAt: Date;
 }

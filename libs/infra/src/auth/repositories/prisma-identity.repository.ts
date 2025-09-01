@@ -1,4 +1,4 @@
-import { DomainIdentity, IdentityRepository } from '@app/domain';
+import { Identity, IdentityRepository } from '@app/domain';
 import { CreateIdentityInput } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import { Prisma } from '@generated/prisma';
@@ -26,7 +26,7 @@ const identitySelect: Prisma.IdentitySelect = {
   updatedAt: true,
 };
 
-function toDomain(model: IdentityModel): DomainIdentity {
+function toDomain(model: IdentityModel): Identity {
   return {
     id: model.id,
     phone: model.phone,
@@ -43,7 +43,7 @@ function toDomain(model: IdentityModel): DomainIdentity {
 export class PrismaIdentityRepository implements IdentityRepository {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  async create(data: CreateIdentityInput): Promise<DomainIdentity> {
+  async create(data: CreateIdentityInput): Promise<Identity> {
     const created: IdentityModel = await this.prisma.identity.create({
       data: {
         phone: data.phone,
@@ -56,7 +56,7 @@ export class PrismaIdentityRepository implements IdentityRepository {
     });
     return toDomain(created);
   }
-  async update(id: string, data: CreateIdentityInput): Promise<DomainIdentity> {
+  async update(id: string, data: CreateIdentityInput): Promise<Identity> {
     const updated: IdentityModel = await this.prisma.identity.update({
       where: { id },
       data: {
@@ -77,9 +77,7 @@ export class PrismaIdentityRepository implements IdentityRepository {
     });
   }
 
-  async findOne(
-    where: Prisma.IdentityWhereInput,
-  ): Promise<DomainIdentity | null> {
+  async findOne(where: Prisma.IdentityWhereInput): Promise<Identity | null> {
     const identity = await this.prisma.identity.findFirst({
       where,
       select: identitySelect,

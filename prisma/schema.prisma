@@ -10,21 +10,12 @@ generator client {
   output        = "../generated/prisma"
 }
 
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// Authorization enums
-enum Effect {
-  allow
-  deny
-}
-
-enum Scope {
-  any
-  own
-}
 
 model User {
   id        String   @id @default(uuid()) @db.Uuid
@@ -39,6 +30,7 @@ model User {
   identity   Identity @relation(fields: [identityId], references: [id])
   identityId String   @unique @db.Uuid
   refreshTokens RefreshToken[]
+  accounts   Account[]
 }
 
 model Role {
@@ -81,7 +73,6 @@ model RoleAssignment {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
 }
 
 model PermissionGrant {
@@ -99,7 +90,6 @@ model PermissionGrant {
   @@map("permission_grant")
 }
 
-// Stores primary identity information per user (phone-first auth)
 model Identity {
   id              String   @id @default(uuid()) @db.Uuid
   phone           String   @unique @db.Text
@@ -116,7 +106,6 @@ model Identity {
   @@map("identity")
 }
 
-// Persisted refresh tokens (store only hashes) for session continuity
 model RefreshToken {
   id                 String   @id @default(uuid()) @db.Uuid
   userId             String   @db.Uuid @map("user_id")
@@ -136,7 +125,6 @@ model RefreshToken {
   @@map("refresh_token")
 }
 
-// One-time SMS codes for phone verification and login
 model SmsCode {
   id          String   @id @default(uuid()) @db.Uuid
   phone       String   @db.Text
@@ -151,4 +139,29 @@ model SmsCode {
   @@index([phone], map: "sms_code_phone_idx")
   @@index([phone, code], map: "sms_code_phone_code_idx")
   @@map("sms_code")
+}
+
+model AccountType {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  accounts    Account[]
+}
+
+model Account {
+  id            String        @id @default(uuid()) @db.Uuid
+  accountTypeId String        @db.Uuid
+  accountType   AccountType   @relation(fields: [accountTypeId], references: [id])
+
+  name          String
+  userId        String        @db.Uuid
+  user          User          @relation(fields: [userId], references: [id])
+
+  cardNumber    String        @unique
+  bankName      String
+  status        String        @default("active")
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }

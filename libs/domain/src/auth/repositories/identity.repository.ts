@@ -1,21 +1,21 @@
 import { Prisma } from '@generated/prisma';
-import type { DomainIdentity } from '../entities/identity.entity';
+import type { Identity } from '../entities/identity.entity';
 import { CreateIdentityInput } from '../types/identity.type';
 
 export interface IdentityRepository {
   create(
     data: CreateIdentityInput,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainIdentity>;
+  ): Promise<Identity>;
   update(
     id: string,
-    data: DomainIdentity,
+    data: Identity,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainIdentity>;
+  ): Promise<Identity>;
   findOne(
     where: Prisma.IdentityWhereInput,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainIdentity | null>;
+  ): Promise<Identity | null>;
   delete(id: string, tx?: Prisma.TransactionClient): Promise<void>;
 }
 

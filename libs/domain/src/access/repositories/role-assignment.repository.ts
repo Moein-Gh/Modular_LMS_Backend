@@ -1,5 +1,5 @@
 import { Prisma } from '@generated/prisma';
-import type { DomainRoleAssignment } from '../entities/role-assignment.entity';
+import type { RoleAssignment } from '../entities/role-assignment.entity';
 import {
   CreateRoleAssignmentInput,
   ListRoleAssignmentsParams,
@@ -10,20 +10,20 @@ export interface RoleAssignmentRepository {
   findById(
     id: string,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainRoleAssignment | null>;
+  ): Promise<RoleAssignment | null>;
   findAll(
     params: ListRoleAssignmentsParams,
     tx?: Prisma.TransactionClient,
-  ): Promise<BaseListResult<DomainRoleAssignment>>;
+  ): Promise<BaseListResult<RoleAssignment>>;
   create(
     data: CreateRoleAssignmentInput,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainRoleAssignment>;
+  ): Promise<RoleAssignment>;
   update(
     id: string,
-    data: DomainRoleAssignment,
+    data: RoleAssignment,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainRoleAssignment>;
+  ): Promise<RoleAssignment>;
   delete(id: string, tx?: Prisma.TransactionClient): Promise<void>;
 }
 

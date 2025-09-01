@@ -22,7 +22,7 @@ import {
 import { ListUsersDto } from './dtos/list-users.dto';
 import { GetUserDto } from './dtos/get-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
-import { DomainUser } from '@app/domain';
+import { User } from '@app/domain';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 
 @Controller('users')
@@ -33,7 +33,7 @@ export class UsersController {
     private readonly registerUserUseCase: RegisterUserUseCase,
   ) {}
 
-  async findUserAndIdentity(id: string): Promise<DomainUser> {
+  async findUserAndIdentity(id: string): Promise<User> {
     const user = await this.usersService.findById(id);
     if (!user) throw new NotFoundException('User not found');
 

@@ -1,6 +1,6 @@
 import {
   CreateRoleAssignmentInput,
-  DomainRoleAssignment,
+  RoleAssignment,
   ListRoleAssignmentsParams,
   OrderDirection,
   RoleAssignmentRepository,
@@ -8,7 +8,7 @@ import {
 import { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 import type { PrismaClient } from '@generated/prisma';
-import type { DomainUser, DomainRole, BaseListResult } from '@app/domain';
+import type { User, Role, BaseListResult } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 
 const roleAssignmentSelect: Prisma.RoleAssignmentSelect = {
@@ -48,7 +48,7 @@ type RoleModel = {
   updatedAt: Date;
 };
 
-function toDomainUser(model: UserModel): DomainUser {
+function toDomainUser(model: UserModel): User {
   return {
     id: model.id,
     identityId: model.identityId,
@@ -56,7 +56,7 @@ function toDomainUser(model: UserModel): DomainUser {
   };
 }
 
-function toDomainRole(model: RoleModel): DomainRole {
+function toDomainRole(model: RoleModel): Role {
   return {
     id: model.id,
     name: model.name,
@@ -69,7 +69,7 @@ function toDomainRole(model: RoleModel): DomainRole {
 
 function toDomain(
   model: RoleAssignmentModel & { user?: UserModel; role?: RoleModel },
-): DomainRoleAssignment {
+): RoleAssignment {
   return {
     id: model.id,
     userId: model.userId,
@@ -93,7 +93,7 @@ export class PrismaRoleAssignmentRepository
   async findById(
     id: string,
     tx: Prisma.TransactionClient,
-  ): Promise<DomainRoleAssignment | null> {
+  ): Promise<RoleAssignment | null> {
     const prisma = tx ?? this.prisma;
     try {
       const model = await prisma.roleAssignment.findUnique({
@@ -116,7 +116,7 @@ export class PrismaRoleAssignmentRepository
   async create(
     data: CreateRoleAssignmentInput,
     tx: Prisma.TransactionClient,
-  ): Promise<DomainRoleAssignment> {
+  ): Promise<RoleAssignment> {
     const prisma = tx ?? this.prisma;
     const created = await prisma.roleAssignment.create({
       data: {
@@ -134,7 +134,7 @@ export class PrismaRoleAssignmentRepository
   async findAll(
     params: ListRoleAssignmentsParams,
     tx: Prisma.TransactionClient,
-  ): Promise<BaseListResult<DomainRoleAssignment>> {
+  ): Promise<BaseListResult<RoleAssignment>> {
     const prisma = tx ?? this.prisma;
     const { userId, skip, take, orderBy, orderDir, includeUser, includeRole } =
       params;
@@ -186,9 +186,9 @@ export class PrismaRoleAssignmentRepository
 
   async update(
     id: string,
-    data: DomainRoleAssignment,
+    data: RoleAssignment,
     tx: Prisma.TransactionClient,
-  ): Promise<DomainRoleAssignment> {
+  ): Promise<RoleAssignment> {
     const prisma = tx ?? this.prisma;
     const updated = await prisma.roleAssignment.update({
       where: { id },

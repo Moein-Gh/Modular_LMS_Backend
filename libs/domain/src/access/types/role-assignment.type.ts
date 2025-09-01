@@ -1,8 +1,8 @@
 import { BaseQueryParams } from '@app/domain';
-import { DomainRoleAssignment } from '../entities/role-assignment.entity';
+import { RoleAssignment } from '../entities/role-assignment.entity';
 
 export type CreateRoleAssignmentInput = Omit<
-  DomainRoleAssignment,
+  RoleAssignment,
   'id' | 'createdAt' | 'updatedAt' | 'isActive'
 >;
 

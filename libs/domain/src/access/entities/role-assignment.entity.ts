@@ -1,7 +1,7 @@
-import { DomainUser } from '@app/domain/user/entities/user.entity';
-import { DomainRole } from './role.entity';
+import { User } from '@app/domain/user/entities/user.entity';
+import { Role } from './role.entity';
 
-export interface DomainRoleAssignment {
+export interface RoleAssignment {
   id: string;
   userId: string;
   roleId: string;
@@ -10,6 +10,6 @@ export interface DomainRoleAssignment {
   createdAt: Date;
   updatedAt: Date;
   isActive: boolean;
-  user?: DomainUser;
-  role?: DomainRole;
+  user?: User;
+  role?: Role;
 }

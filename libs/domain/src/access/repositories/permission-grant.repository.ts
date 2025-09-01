@@ -4,18 +4,18 @@ import {
   ListPermissionGrantsParams,
   UpdatePermissionGrantInput,
 } from '@app/domain';
-import { DomainPermissionGrant } from '../entities/permission-grant.entity';
+import { PermissionGrant } from '../entities/permission-grant.entity';
 
 export interface PermissionGrantRepository {
-  findById(id: string): Promise<DomainPermissionGrant | null>;
+  findById(id: string): Promise<PermissionGrant | null>;
   findAll(
     params: ListPermissionGrantsParams,
-  ): Promise<BaseListResult<DomainPermissionGrant>>;
-  create(input: CreatePermissionGrantInput): Promise<DomainPermissionGrant>;
+  ): Promise<BaseListResult<PermissionGrant>>;
+  create(input: CreatePermissionGrantInput): Promise<PermissionGrant>;
   update(
     id: string,
     input: UpdatePermissionGrantInput,
-  ): Promise<DomainPermissionGrant>;
+  ): Promise<PermissionGrant>;
   delete(id: string): Promise<void>;
 }
 

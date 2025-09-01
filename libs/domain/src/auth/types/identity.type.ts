@@ -1,6 +1,6 @@
-import { DomainIdentity } from '../entities/identity.entity';
+import { Identity } from '../entities/identity.entity';
 
 export type CreateIdentityInput = Omit<
-  DomainIdentity,
+  Identity,
   'id' | 'createdAt' | 'updatedAt'
 >;

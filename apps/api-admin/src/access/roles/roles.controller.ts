@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AccessTokenGuard, RoleService } from '@app/application';
-import { OrderDirection, type DomainRole } from '@app/domain';
+import { OrderDirection, type Role } from '@app/domain';
 import { CreateRoleDto } from './dtos/create-role.dto';
 import { ListRolesQuery } from './dtos/list-role.dto';
 import { UUID_V4_PIPE } from '../../common/pipes/UUID.pipe';
@@ -20,7 +20,7 @@ export class RolesController {
   constructor(private readonly roleService: RoleService) {}
 
   @Post()
-  create(@Body() dto: CreateRoleDto): Promise<DomainRole> {
+  create(@Body() dto: CreateRoleDto): Promise<Role> {
     return this.roleService.create(dto);
   }
 

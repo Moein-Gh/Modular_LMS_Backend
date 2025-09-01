@@ -1,8 +1,4 @@
-import {
-  DomainIdentity,
-  IdentityRepository,
-  IDENTITY_REPOSITORY,
-} from '@app/domain';
+import { Identity, IdentityRepository, IDENTITY_REPOSITORY } from '@app/domain';
 import { Injectable, Inject } from '@nestjs/common';
 import type { Prisma } from '@generated/prisma';
 import { CreateIdentityInput } from '@app/domain/auth/types/identity.type';
@@ -17,7 +13,7 @@ export class IdentityService {
   public async createIdentity(
     input: CreateIdentityInput,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainIdentity> {
+  ): Promise<Identity> {
     const identity = await this.identityRepository.create(input, tx);
     return identity;
   }
@@ -25,7 +21,7 @@ export class IdentityService {
   public async findByPhone(
     phone: string,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainIdentity | null> {
+  ): Promise<Identity | null> {
     const identity = await this.identityRepository.findOne({ phone }, tx);
     return identity ?? null;
   }
@@ -33,16 +29,16 @@ export class IdentityService {
   public async findOne(
     where: Prisma.IdentityWhereInput,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainIdentity | null> {
+  ): Promise<Identity | null> {
     const identity = await this.identityRepository.findOne(where, tx);
     return identity ?? null;
   }
 
   public async update(
     id: string,
-    data: DomainIdentity,
+    data: Identity,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainIdentity> {
+  ): Promise<Identity> {
     const identity = await this.identityRepository.update(id, data, tx);
     return identity;
   }

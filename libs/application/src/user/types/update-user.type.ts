@@ -1,3 +1,3 @@
-import { DomainUser } from '@app/domain';
+import { User } from '@app/domain';
 
-export type UpdateUserInput = Omit<DomainUser, 'id' | 'identity'>;
+export type UpdateUserInput = Omit<User, 'id' | 'identity'>;

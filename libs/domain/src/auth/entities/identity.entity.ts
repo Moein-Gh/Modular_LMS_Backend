@@ -1,4 +1,4 @@
-export interface DomainIdentity {
+export interface Identity {
   id: string;
   phone: string;
   name: string | null;

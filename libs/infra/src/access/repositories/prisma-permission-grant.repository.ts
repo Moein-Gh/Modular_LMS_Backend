@@ -1,16 +1,12 @@
-import { Injectable, Inject } from '@nestjs/common';
-import type { PrismaClient, Prisma } from '@generated/prisma';
+import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@generated/prisma';
 import {
   PermissionGrantRepository,
   CreatePermissionGrantInput,
   UpdatePermissionGrantInput,
   ListPermissionGrantsParams,
 } from '@app/domain';
-import type {
-  BaseListResult,
-  DomainPermissionGrant,
-  GrantType,
-} from '@app/domain';
+import type { BaseListResult, PermissionGrant, GrantType } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 
 const permissionGrantSelect: Prisma.PermissionGrantSelect = {
@@ -26,23 +22,14 @@ const permissionGrantSelect: Prisma.PermissionGrantSelect = {
   updatedAt: true,
 };
 
-type PermissionGrant = {
-  id: string;
-  granteeType: GrantType;
-  granteeId: string;
-  permissionId: string;
-  grantedBy: string;
-  isGranted: true;
-  reason: string;
-  expiresAt: null;
-  createdAt: Date;
-  updatedAt: Date;
-};
+type PermissionGrantModel = Prisma.PermissionGrantGetPayload<{
+  select: typeof permissionGrantSelect;
+}>;
 
-function toDomain(model: PermissionGrant): DomainPermissionGrant {
+function toDomain(model: PermissionGrantModel): PermissionGrant {
   return {
     id: model.id,
-    granteeType: model.granteeType,
+    granteeType: model.granteeType as unknown as GrantType,
     granteeId: model.granteeId,
     permissionId: model.permissionId,
     grantedBy: model.grantedBy ?? undefined,
@@ -58,19 +45,19 @@ function toDomain(model: PermissionGrant): DomainPermissionGrant {
 export class PrismaPermissionGrantRepository
   implements PermissionGrantRepository
 {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string): Promise<DomainPermissionGrant | null> {
+  async findById(id: string): Promise<PermissionGrant | null> {
     const model = await this.prisma.permissionGrant.findUnique({
       where: { id },
       select: permissionGrantSelect,
     });
-    return model ? toDomain(model as PermissionGrant) : null;
+    return model ? toDomain(model) : null;
   }
 
   async findAll(
     params: ListPermissionGrantsParams,
-  ): Promise<BaseListResult<DomainPermissionGrant>> {
+  ): Promise<BaseListResult<PermissionGrant>> {
     const {
       granteeType,
       granteeId,
@@ -89,16 +76,15 @@ export class PrismaPermissionGrantRepository
       ...(typeof isGranted === 'boolean' ? { isGranted } : {}),
     };
 
-    const order: Prisma.PermissionGrantOrderByWithRelationInput = {
-      [orderBy]: orderDir,
-    };
-
     const [items, total] = await this.prisma.$transaction([
       this.prisma.permissionGrant.findMany({
         where,
         skip,
         take,
-        orderBy: order,
+        // Cast is safe because orderBy and orderDir are validated at domain layer
+        orderBy: {
+          [orderBy]: orderDir,
+        } as Prisma.PermissionGrantOrderByWithRelationInput,
         select: permissionGrantSelect,
       }),
       this.prisma.permissionGrant.count({ where }),
@@ -107,12 +93,11 @@ export class PrismaPermissionGrantRepository
     return { items: items.map(toDomain), total };
   }
 
-  async create(
-    input: CreatePermissionGrantInput,
-  ): Promise<DomainPermissionGrant> {
+  async create(input: CreatePermissionGrantInput): Promise<PermissionGrant> {
     const created = await this.prisma.permissionGrant.create({
       data: {
-        granteeType: input.granteeType,
+        granteeType:
+          input.granteeType as unknown as Prisma.PermissionGrantUncheckedCreateInput['granteeType'],
         granteeId: input.granteeId,
         permissionId: input.permissionId,
         grantedBy: input.grantedBy ?? null,
@@ -122,13 +107,13 @@ export class PrismaPermissionGrantRepository
       },
       select: permissionGrantSelect,
     });
-    return toDomain(created as PermissionGrant);
+    return toDomain(created);
   }
 
   async update(
     id: string,
     input: UpdatePermissionGrantInput,
-  ): Promise<DomainPermissionGrant> {
+  ): Promise<PermissionGrant> {
     const updated = await this.prisma.permissionGrant.update({
       where: { id },
       data: {
@@ -138,7 +123,7 @@ export class PrismaPermissionGrantRepository
       },
       select: permissionGrantSelect,
     });
-    return toDomain(updated as PermissionGrant);
+    return toDomain(updated);
   }
 
   async delete(id: string): Promise<void> {

@@ -1,4 +1,4 @@
-export interface DomainPayload {
+export interface Payload {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;

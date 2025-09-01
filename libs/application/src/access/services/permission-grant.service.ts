@@ -8,7 +8,7 @@ import {
 import type {
   BaseListResult,
   CreatePermissionGrantInput,
-  DomainPermissionGrant,
+  PermissionGrant,
 } from '@app/domain';
 import { NotFoundError } from '@app/application/errors/not-found.error';
 
@@ -19,11 +19,11 @@ export class PermissionGrantService {
     private readonly permissionGrants: PermissionGrantRepository,
   ) {}
 
-  create(input: CreatePermissionGrantInput): Promise<DomainPermissionGrant> {
+  create(input: CreatePermissionGrantInput): Promise<PermissionGrant> {
     return this.permissionGrants.create(input);
   }
 
-  async getById(id: string): Promise<DomainPermissionGrant> {
+  async getById(id: string): Promise<PermissionGrant> {
     const grant = await this.permissionGrants.findById(id);
     if (!grant) {
       throw new NotFoundError('PermissionGrant', 'id', id);
@@ -33,14 +33,14 @@ export class PermissionGrantService {
 
   findAll(
     params: ListPermissionGrantsParams,
-  ): Promise<BaseListResult<DomainPermissionGrant>> {
+  ): Promise<BaseListResult<PermissionGrant>> {
     return this.permissionGrants.findAll(params);
   }
 
   update(
     id: string,
     data: UpdatePermissionGrantInput,
-  ): Promise<DomainPermissionGrant> {
+  ): Promise<PermissionGrant> {
     return this.permissionGrants.update(id, data);
   }
 

@@ -1,5 +1,5 @@
 import { AccessTokenGuard, RoleAssignmentService } from '@app/application';
-import { DomainRoleAssignment, OrderDirection } from '@app/domain';
+import { RoleAssignment, OrderDirection } from '@app/domain';
 import {
   Body,
   Controller,
@@ -19,9 +19,7 @@ export class RoleAssignmentsController {
   constructor(private readonly roleAssignmentService: RoleAssignmentService) {}
 
   @Post()
-  async create(
-    @Body() dto: CreateRoleAssignmentDto,
-  ): Promise<DomainRoleAssignment> {
+  async create(@Body() dto: CreateRoleAssignmentDto): Promise<RoleAssignment> {
     // after implementing authentication add AssignedBy as the current user
     return this.roleAssignmentService.create(dto);
   }

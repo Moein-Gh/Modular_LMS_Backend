@@ -1,8 +1,8 @@
-import { DomainIdentity } from '@app/domain';
+import { Identity } from '@app/domain';
 
-export interface DomainUser {
+export interface User {
   id: string;
   identityId: string;
   isActive: boolean;
-  identity?: DomainIdentity;
+  identity?: Identity;
 }

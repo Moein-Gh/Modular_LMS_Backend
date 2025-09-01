@@ -1,10 +1,7 @@
 import { BaseQueryParams } from '@app/domain';
-import { DomainRole } from '../entities/role.entity';
+import { Role } from '../entities/role.entity';
 
-export type CreateRoleInput = Omit<
-  DomainRole,
-  'id' | 'createdAt' | 'updatedAt'
->;
+export type CreateRoleInput = Omit<Role, 'id' | 'createdAt' | 'updatedAt'>;
 
 export interface ListRolesParams extends BaseQueryParams {
   orderBy?: 'createdAt' | 'name' | 'key';

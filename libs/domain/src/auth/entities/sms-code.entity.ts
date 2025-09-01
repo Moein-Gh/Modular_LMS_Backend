@@ -1,4 +1,4 @@
-export interface DomainSmsCode {
+export interface SmsCode {
   id: string;
   phone: string;
   code: string;

@@ -6,7 +6,7 @@ import {
   type CreateRoleInput,
   type ListRolesParams,
 } from '@app/domain';
-import type { BaseListResult, DomainRole } from '@app/domain';
+import type { BaseListResult, Role } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 
 // Use a structural type that matches the Prisma Role model
@@ -28,7 +28,7 @@ const roleSelect = {
   updatedAt: true,
 } satisfies Prisma.RoleSelect;
 
-function toDomain(model: RoleModel): DomainRole {
+function toDomain(model: RoleModel): Role {
   return {
     id: model.id,
     key: model.key,
@@ -46,7 +46,7 @@ export class PrismaRoleRepository implements RoleRepository {
   async findById(
     id: string,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainRole | null> {
+  ): Promise<Role | null> {
     try {
       const prisma = tx ?? this.prisma;
       const model = await prisma.role.findUnique({
@@ -69,7 +69,7 @@ export class PrismaRoleRepository implements RoleRepository {
   async findByKey(
     key: string,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainRole | null> {
+  ): Promise<Role | null> {
     const prisma = tx ?? this.prisma;
     const model = await prisma.role.findUnique({
       where: { key },
@@ -81,7 +81,7 @@ export class PrismaRoleRepository implements RoleRepository {
   async findAll(
     params: ListRolesParams,
     tx?: Prisma.TransactionClient,
-  ): Promise<BaseListResult<DomainRole>> {
+  ): Promise<BaseListResult<Role>> {
     const prisma = tx ?? this.prisma;
     const {
       search,
@@ -125,7 +125,7 @@ export class PrismaRoleRepository implements RoleRepository {
   async create(
     data: CreateRoleInput,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainRole> {
+  ): Promise<Role> {
     const prisma = tx ?? this.prisma;
     const created = await prisma.role.create({
       data: {
@@ -140,9 +140,9 @@ export class PrismaRoleRepository implements RoleRepository {
 
   async update(
     id: string,
-    data: DomainRole,
+    data: Role,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainRole> {
+  ): Promise<Role> {
     const prisma = tx ?? this.prisma;
     const updated = await prisma.role.update({
       where: { id },

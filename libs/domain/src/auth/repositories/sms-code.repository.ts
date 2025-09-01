@@ -1,10 +1,10 @@
-import { DomainSmsCode } from '../entities/sms-code.entity';
+import { SmsCode } from '../entities/sms-code.entity';
 
 export interface SmsCodeRepository {
-  findActive(phone: string, purpose: string): Promise<DomainSmsCode | null>;
+  findActive(phone: string, purpose: string): Promise<SmsCode | null>;
   create(
-    code: Omit<DomainSmsCode, 'id' | 'createdAt' | 'consumedAt'>,
-  ): Promise<DomainSmsCode>;
+    code: Omit<SmsCode, 'id' | 'createdAt' | 'consumedAt'>,
+  ): Promise<SmsCode>;
   consume(id: string): Promise<void>;
   incrementAttempts(id: string): Promise<void>;
 }

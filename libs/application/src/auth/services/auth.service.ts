@@ -6,7 +6,7 @@ import type { LogoutDto } from '../dtos/logout.dto';
 import * as crypto from 'crypto';
 import { LogoutResult, RequestSmsCodeResult } from '../dtos/auth.responses';
 import { InvalidOrExpiredCodeError } from '../errors/invalid-or-expired-code.error';
-import { AccessToken, DomainPayload, RefreshToken } from '@app/domain';
+import { AccessToken, Payload, RefreshToken } from '@app/domain';
 import { IdentityService } from './identity.service';
 import { NotFoundError } from '@app/application/errors/not-found.error';
 import { UsersService } from '@app/application/user/services/users.service';
@@ -64,7 +64,7 @@ export class AuthService {
   }
 
   // 2. Verify SMS code and issue tokens
-  public async verifySmsCode(cmd: VerifySmsCodeDto): Promise<DomainPayload> {
+  public async verifySmsCode(cmd: VerifySmsCodeDto): Promise<Payload> {
     const identity = await this.identityService.findByPhone(cmd.phone);
     if (!identity) {
       throw new NotFoundError('Identity', 'phone number', cmd.phone);
@@ -133,7 +133,7 @@ export class AuthService {
   }
 
   // 3. Refresh tokens
-  public async refresh(refreshToken: string): Promise<DomainPayload> {
+  public async refresh(refreshToken: string): Promise<Payload> {
     if (!refreshToken) {
       throw new BadRequestException('Refresh token is required');
     }

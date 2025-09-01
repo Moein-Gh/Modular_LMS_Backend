@@ -1,8 +1,8 @@
-import { DomainUser } from '@app/domain';
+import { User } from '@app/domain';
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
 interface RequestWithUserId extends Request {
-  user?: DomainUser;
+  user?: User;
 }
 
 export const CurrentUserId = createParamDecorator(

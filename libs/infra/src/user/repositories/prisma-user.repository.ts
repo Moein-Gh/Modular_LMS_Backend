@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { IUserRepository, DomainUser } from '@app/domain';
+import type { IUserRepository, User } from '@app/domain';
 import type { Prisma } from '@generated/prisma';
 import { CreateUserInput } from '@app/application';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
@@ -13,7 +13,7 @@ export class PrismaUserRepository implements IUserRepository {
   public async createUser(
     input: CreateUserInput,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainUser> {
+  ): Promise<User> {
     const prisma = tx ?? this.prisma;
 
     const user = await prisma.user.create({
@@ -29,7 +29,7 @@ export class PrismaUserRepository implements IUserRepository {
     id: string,
     include: boolean,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainUser | null> {
+  ): Promise<User | null> {
     const prisma = tx ?? this.prisma;
     const user = await prisma.user.findUnique({
       where: { id },
@@ -55,7 +55,7 @@ export class PrismaUserRepository implements IUserRepository {
     identityId: string,
     include: boolean,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainUser | null> {
+  ): Promise<User | null> {
     const prisma = tx ?? this.prisma;
     const user = await prisma.user.findUnique({
       where: { identityId },
@@ -67,7 +67,7 @@ export class PrismaUserRepository implements IUserRepository {
   public async findAll(
     include: boolean,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainUser[]> {
+  ): Promise<User[]> {
     const prisma = tx ?? this.prisma;
     const users = await prisma.user.findMany({
       include: { identity: include },

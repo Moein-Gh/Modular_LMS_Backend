@@ -3,7 +3,7 @@ import {
   type RoleAssignmentRepository,
   ROLE_ASSIGNMENT_REPOSITORY,
 } from '@app/domain';
-import type { BaseListResult, DomainRoleAssignment } from '@app/domain';
+import type { BaseListResult, RoleAssignment } from '@app/domain';
 import { NotFoundError } from '@app/application/errors/not-found.error';
 import { Prisma } from '@generated/prisma';
 import {
@@ -21,14 +21,14 @@ export class RoleAssignmentService {
   create(
     input: CreateRoleAssignmentInput,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainRoleAssignment> {
+  ): Promise<RoleAssignment> {
     return this.roleAssignment.create(input, tx);
   }
 
   async getById(
     id: string,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainRoleAssignment> {
+  ): Promise<RoleAssignment> {
     const roleAssignment = await this.roleAssignment.findById(id, tx);
     if (!roleAssignment) {
       throw new NotFoundError('RoleAssignment', 'id', id);
@@ -39,15 +39,15 @@ export class RoleAssignmentService {
   findAll(
     params: ListRoleAssignmentsParams,
     tx?: Prisma.TransactionClient,
-  ): Promise<BaseListResult<DomainRoleAssignment>> {
+  ): Promise<BaseListResult<RoleAssignment>> {
     return this.roleAssignment.findAll(params, tx);
   }
 
   update(
     id: string,
-    data: DomainRoleAssignment,
+    data: RoleAssignment,
     tx?: Prisma.TransactionClient,
-  ): Promise<DomainRoleAssignment> {
+  ): Promise<RoleAssignment> {
     return this.roleAssignment.update(id, data, tx);
   }
 

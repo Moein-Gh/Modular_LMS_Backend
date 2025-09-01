@@ -1,8 +1,8 @@
-import { DomainPermissionGrant, GrantType } from '@app/domain';
+import { PermissionGrant, GrantType } from '@app/domain';
 import { BaseQueryParams } from '@app/domain';
 
 export type CreatePermissionGrantInput = Omit<
-  DomainPermissionGrant,
+  PermissionGrant,
   'id' | 'createdAt' | 'updatedAt'
 >;
 

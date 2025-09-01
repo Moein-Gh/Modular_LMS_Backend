@@ -3,7 +3,7 @@ export enum GrantType {
   ROLE = 'role',
 }
 
-export interface DomainPermissionGrant {
+export interface PermissionGrant {
   id: string;
   granteeType: GrantType;
   granteeId: string;
