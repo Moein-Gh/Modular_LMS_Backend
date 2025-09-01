@@ -6,3 +6,5 @@ export * from './user/user.infra.module';
 export * from './access/access-infra.module';
 // AUTH
 export * from './auth/auth-infra.module';
+// BANK
+export * from './bank/bank.infra.module';

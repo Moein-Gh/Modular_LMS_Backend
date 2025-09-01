@@ -13,6 +13,9 @@ import { UserApplicationModule } from '@app/application/user/user-application.mo
 import { ConfigModule } from '@app/config';
 import { AccessModule } from './access/access.module';
 import { AuthController } from './auth/auth.controller';
+import { AccountsController } from './bank/accounts.controller';
+import { AccountTypesController } from './bank/account-types.controller';
+import { BankApplicationModule } from '@app/application';
 
 @Module({
   imports: [
@@ -25,8 +28,15 @@ import { AuthController } from './auth/auth.controller';
     ConfigModule,
     AuthApplicationModule,
     UserApplicationModule,
+    BankApplicationModule,
   ],
-  controllers: [ApiAdminController, UsersController, AuthController],
+  controllers: [
+    ApiAdminController,
+    UsersController,
+    AuthController,
+    AccountsController,
+    AccountTypesController,
+  ],
   providers: [
     ApiAdminService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },

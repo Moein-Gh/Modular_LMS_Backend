@@ -1,10 +1,10 @@
-// AccountType Repository Interface
 import { AccountType } from '../entities/account-type.entity';
+import { CreateAccountTypeInput, UpdateAccountTypeInput } from '@app/domain';
 
 export interface AccountTypeRepository {
+  findAll(): Promise<AccountType[]>;
   findById(id: string): Promise<AccountType | null>;
-  findByName(name: string): Promise<AccountType | null>;
-  create(accountType: AccountType): Promise<AccountType>;
-  update(accountType: AccountType): Promise<AccountType>;
+  create(accountType: CreateAccountTypeInput): Promise<AccountType>;
+  update(id: string, accountType: UpdateAccountTypeInput): Promise<AccountType>;
   delete(id: string): Promise<void>;
 }

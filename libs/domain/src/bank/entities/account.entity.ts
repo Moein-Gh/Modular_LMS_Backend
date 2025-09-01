@@ -1,6 +1,12 @@
 import { User } from '@app/domain';
 import { AccountType } from '@app/domain';
 
+export enum AccountStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  RESTRICTED = 'restricted',
+}
+
 export interface Account {
   id: string;
   accountTypeId: string;
@@ -8,11 +14,11 @@ export interface Account {
   userId: string;
   cardNumber: string;
   bankName: string;
-  status: string;
+  status: AccountStatus;
 
   createdAt: Date;
   updatedAt: Date;
 
-  accountType: AccountType;
-  user: User;
+  accountType?: AccountType;
+  user?: User;
 }
