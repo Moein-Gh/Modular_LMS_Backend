@@ -6,6 +6,7 @@ import type {
 } from '@app/domain';
 import { Prisma } from '@generated/prisma';
 import { PrismaAccountTypeRepository } from '@app/infra/bank/repositories/prisma-account-type.repository';
+import { AccountTypeNameTakenError } from '../errors/account-type-name-taken.error';
 
 @Injectable()
 export class AccountTypesService {
@@ -26,6 +27,10 @@ export class AccountTypesService {
     input: CreateAccountTypeInput,
     tx?: Prisma.TransactionClient,
   ): Promise<AccountType> {
+    const existing = await this.accountTypesRepo.findByName(input.name, tx);
+    if (existing) {
+      throw new AccountTypeNameTakenError(input.name);
+    }
     return this.accountTypesRepo.create(input, tx);
   }
 

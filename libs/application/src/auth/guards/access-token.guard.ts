@@ -64,7 +64,6 @@ export class AccessTokenGuard implements CanActivate {
 
     // Attach full user and userId to request for downstream handlers
     req.user = user;
-    console.log(req.user);
     return true;
   }
 }

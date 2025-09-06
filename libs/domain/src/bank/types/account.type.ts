@@ -2,7 +2,7 @@ import { AccountStatus } from '../entities/account.entity';
 
 export type CreateAccountInput = {
   accountTypeId: string;
-  name: string;
+  name?: string;
   userId: string;
   cardNumber: string;
   bankName: string;

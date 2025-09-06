@@ -1,25 +1,40 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import type { Account } from '@app/domain';
-import { Prisma } from '@generated/prisma';
-import { PrismaAccountRepository } from '@app/infra/bank/repositories/prisma-account.repository';
-import {
+import type {
   CreateAccountInput,
   UpdateAccountInput,
 } from '@app/domain/bank/types/account.type';
+import { Prisma } from '@generated/prisma';
+import { NotFoundError } from '@app/application/errors/not-found.error';
+import {
+  PrismaAccountRepository,
+  PrismaAccountTypeRepository,
+} from '@app/infra';
 
 @Injectable()
 export class AccountsService {
-  constructor(private readonly accountsRepo: PrismaAccountRepository) {}
+  constructor(
+    private readonly accountsRepo: PrismaAccountRepository,
+    private readonly accountTypesRepo: PrismaAccountTypeRepository,
+  ) {}
 
   async list(tx?: Prisma.TransactionClient) {
-    return this.accountsRepo.findAll(tx);
+    return this.accountsRepo.findAll(tx, {
+      include: { accountType: true, user: { include: { identity: true } } },
+    });
   }
 
   async findById(
     id: string,
     tx?: Prisma.TransactionClient,
   ): Promise<Account | null> {
-    return this.accountsRepo.findById(id, tx);
+    return this.accountsRepo.findUnique(
+      {
+        where: { id },
+        include: { accountType: true, user: { include: { identity: true } } },
+      },
+      tx,
+    );
   }
 
   async findByUserId(
@@ -30,10 +45,37 @@ export class AccountsService {
   }
 
   async create(
-    account: CreateAccountInput,
+    input: CreateAccountInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Account> {
-    return this.accountsRepo.create(account, tx);
+    // check if accountTypeId exists
+    console.log(input.accountTypeId);
+    const accountType = await this.accountTypesRepo.findById(
+      input.accountTypeId,
+    );
+
+    if (!accountType) {
+      throw new NotFoundError('AccountType', 'id', input.accountTypeId);
+    }
+
+    // check if cardNumber is unique
+    const existing = await this.accountsRepo.findUnique({
+      where: { cardNumber: input.cardNumber },
+    });
+    if (existing) {
+      throw new BadRequestException('Card number must be unique');
+    }
+
+    // Generate name
+    const name: string =
+      input.name ?? `${input.bankName.trim()}-${input.cardNumber.slice(-4)}`;
+
+    const payload: CreateAccountInput & { name: string } = {
+      ...input,
+      name,
+    };
+
+    return this.accountsRepo.create(payload, tx);
   }
 
   async update(
@@ -41,7 +83,7 @@ export class AccountsService {
     account: UpdateAccountInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Account> {
-    const exists = await this.accountsRepo.findById(id, tx);
+    const exists = await this.accountsRepo.findUnique({ where: { id } }, tx);
     if (!exists) {
       throw new Error('Account not found');
     }

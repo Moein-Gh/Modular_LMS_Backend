@@ -3,10 +3,7 @@ import type { PrismaClient, Prisma } from '@generated/prisma';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import type { Account } from '@app/domain';
 import { AccountRepository } from '@app/domain';
-import {
-  CreateAccountInput,
-  UpdateAccountInput,
-} from '@app/domain/bank/types/account.type';
+import { CreateAccountInput, UpdateAccountInput } from '@app/domain';
 
 const accountSelect: Prisma.AccountSelect = {
   id: true,
@@ -21,18 +18,24 @@ const accountSelect: Prisma.AccountSelect = {
 };
 
 type AccountModel = Prisma.AccountGetPayload<{ select: typeof accountSelect }>;
+type AccountModelWithRelations = AccountModel & {
+  user?: Account['user'];
+  accountType?: Account['accountType'];
+};
 
-function toDomain(model: AccountModel): Account {
+function toDomain(model: AccountModelWithRelations): Account {
   return {
     id: model.id,
     accountTypeId: model.accountTypeId,
     name: model.name,
     userId: model.userId,
     cardNumber: model.cardNumber,
-    bankName: model.bankName as unknown as Account['bankName'],
+    bankName: model.bankName,
     status: model.status as unknown as Account['status'],
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
+    user: model.user,
+    accountType: model.accountType,
   };
 }
 
@@ -40,38 +43,45 @@ function toDomain(model: AccountModel): Account {
 export class PrismaAccountRepository implements AccountRepository {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaClient) {}
 
-  async findAll(tx?: Prisma.TransactionClient): Promise<Account[]> {
+  async findAll(
+    tx?: Prisma.TransactionClient,
+    options?: Prisma.AccountFindManyArgs,
+  ): Promise<Account[]> {
     const prisma = tx ?? this.prisma;
-    const items = await prisma.account.findMany({ select: accountSelect });
-    return items.map((m) => toDomain(m as AccountModel));
+    const { include, ...rest } = options ?? {};
+    const args: Prisma.AccountFindManyArgs = {
+      ...(include ? { include } : { select: accountSelect }),
+      ...rest,
+    };
+    const items = await prisma.account.findMany(args);
+
+    return items.map((m) => toDomain(m as AccountModelWithRelations));
   }
 
-  async findById(
-    id: string,
+  async findUnique(
+    options: Prisma.AccountFindUniqueArgs,
     tx?: Prisma.TransactionClient,
   ): Promise<Account | null> {
     const prisma = tx ?? this.prisma;
-    const model = await prisma.account.findUnique({
-      where: { id },
-      select: accountSelect,
-    });
-    return model ? toDomain(model as AccountModel) : null;
+    const { include, where, ...rest } = options ?? {};
+    const args: Prisma.AccountFindUniqueArgs = {
+      where,
+      ...(include ? { include } : { select: accountSelect }),
+      ...rest,
+    };
+    const model = await prisma.account.findUnique(args);
+    return model ? toDomain(model as AccountModelWithRelations) : null;
   }
 
   async findByUserId(
     userId: string,
     tx?: Prisma.TransactionClient,
   ): Promise<Account[]> {
-    const prisma = tx ?? this.prisma;
-    const items = await prisma.account.findMany({
-      where: { userId },
-      select: accountSelect,
-    });
-    return items.map((m) => toDomain(m as AccountModel));
+    return this.findAll(tx, { where: { userId } });
   }
 
   async create(
-    account: CreateAccountInput,
+    account: CreateAccountInput & { name: string },
     tx?: Prisma.TransactionClient,
   ): Promise<Account> {
     const prisma = tx ?? this.prisma;
@@ -94,14 +104,21 @@ export class PrismaAccountRepository implements AccountRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Account> {
     const prisma = tx ?? this.prisma;
-    const existingAccount = await prisma.account.findUnique({ where: { id } });
-    if (!existingAccount) {
-      throw new Error('Account not found');
-    }
-    Object.assign(existingAccount, account);
     const updated = await prisma.account.update({
       where: { id },
-      data: existingAccount,
+      data: {
+        ...(account.accountTypeId !== undefined && {
+          accountTypeId: account.accountTypeId,
+        }),
+        ...(account.name !== undefined && { name: account.name }),
+        ...(account.userId !== undefined && { userId: account.userId }),
+        ...(account.cardNumber !== undefined && {
+          cardNumber: account.cardNumber,
+        }),
+        ...(account.bankName !== undefined && { bankName: account.bankName }),
+        ...(account.status !== undefined && { status: account.status }),
+      },
+      select: accountSelect,
     });
     return toDomain(updated as AccountModel);
   }

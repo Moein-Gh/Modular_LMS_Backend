@@ -25,6 +25,18 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
     return accountType;
   }
 
+  // Added: find by name for uniqueness checks
+  async findByName(
+    name: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<AccountType | null> {
+    const prisma = tx ?? this.prisma;
+    const accountType = await prisma.accountType.findFirst({
+      where: { name },
+    });
+    return accountType ?? null;
+  }
+
   async create(
     input: Pick<AccountType, 'name'>,
     tx?: Prisma.TransactionClient,

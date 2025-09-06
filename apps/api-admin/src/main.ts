@@ -7,9 +7,9 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap(): Promise<void> {
   ProcessErrorHandlers.setupProcessHandlers();
 
-  const app = await NestFactory.create(ApiAdminModule);
-
-  // ProblemDetailsFilter is registered via ProblemDetailsModule
+  const app = await NestFactory.create(ApiAdminModule, {
+    logger: ['warn', 'error'],
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -22,7 +22,11 @@ async function bootstrap(): Promise<void> {
 
   setupDocs(app, 'Loan Platform – Admin API');
 
-  await app.listen(process.env.port ?? 3000);
+  const port = Number(process.env.port ?? 3000);
+  await app.listen(port);
+  console.log('---------------------------------------');
+  console.log(`------ Admin API ready on :${port} -------`);
+  console.log('---------------------------------------');
 }
 
 void bootstrap();

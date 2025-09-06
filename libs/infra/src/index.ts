@@ -1,10 +1,10 @@
 export * from './infra.module';
 export * from './infra.service';
 // USER
-export * from './user/user.infra.module';
+export * from './user/index';
 // ACCESS
-export * from './access/access-infra.module';
+export * from './access/index';
 // AUTH
-export * from './auth/auth-infra.module';
+export * from './auth/index';
 // BANK
-export * from './bank/bank.infra.module';
+export * from './bank/index';
