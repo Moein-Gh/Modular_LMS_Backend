@@ -12,24 +12,17 @@ import {
 } from '@nestjs/common';
 import { AccessTokenGuard } from '@app/application';
 import { AccountTypesService } from '@app/application';
-import { AccountsService } from '@app/application';
-import { IsString } from 'class-validator';
-
-class CreateAccountTypeDto {
-  @IsString()
-  name!: string;
-}
-
-class UpdateAccountTypeDto {
-  @IsString()
-  name!: string;
-}
+import { BankService } from '@app/application';
+import { CreateBankDto } from './dtos/create-bank.dto';
+import { CreateAccountTypeDto } from './dtos/account-types/create-account-type.dto';
+import { UpdateAccountTypeDto } from './dtos/account-types/update-account-type.dto';
+// controller shouldn't depend on domain types for simple DTO forwarding
 
 @Controller('bank')
 export class BankController {
   constructor(
     private readonly accountTypes: AccountTypesService,
-    private readonly accounts: AccountsService,
+    private readonly bankService: BankService,
   ) {}
 
   // Account Types
@@ -38,6 +31,15 @@ export class BankController {
   @HttpCode(HttpStatus.CREATED)
   createAccountType(@Body() dto: CreateAccountTypeDto) {
     return this.accountTypes.create({ name: dto.name });
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  createBank(@Body() dto: CreateBankDto) {
+    // Delegate creation and validation to application service; it will
+    // throw a BankAlreadyExistsError if a bank is already present.
+    return this.bankService.bootstrap(dto);
   }
 
   @UseGuards(AccessTokenGuard)

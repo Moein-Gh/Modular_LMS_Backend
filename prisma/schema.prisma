@@ -164,4 +164,29 @@ model Account {
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  // Back-relation: bank using this account
+  bank          Bank?
+}
+
+/// Singleton bank configuration for the platform (exactly one row expected with id = 1)
+model Bank {
+  id                     String   @id @default(uuid()) @db.Uuid
+  name                   String
+  subscriptionFee        Decimal  @db.Decimal(18, 4)
+  commissionPercentage   Decimal  @default(10) @db.Decimal(5, 2)
+  defaultMaxInstallments Int      @default(10)
+
+  installmentOptions     Int[]    @default(dbgenerated("ARRAY[5,10,12]"))
+  status                 String   @default("active")
+  currency               String   @default("Toman")
+  timeZone               String   @default("Asia/Tehran")
+
+  accountId  String?  @unique @db.Uuid
+  account    Account? @relation(fields: [accountId], references: [id])
+
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@map("bank")
 }
