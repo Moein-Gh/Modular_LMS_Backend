@@ -43,6 +43,10 @@ services:
             - dist/
         - action: rebuild
           path: package.json
+        - action: rebuild
+          path: pnpm-lock.yaml
+        - action: rebuild
+          path: pnpm-workspace.yaml
 
   api-admin:
     build:
@@ -75,6 +79,10 @@ services:
             - dist/
         - action: rebuild
           path: package.json
+        - action: rebuild
+          path: pnpm-lock.yaml
+        - action: rebuild
+          path: pnpm-workspace.yaml
 
 volumes:
   pgdata:

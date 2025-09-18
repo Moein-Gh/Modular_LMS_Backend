@@ -1,9 +1,14 @@
 # ---------- builder ----------
 FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-RUN corepack enable && pnpm install --frozen-lockfile
+# Copy root package.json and pnpm-lock.yaml for monorepo install
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Use the exact pnpm version pinned in package.json
+ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
+RUN corepack enable && corepack prepare pnpm@10.14.0 --activate && pnpm install --frozen-lockfile
+# Copy only api-user app and libs after installing dependencies
 COPY . .
+RUN pnpm exec prisma generate
 RUN pnpm run build api-user
 
 # ---------- production ----------
@@ -18,9 +23,14 @@ CMD ["node", "dist/main.js"]
 # ---------- development (watch) ----------
 FROM node:20-alpine AS dev
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-RUN corepack enable && pnpm install
+# Copy root package.json and pnpm-lock.yaml for monorepo install
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Use the exact pnpm version pinned in package.json
+ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
+RUN corepack enable && corepack prepare pnpm@10.14.0 --activate && pnpm install
+# Copy only api-user app and libs after installing dependencies
 COPY . .
+RUN pnpm exec prisma generate
 ENV NODE_ENV=development
 EXPOSE 3000
 CMD ["pnpm", "run", "start:dev"]
