@@ -144,6 +144,7 @@ model SmsCode {
 model AccountType {
   id          String   @id @default(uuid()) @db.Uuid
   name        String    @unique
+  maxAccounts Int?     
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   accounts    Account[]

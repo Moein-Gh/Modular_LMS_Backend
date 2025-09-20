@@ -1,12 +1,16 @@
 import { Account } from '@app/domain';
-import { CreateAccountInput, UpdateAccountInput } from '../types/account.type';
 import { Prisma } from '@generated/prisma';
+import { CreateAccountInput, UpdateAccountInput } from '../types/account.type';
 
 export interface AccountRepository {
   findAll(
-    tx?: Prisma.TransactionClient,
     options?: Prisma.AccountFindManyArgs,
+    tx?: Prisma.TransactionClient,
   ): Promise<Account[]>;
+  count(
+    where?: Prisma.AccountWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number>;
   findUnique(
     options: Prisma.AccountFindUniqueArgs,
     tx?: Prisma.TransactionClient,

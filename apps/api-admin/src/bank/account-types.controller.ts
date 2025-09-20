@@ -1,4 +1,10 @@
 import {
+  AccessTokenGuard,
+  AccountTypesService,
+  PaginatedResponseDto,
+  PaginationQueryDto,
+} from '@app/application';
+import {
   Body,
   Controller,
   Delete,
@@ -8,9 +14,9 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { AccessTokenGuard, AccountTypesService } from '@app/application';
 import { CreateAccountTypeDto } from './dtos/account-types/create-account-type.dto';
 import { UpdateAccountTypeDto } from './dtos/account-types/update-account-type.dto';
 
@@ -20,8 +26,18 @@ export class AccountTypesController {
   constructor(private readonly accountTypes: AccountTypesService) {}
 
   @Get()
-  list() {
-    return this.accountTypes.list();
+  async list(
+    @Query() query: PaginationQueryDto,
+  ): Promise<PaginatedResponseDto<any>> {
+    const { items, totalItems, page, pageSize } =
+      await this.accountTypes.list(query);
+    return PaginatedResponseDto.from({
+      items,
+      totalItems,
+      page,
+      pageSize,
+      makeUrl: (p, s) => `/account-types?page=${p}&pageSize=${s}`,
+    });
   }
 
   @Get(':id')
@@ -32,12 +48,18 @@ export class AccountTypesController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateAccountTypeDto) {
-    return this.accountTypes.create({ name: dto.name });
+    return this.accountTypes.create({
+      name: dto.name,
+      maxAccounts: dto.maxAccounts,
+    });
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateAccountTypeDto) {
-    return this.accountTypes.update(id, { name: dto.name });
+    return this.accountTypes.update(id, {
+      name: dto.name,
+      maxAccounts: dto.maxAccounts,
+    });
   }
 
   @Delete(':id')

@@ -14,3 +14,7 @@ export * from './auth';
 
 // BANK
 export * from './bank';
+
+// COMMON DTOs
+export * from './common/dto/paginated-response.dto';
+export * from './common/dto/pagination-query.dto';

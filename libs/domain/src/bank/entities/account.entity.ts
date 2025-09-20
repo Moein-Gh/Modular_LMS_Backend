@@ -1,5 +1,4 @@
-import { User } from '@app/domain';
-import { AccountType } from '@app/domain';
+import { AccountType, User } from '@app/domain';
 
 export enum AccountStatus {
   ACTIVE = 'active',

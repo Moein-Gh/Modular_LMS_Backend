@@ -1,4 +1,10 @@
 import {
+  AccessTokenGuard,
+  AccountsService,
+  PaginatedResponseDto,
+  PaginationQueryDto,
+} from '@app/application';
+import {
   Body,
   Controller,
   Delete,
@@ -8,9 +14,9 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { AccessTokenGuard, AccountsService } from '@app/application';
 import { CreateAccountDto } from './dtos/accounts/create-account.dto';
 import { UpdateAccountDto } from './dtos/accounts/update-account.dto';
 
@@ -20,8 +26,18 @@ export class AccountsController {
   constructor(private readonly accounts: AccountsService) {}
 
   @Get()
-  list() {
-    return this.accounts.list();
+  async list(
+    @Query() query: PaginationQueryDto,
+  ): Promise<PaginatedResponseDto<any>> {
+    const { items, totalItems, page, pageSize } =
+      await this.accounts.list(query);
+    return PaginatedResponseDto.from({
+      items,
+      totalItems,
+      page,
+      pageSize,
+      makeUrl: (p, s) => `/accounts?page=${p}&pageSize=${s}`,
+    });
   }
 
   @Get(':id')

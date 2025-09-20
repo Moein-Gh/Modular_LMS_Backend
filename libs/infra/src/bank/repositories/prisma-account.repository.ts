@@ -1,9 +1,12 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type { PrismaClient, Prisma } from '@generated/prisma';
-import { PrismaService } from '@app/infra/prisma/prisma.service';
 import type { Account } from '@app/domain';
-import { AccountRepository } from '@app/domain';
-import { CreateAccountInput, UpdateAccountInput } from '@app/domain';
+import {
+  AccountRepository,
+  CreateAccountInput,
+  UpdateAccountInput,
+} from '@app/domain';
+import { PrismaService } from '@app/infra/prisma/prisma.service';
+import type { Prisma, PrismaClient } from '@generated/prisma';
+import { Inject, Injectable } from '@nestjs/common';
 
 const accountSelect: Prisma.AccountSelect = {
   id: true,
@@ -44,8 +47,8 @@ export class PrismaAccountRepository implements AccountRepository {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaClient) {}
 
   async findAll(
-    tx?: Prisma.TransactionClient,
     options?: Prisma.AccountFindManyArgs,
+    tx?: Prisma.TransactionClient,
   ): Promise<Account[]> {
     const prisma = tx ?? this.prisma;
     const { include, ...rest } = options ?? {};
@@ -56,6 +59,14 @@ export class PrismaAccountRepository implements AccountRepository {
     const items = await prisma.account.findMany(args);
 
     return items.map((m) => toDomain(m as AccountModelWithRelations));
+  }
+
+  async count(
+    where?: Prisma.AccountWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    const prisma = tx ?? this.prisma;
+    return prisma.account.count({ where });
   }
 
   async findUnique(
@@ -77,7 +88,7 @@ export class PrismaAccountRepository implements AccountRepository {
     userId: string,
     tx?: Prisma.TransactionClient,
   ): Promise<Account[]> {
-    return this.findAll(tx, { where: { userId } });
+    return this.findAll({ where: { userId } }, tx);
   }
 
   async create(

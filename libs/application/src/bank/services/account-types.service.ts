@@ -1,19 +1,32 @@
-import { Injectable } from '@nestjs/common';
+import { PaginationQueryDto } from '@app/application/common/dto/pagination-query.dto';
+import { paginatePrisma } from '@app/application/common/pagination.util';
 import type {
   AccountType,
   CreateAccountTypeInput,
   UpdateAccountTypeInput,
 } from '@app/domain';
-import { Prisma } from '@generated/prisma';
 import { PrismaAccountTypeRepository } from '@app/infra/bank/repositories/prisma-account-type.repository';
+import { Prisma } from '@generated/prisma';
+import { Injectable } from '@nestjs/common';
 import { AccountTypeNameTakenError } from '../errors/account-type-name-taken.error';
 
 @Injectable()
 export class AccountTypesService {
   constructor(private readonly accountTypesRepo: PrismaAccountTypeRepository) {}
 
-  async list(tx?: Prisma.TransactionClient) {
-    return this.accountTypesRepo.findAll(tx);
+  async list(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
+    return paginatePrisma<
+      AccountType,
+      Prisma.AccountTypeFindManyArgs,
+      Prisma.AccountTypeWhereInput
+    >({
+      repo: this.accountTypesRepo,
+      query: query ?? new PaginationQueryDto(),
+      searchFields: ['name', 'maxAccounts'],
+      defaultOrderBy: 'createdAt',
+      defaultOrderDir: 'desc',
+      tx,
+    });
   }
 
   async findById(
