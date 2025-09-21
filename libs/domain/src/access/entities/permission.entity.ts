@@ -1,4 +1,4 @@
-export interface DomainPermission {
+export interface Permission {
   id: string;
   key: string;
   name: string;

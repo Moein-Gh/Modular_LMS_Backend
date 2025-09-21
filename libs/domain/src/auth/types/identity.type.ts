@@ -4,3 +4,5 @@ export type CreateIdentityInput = Omit<
   Identity,
   'id' | 'createdAt' | 'updatedAt'
 >;
+
+export type UpdateIdentityInput = Partial<CreateIdentityInput>;

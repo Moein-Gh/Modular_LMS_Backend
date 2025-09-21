@@ -1,30 +1,32 @@
 import {
+  Body,
   Controller,
   Get,
-  Param,
-  Patch,
-  Body,
-  NotFoundException,
-  UseGuards,
-  Post,
   HttpCode,
   HttpStatus,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 
 import {
   AccessTokenGuard,
   IdentityService,
   NotFoundError,
+  PaginatedResponseDto,
+  PaginationQueryDto,
   RegisterUserInput,
   RegisterUserUseCase,
   UsersService,
 } from '@app/application';
-import { ListUsersDto } from './dtos/list-users.dto';
-import { GetUserDto } from './dtos/get-user.dto';
-import { UpdateUserDto } from './dtos/update-user.dto';
 import { User } from '@app/domain';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
-
+import { GetUserDto } from './dtos/get-user.dto';
+import { UpdateUserDto } from './dtos/update-user.dto';
+@UseGuards(AccessTokenGuard)
 @Controller('users')
 export class UsersController {
   constructor(
@@ -37,9 +39,7 @@ export class UsersController {
     const user = await this.usersService.findById(id);
     if (!user) throw new NotFoundException('User not found');
 
-    const identity = await this.identityService.findOne({
-      id: user.identityId,
-    });
+    const identity = await this.identityService.findById(user.identityId);
 
     if (!identity) throw new NotFoundError('Identity', 'id', user.identityId);
 
@@ -51,27 +51,27 @@ export class UsersController {
     };
   }
 
-  @UseGuards(AccessTokenGuard)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   registerUser(@Body() body: RegisterUserInput) {
     return this.registerUserUseCase.execute(body);
   }
 
-  @UseGuards(AccessTokenGuard)
   @Get()
-  async findAll(): Promise<ListUsersDto[]> {
-    const users = await this.usersService.findAll(true);
-    return users.map((u) => ({
-      id: u.id,
-      email: u.identity?.email ?? '',
-      isActive: u.isActive,
-      identityId: u.identityId,
-      identity: u.identity!,
-    }));
+  async findAll(
+    @Query() query: PaginationQueryDto,
+  ): Promise<PaginatedResponseDto<User>> {
+    const { items, totalItems, page, pageSize } =
+      await this.usersService.findAll(query);
+    return PaginatedResponseDto.from({
+      items,
+      totalItems,
+      page,
+      pageSize,
+      makeUrl: (p, s) => `/users?page=${p}&pageSize=${s}`,
+    });
   }
 
-  @UseGuards(AccessTokenGuard)
   @Get(':id')
   async findOne(@Param('id', UUID_V4_PIPE) id: string): Promise<GetUserDto> {
     const user = await this.findUserAndIdentity(id);
@@ -83,7 +83,6 @@ export class UsersController {
     };
   }
 
-  @UseGuards(AccessTokenGuard)
   @Patch(':id')
   async update(
     @Param('id', UUID_V4_PIPE) id: string,
@@ -92,7 +91,7 @@ export class UsersController {
     const user = await this.findUserAndIdentity(id);
     if (!user) throw new NotFoundError('User', 'id', id);
 
-    const updated = await this.usersService.updateUser(id, {
+    const updated = await this.usersService.update(id, {
       isActive: dto.isActive,
       identityId: dto.identityId,
     });

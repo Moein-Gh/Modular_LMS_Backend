@@ -1,28 +1,19 @@
 import { CreateUserInput } from '@app/application';
-import type { User } from '../entities/user.entity';
+import { UpdateUserInput } from '@app/application/user/types/update-user.type';
+import { BaseQueryParams } from '@app/domain/common';
+import { User } from '../entities/user.entity';
 
-import type { Prisma } from '@generated/prisma';
+export interface ListUserParams extends BaseQueryParams {
+  identityName?: string;
+  identityEmail?: string;
+  isActive?: boolean;
+}
 
 export interface IUserRepository {
-  createUser(
-    input: CreateUserInput,
-    tx?: Prisma.TransactionClient,
-  ): Promise<User>;
-  findById(
-    id: string,
-    include: boolean,
-    tx?: Prisma.TransactionClient,
-  ): Promise<User | null>;
-  findByIdentityId(
-    identityId: string,
-    include: boolean,
-    tx?: Prisma.TransactionClient,
-  ): Promise<User | null>;
-  setActive(
-    userId: string,
-    isActive: boolean,
-    tx?: Prisma.TransactionClient,
-  ): Promise<void>;
-  deleteUser(id: string, tx?: Prisma.TransactionClient): Promise<void>;
-  findAll(include: boolean, tx?: Prisma.TransactionClient): Promise<User[]>;
+  findAll(options?: unknown, tx?: unknown): Promise<User[]>;
+  findById(id: string, tx?: unknown): Promise<User | null>;
+  count(where?: unknown, tx?: unknown): Promise<number>;
+  create(account: CreateUserInput, tx?: unknown): Promise<User>;
+  update(id: string, account: UpdateUserInput, tx?: unknown): Promise<User>;
+  delete(id: string, tx?: unknown): Promise<void>;
 }

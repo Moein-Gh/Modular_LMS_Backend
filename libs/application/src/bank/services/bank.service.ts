@@ -1,14 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import type { Prisma } from '@generated/prisma';
+import { NotFoundError } from '@app/application/errors/not-found.error';
 import type { Bank } from '@app/domain';
 import type {
-  UpdateBankInput,
   CreateBankInput,
+  UpdateBankInput,
 } from '@app/domain/bank/types/bank.type';
+import {
+  PrismaAccountRepository,
+  PrismaAccountTypeRepository,
+} from '@app/infra';
 import { PrismaBankRepository } from '@app/infra/bank/repositories/prisma-bank.repository';
-import { PrismaAccountRepository } from '@app/infra';
-import { PrismaAccountTypeRepository } from '@app/infra';
-import { NotFoundError } from '@app/application/errors/not-found.error';
+import type { Prisma } from '@generated/prisma';
+import { Injectable } from '@nestjs/common';
 import { BankAlreadyExistsError } from '../errors/bank-already-exists.error';
 import { BankInvalidAccountError } from '../errors/bank-invalid-account.error';
 
@@ -64,6 +66,17 @@ export class BankService {
     input: UpdateBankInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Bank> {
-    return this.bankRepo.update(id, input, tx);
+    const existing = await this.bankRepo.findOne(tx);
+    if (!existing || existing.id !== id) {
+      throw new NotFoundError('Bank', 'id', id);
+    }
+    try {
+      return await this.bankRepo.update(id, input, tx);
+    } catch (e) {
+      if ((e as { code?: unknown })?.code === 'P2025') {
+        throw new NotFoundError('Bank', 'id', id);
+      }
+      throw e;
+    }
   }
 }

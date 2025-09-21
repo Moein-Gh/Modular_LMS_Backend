@@ -17,6 +17,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { CreateAccountTypeDto } from './dtos/account-types/create-account-type.dto';
 import { UpdateAccountTypeDto } from './dtos/account-types/update-account-type.dto';
 
@@ -26,11 +27,11 @@ export class AccountTypesController {
   constructor(private readonly accountTypes: AccountTypesService) {}
 
   @Get()
-  async list(
+  async findAll(
     @Query() query: PaginationQueryDto,
   ): Promise<PaginatedResponseDto<any>> {
     const { items, totalItems, page, pageSize } =
-      await this.accountTypes.list(query);
+      await this.accountTypes.findAll(query);
     return PaginatedResponseDto.from({
       items,
       totalItems,
@@ -41,7 +42,7 @@ export class AccountTypesController {
   }
 
   @Get(':id')
-  get(@Param('id') id: string) {
+  get(@Param('id', UUID_V4_PIPE) id: string) {
     return this.accountTypes.findById(id);
   }
 
@@ -55,7 +56,10 @@ export class AccountTypesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateAccountTypeDto) {
+  update(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @Body() dto: UpdateAccountTypeDto,
+  ) {
     return this.accountTypes.update(id, {
       name: dto.name,
       maxAccounts: dto.maxAccounts,
@@ -64,7 +68,7 @@ export class AccountTypesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id', UUID_V4_PIPE) id: string) {
     await this.accountTypes.delete(id);
     return;
   }

@@ -1,3 +1,4 @@
-import { User } from '@app/domain';
-
-export type UpdateUserInput = Omit<User, 'id' | 'identity'>;
+export type UpdateUserInput = Partial<{
+  identityId: string;
+  isActive: boolean;
+}>;

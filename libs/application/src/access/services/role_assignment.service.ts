@@ -1,15 +1,14 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { PaginationQueryDto } from '@app/application/common/dto/pagination-query.dto';
+import { paginatePrisma } from '@app/application/common/pagination.util';
+import { NotFoundError } from '@app/application/errors/not-found.error';
+import type { RoleAssignment } from '@app/domain';
 import {
   type RoleAssignmentRepository,
   ROLE_ASSIGNMENT_REPOSITORY,
 } from '@app/domain';
-import type { BaseListResult, RoleAssignment } from '@app/domain';
-import { NotFoundError } from '@app/application/errors/not-found.error';
+import { CreateRoleAssignmentInput } from '@app/domain/access/types/role-assignment.type';
 import { Prisma } from '@generated/prisma';
-import {
-  CreateRoleAssignmentInput,
-  ListRoleAssignmentsParams,
-} from '@app/domain/access/types/role-assignment.type';
+import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class RoleAssignmentService {
@@ -36,11 +35,22 @@ export class RoleAssignmentService {
     return roleAssignment;
   }
 
-  findAll(
-    params: ListRoleAssignmentsParams,
-    tx?: Prisma.TransactionClient,
-  ): Promise<BaseListResult<RoleAssignment>> {
-    return this.roleAssignment.findAll(params, tx);
+  async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
+    return paginatePrisma<
+      RoleAssignment,
+      Prisma.RoleAssignmentFindManyArgs,
+      Prisma.RoleAssignmentWhereInput
+    >({
+      repo: this.roleAssignment,
+      query: query ?? new PaginationQueryDto(),
+      defaultOrderBy: 'createdAt',
+      defaultOrderDir: 'desc',
+      tx,
+      include: {
+        role: true,
+        user: { include: { identity: { select: { name: true } } } },
+      },
+    });
   }
 
   update(
@@ -48,10 +58,36 @@ export class RoleAssignmentService {
     data: RoleAssignment,
     tx?: Prisma.TransactionClient,
   ): Promise<RoleAssignment> {
-    return this.roleAssignment.update(id, data, tx);
+    return (async () => {
+      const existing = await this.roleAssignment.findById(id, tx);
+      if (!existing) {
+        throw new NotFoundError('RoleAssignment', 'id', id);
+      }
+      try {
+        return await this.roleAssignment.update(id, data, tx);
+      } catch (e) {
+        if ((e as { code?: unknown })?.code === 'P2025') {
+          throw new NotFoundError('RoleAssignment', 'id', id);
+        }
+        throw e;
+      }
+    })();
   }
 
   delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
-    return this.roleAssignment.delete(id, tx);
+    return (async () => {
+      const existing = await this.roleAssignment.findById(id, tx);
+      if (!existing) {
+        throw new NotFoundError('RoleAssignment', 'id', id);
+      }
+      try {
+        await this.roleAssignment.delete(id, tx);
+      } catch (e) {
+        if ((e as { code?: unknown })?.code === 'P2025') {
+          throw new NotFoundError('RoleAssignment', 'id', id);
+        }
+        throw e;
+      }
+    })();
   }
 }

@@ -1,12 +1,12 @@
+import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
 import { Injectable } from '@nestjs/common';
-import { IdentityService } from '../services/identity.service';
 import { UsersService } from '../../user/services/users.service';
 import {
   RegisterUserInput,
   RegisterUserResult,
 } from '../dtos/register-user.usecase.dto';
 import { IdentityAlreadyExistsError } from '../errors/identityAlreadyExists';
-import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
+import { IdentityService } from '../services/identity.service';
 
 @Injectable()
 export class RegisterUserUseCase {

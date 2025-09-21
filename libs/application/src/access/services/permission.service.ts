@@ -1,12 +1,14 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { PaginationQueryDto } from '@app/application/common/dto/pagination-query.dto';
+import { paginatePrisma } from '@app/application/common/pagination.util';
+import { NotFoundError } from '@app/application/errors/not-found.error';
+import type { Permission } from '@app/domain';
 import {
   PERMISSION_REPOSITORY,
-  type PermissionRepository,
   type CreatePermissionInput,
-  type ListPermissionsParams,
+  type PermissionRepository,
 } from '@app/domain';
-import type { BaseListResult, DomainPermission } from '@app/domain';
-import { NotFoundError } from '@app/application/errors/not-found.error';
+import { Prisma } from '@generated/prisma';
+import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class PermissionService {
@@ -15,11 +17,11 @@ export class PermissionService {
     private readonly permissions: PermissionRepository,
   ) {}
 
-  create(input: CreatePermissionInput): Promise<DomainPermission> {
+  create(input: CreatePermissionInput): Promise<Permission> {
     return this.permissions.create(input);
   }
 
-  async getById(id: string): Promise<DomainPermission> {
+  async getById(id: string): Promise<Permission> {
     const permission = await this.permissions.findById(id);
     if (!permission) {
       throw new NotFoundError('Permission', 'id', id);
@@ -27,30 +29,56 @@ export class PermissionService {
     return permission;
   }
 
-  async getByKey(key: string): Promise<DomainPermission> {
-    const permission = await this.permissions.findByKey(key);
-    if (!permission) {
+  async getByKey(key: string): Promise<Permission> {
+    const permissions = await this.permissions.findAll({ key });
+    if (!permissions.length) {
       throw new NotFoundError('Permission', 'key', key);
     }
-    return permission;
+    return permissions[0];
   }
 
-  async findAll(
-    params: ListPermissionsParams,
-  ): Promise<BaseListResult<DomainPermission>> {
-    return this.permissions.findAll(params);
+  async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
+    return paginatePrisma<
+      Permission,
+      Prisma.PermissionFindManyArgs,
+      Prisma.PermissionWhereInput
+    >({
+      repo: this.permissions,
+      query: query ?? new PaginationQueryDto(),
+      searchFields: ['name', 'key', 'description'],
+      defaultOrderBy: 'createdAt',
+      defaultOrderDir: 'desc',
+      tx,
+    });
   }
 
-  async update(id: string, data: DomainPermission): Promise<DomainPermission> {
-    const existingPermission = await this.permissions.findById(id);
-    if (!existingPermission) {
+  async update(id: string, data: Permission): Promise<Permission> {
+    const existing = await this.permissions.findById(id);
+    if (!existing) {
       throw new NotFoundError('Permission', 'id', id);
     }
-    Object.assign(existingPermission, data);
-    return this.permissions.update(id, existingPermission);
+    try {
+      return await this.permissions.update(id, { ...existing, ...data });
+    } catch (e) {
+      if ((e as { code?: unknown })?.code === 'P2025') {
+        throw new NotFoundError('Permission', 'id', id);
+      }
+      throw e;
+    }
   }
 
   async delete(id: string): Promise<void> {
-    return this.permissions.delete(id);
+    const existing = await this.permissions.findById(id);
+    if (!existing) {
+      throw new NotFoundError('Permission', 'id', id);
+    }
+    try {
+      await this.permissions.delete(id);
+    } catch (e) {
+      if ((e as { code?: unknown })?.code === 'P2025') {
+        throw new NotFoundError('Permission', 'id', id);
+      }
+      throw e;
+    }
   }
 }

@@ -61,6 +61,18 @@ export class PrismaAccountRepository implements AccountRepository {
     return items.map((m) => toDomain(m as AccountModelWithRelations));
   }
 
+  async findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Account | null> {
+    const prisma = tx ?? this.prisma;
+    const model = await prisma.account.findUnique({
+      where: { id },
+      select: accountSelect,
+    });
+    return model ? toDomain(model as AccountModel) : null;
+  }
+
   async count(
     where?: Prisma.AccountWhereInput,
     tx?: Prisma.TransactionClient,

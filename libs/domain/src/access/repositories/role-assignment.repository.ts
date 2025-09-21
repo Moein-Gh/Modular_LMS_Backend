@@ -1,30 +1,23 @@
-import { Prisma } from '@generated/prisma';
-import type { RoleAssignment } from '../entities/role-assignment.entity';
+import { RoleAssignment } from '../entities/role-assignment.entity';
 import {
   CreateRoleAssignmentInput,
-  ListRoleAssignmentsParams,
+  UpdateRoleAssignmentInput,
 } from '../types/role-assignment.type';
-import { BaseListResult } from '@app/domain/common/baseListResult.type';
 
 export interface RoleAssignmentRepository {
-  findById(
-    id: string,
-    tx?: Prisma.TransactionClient,
-  ): Promise<RoleAssignment | null>;
-  findAll(
-    params: ListRoleAssignmentsParams,
-    tx?: Prisma.TransactionClient,
-  ): Promise<BaseListResult<RoleAssignment>>;
+  findAll(options?: unknown, tx?: unknown): Promise<RoleAssignment[]>;
+  findById(id: string, tx?: unknown): Promise<RoleAssignment | null>;
+  count(where?: unknown, tx?: unknown): Promise<number>;
   create(
-    data: CreateRoleAssignmentInput,
-    tx?: Prisma.TransactionClient,
+    account: CreateRoleAssignmentInput,
+    tx?: unknown,
   ): Promise<RoleAssignment>;
   update(
     id: string,
-    data: RoleAssignment,
-    tx?: Prisma.TransactionClient,
+    account: UpdateRoleAssignmentInput,
+    tx?: unknown,
   ): Promise<RoleAssignment>;
-  delete(id: string, tx?: Prisma.TransactionClient): Promise<void>;
+  delete(id: string, tx?: unknown): Promise<void>;
 }
 
 export const ROLE_ASSIGNMENT_REPOSITORY = Symbol('ROLE_ASSIGNMENT_REPOSITORY');

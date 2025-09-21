@@ -1,7 +1,6 @@
-import { Identity, IdentityRepository } from '@app/domain';
-import { CreateIdentityInput } from '@app/domain';
+import { CreateIdentityInput, Identity, IdentityRepository } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
-import { Prisma } from '@generated/prisma';
+import type { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 
 type IdentityModel = {
@@ -43,8 +42,12 @@ function toDomain(model: IdentityModel): Identity {
 export class PrismaIdentityRepository implements IdentityRepository {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  async create(data: CreateIdentityInput): Promise<Identity> {
-    const created: IdentityModel = await this.prisma.identity.create({
+  async create(
+    data: CreateIdentityInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Identity> {
+    const client = (tx ?? this.prisma) as PrismaService;
+    const created: IdentityModel = await client.identity.create({
       data: {
         phone: data.phone,
         name: data.name,
@@ -56,8 +59,14 @@ export class PrismaIdentityRepository implements IdentityRepository {
     });
     return toDomain(created);
   }
-  async update(id: string, data: CreateIdentityInput): Promise<Identity> {
-    const updated: IdentityModel = await this.prisma.identity.update({
+
+  async update(
+    id: string,
+    data: CreateIdentityInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Identity> {
+    const client = (tx ?? this.prisma) as PrismaService;
+    const updated: IdentityModel = await client.identity.update({
       where: { id },
       data: {
         phone: data.phone,
@@ -71,17 +80,53 @@ export class PrismaIdentityRepository implements IdentityRepository {
     return toDomain(updated);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.identity.delete({
-      where: { id },
-    });
+  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const client = (tx ?? this.prisma) as PrismaService;
+    await client.identity.delete({ where: { id } });
   }
 
-  async findOne(where: Prisma.IdentityWhereInput): Promise<Identity | null> {
-    const identity = await this.prisma.identity.findFirst({
+  async findOne(
+    where: Prisma.IdentityWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Identity | null> {
+    const client = (tx ?? this.prisma) as PrismaService;
+    const identity = await client.identity.findFirst({
       where,
       select: identitySelect,
     });
     return identity ? toDomain(identity) : null;
+  }
+
+  async findAll(
+    options?: Prisma.IdentityFindManyArgs,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Identity[]> {
+    const client = (tx ?? this.prisma) as PrismaService;
+    const { where } = (options ?? {}) as { where?: Prisma.IdentityWhereInput };
+    const identities = await client.identity.findMany({
+      where,
+      select: identitySelect,
+    });
+    return identities.map(toDomain);
+  }
+
+  async findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Identity | null> {
+    const client = (tx ?? this.prisma) as PrismaService;
+    const identity = await client.identity.findUnique({
+      where: { id },
+      select: identitySelect,
+    });
+    return identity ? toDomain(identity) : null;
+  }
+
+  async count(
+    where?: Prisma.IdentityWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    const client = (tx ?? this.prisma) as PrismaService;
+    return client.identity.count({ where: where as Prisma.IdentityWhereInput });
   }
 }

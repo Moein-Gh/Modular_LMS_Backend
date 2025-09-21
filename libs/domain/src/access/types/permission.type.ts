@@ -1,10 +1,12 @@
 import { BaseQueryParams } from '@app/domain';
-import { DomainPermission } from '../entities/permission.entity';
+import { Permission } from '../entities/permission.entity';
 
 export type CreatePermissionInput = Omit<
-  DomainPermission,
+  Permission,
   'id' | 'createdAt' | 'updatedAt'
 >;
+
+export type UpdatePermissionInput = Partial<CreatePermissionInput>;
 
 export interface ListPermissionsParams extends BaseQueryParams {
   orderBy?: 'createdAt' | 'name' | 'key';

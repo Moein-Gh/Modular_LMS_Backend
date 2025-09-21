@@ -1,13 +1,12 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type { PrismaClient } from '@generated/prisma';
-import { Prisma } from '@generated/prisma';
+import type { Role } from '@app/domain';
 import {
-  type RoleRepository,
   type CreateRoleInput,
-  type ListRolesParams,
+  type RoleRepository,
+  type UpdateRoleInput,
 } from '@app/domain';
-import type { BaseListResult, Role } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
+import { Prisma } from '@generated/prisma';
+import { Inject, Injectable } from '@nestjs/common';
 
 // Use a structural type that matches the Prisma Role model
 type RoleModel = {
@@ -41,92 +40,42 @@ function toDomain(model: RoleModel): Role {
 
 @Injectable()
 export class PrismaRoleRepository implements RoleRepository {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaClient) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async findById(
     id: string,
     tx?: Prisma.TransactionClient,
   ): Promise<Role | null> {
-    try {
-      const prisma = tx ?? this.prisma;
-      const model = await prisma.role.findUnique({
-        where: { id },
-        select: roleSelect,
-      });
-      return model ? toDomain(model as RoleModel) : null;
-    } catch (e) {
-      if (
-        e instanceof Prisma.PrismaClientKnownRequestError &&
-        e.code === 'P2023'
-      ) {
-        // Invalid UUID → treat as not found, service will map to 404
-        return null;
-      }
-      throw e;
-    }
-  }
-
-  async findByKey(
-    key: string,
-    tx?: Prisma.TransactionClient,
-  ): Promise<Role | null> {
-    const prisma = tx ?? this.prisma;
+    const prisma = (tx ?? this.prisma) as PrismaService;
     const model = await prisma.role.findUnique({
-      where: { key },
+      where: { id },
       select: roleSelect,
     });
     return model ? toDomain(model as RoleModel) : null;
   }
 
-  async findAll(
-    params: ListRolesParams,
+  public async findAll(
+    options: Prisma.RoleFindManyArgs,
     tx?: Prisma.TransactionClient,
-  ): Promise<BaseListResult<Role>> {
+  ): Promise<Role[]> {
     const prisma = tx ?? this.prisma;
-    const {
-      search,
-      skip = 0,
-      take = 20,
-      orderBy = 'createdAt',
-      orderDir = 'desc',
-    } = params;
+    const roles = await prisma.role.findMany(options);
+    return roles.map((r) => toDomain(r as RoleModel));
+  }
 
-    const where: Prisma.RoleWhereInput | undefined = search
-      ? {
-          OR: [
-            { key: { contains: search, mode: 'insensitive' } },
-            { name: { contains: search, mode: 'insensitive' } },
-            { description: { contains: search, mode: 'insensitive' } },
-          ],
-        }
-      : undefined;
-
-    const order: Prisma.RoleOrderByWithRelationInput =
-      orderBy === 'name'
-        ? { name: orderDir }
-        : orderBy === 'key'
-          ? { key: orderDir }
-          : { createdAt: orderDir };
-
-    const [items, total] = await Promise.all([
-      prisma.role.findMany({
-        where,
-        skip,
-        take,
-        orderBy: order,
-        select: roleSelect,
-      }),
-      this.prisma.role.count({ where }),
-    ]);
-
-    return { items: items.map((i) => toDomain(i as RoleModel)), total };
+  async count(
+    where?: Prisma.RoleWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    const prisma = (tx ?? this.prisma) as PrismaService;
+    return prisma.role.count({ where });
   }
 
   async create(
     data: CreateRoleInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Role> {
-    const prisma = tx ?? this.prisma;
+    const prisma = (tx ?? this.prisma) as PrismaService;
     const created = await prisma.role.create({
       data: {
         key: data.key,
@@ -140,10 +89,10 @@ export class PrismaRoleRepository implements RoleRepository {
 
   async update(
     id: string,
-    data: Role,
+    data: UpdateRoleInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Role> {
-    const prisma = tx ?? this.prisma;
+    const prisma = (tx ?? this.prisma) as PrismaService;
     const updated = await prisma.role.update({
       where: { id },
       data: {
@@ -156,7 +105,7 @@ export class PrismaRoleRepository implements RoleRepository {
   }
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
-    const prisma = tx ?? this.prisma;
+    const prisma = (tx ?? this.prisma) as PrismaService;
     await prisma.role.delete({ where: { id } });
   }
 }

@@ -1,16 +1,14 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { PaginationQueryDto } from '@app/application/common/dto/pagination-query.dto';
+import { paginatePrisma } from '@app/application/common/pagination.util';
+import { NotFoundError } from '@app/application/errors/not-found.error';
+import type { CreatePermissionGrantInput, PermissionGrant } from '@app/domain';
 import {
   PERMISSION_GRANT_REPOSITORY,
   type PermissionGrantRepository,
   type UpdatePermissionGrantInput,
-  type ListPermissionGrantsParams,
 } from '@app/domain';
-import type {
-  BaseListResult,
-  CreatePermissionGrantInput,
-  PermissionGrant,
-} from '@app/domain';
-import { NotFoundError } from '@app/application/errors/not-found.error';
+import { Prisma } from '@generated/prisma';
+import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class PermissionGrantService {
@@ -31,20 +29,54 @@ export class PermissionGrantService {
     return grant;
   }
 
-  findAll(
-    params: ListPermissionGrantsParams,
-  ): Promise<BaseListResult<PermissionGrant>> {
-    return this.permissionGrants.findAll(params);
+  async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
+    return paginatePrisma<
+      PermissionGrant,
+      Prisma.PermissionGrantFindManyArgs,
+      Prisma.PermissionGrantWhereInput
+    >({
+      repo: this.permissionGrants,
+      query: query ?? new PaginationQueryDto(),
+      defaultOrderBy: 'createdAt',
+      defaultOrderDir: 'desc',
+      tx,
+    });
   }
 
   update(
     id: string,
     data: UpdatePermissionGrantInput,
   ): Promise<PermissionGrant> {
-    return this.permissionGrants.update(id, data);
+    return (async () => {
+      const existing = await this.permissionGrants.findById(id);
+      if (!existing) {
+        throw new NotFoundError('PermissionGrant', 'id', id);
+      }
+      try {
+        return await this.permissionGrants.update(id, data);
+      } catch (e) {
+        if ((e as { code?: unknown })?.code === 'P2025') {
+          throw new NotFoundError('PermissionGrant', 'id', id);
+        }
+        throw e;
+      }
+    })();
   }
 
   delete(id: string): Promise<void> {
-    return this.permissionGrants.delete(id);
+    return (async () => {
+      const existing = await this.permissionGrants.findById(id);
+      if (!existing) {
+        throw new NotFoundError('PermissionGrant', 'id', id);
+      }
+      try {
+        await this.permissionGrants.delete(id);
+      } catch (e) {
+        if ((e as { code?: unknown })?.code === 'P2025') {
+          throw new NotFoundError('PermissionGrant', 'id', id);
+        }
+        throw e;
+      }
+    })();
   }
 }

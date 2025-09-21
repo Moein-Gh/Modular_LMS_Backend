@@ -1,7 +1,8 @@
-import { Identity, IdentityRepository, IDENTITY_REPOSITORY } from '@app/domain';
-import { Injectable, Inject } from '@nestjs/common';
-import type { Prisma } from '@generated/prisma';
+import { NotFoundError } from '@app/application/errors/not-found.error';
+import { Identity, IDENTITY_REPOSITORY, IdentityRepository } from '@app/domain';
 import { CreateIdentityInput } from '@app/domain/auth/types/identity.type';
+import { Prisma } from '@generated/prisma';
+import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class IdentityService {
@@ -14,24 +15,61 @@ export class IdentityService {
     input: CreateIdentityInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Identity> {
-    const identity = await this.identityRepository.create(input, tx);
-    return identity;
+    return this.identityRepository.create(input, tx);
   }
 
-  public async findByPhone(
-    phone: string,
+  public async findAll(
+    options?: Prisma.IdentityFindManyArgs,
     tx?: Prisma.TransactionClient,
-  ): Promise<Identity | null> {
-    const identity = await this.identityRepository.findOne({ phone }, tx);
-    return identity ?? null;
+  ): Promise<Identity[]> {
+    return this.identityRepository.findAll(options, tx);
   }
 
   public async findOne(
-    where: Prisma.IdentityWhereInput,
+    where?: Prisma.IdentityWhereInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Identity | null> {
-    const identity = await this.identityRepository.findOne(where, tx);
-    return identity ?? null;
+    const results = await this.identityRepository.findAll(
+      { where } as unknown,
+      tx,
+    );
+    return results.length ? results[0] : null;
+  }
+
+  public async findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Identity> {
+    const identity = await this.identityRepository.findById(id, tx);
+    if (!identity) {
+      throw new NotFoundError('Identity', 'id', id);
+    }
+    return identity;
+  }
+
+  public async count(
+    where?: unknown,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    return this.identityRepository.count(where, tx);
+  }
+
+  public async delete(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const existing = await this.identityRepository.findById(id, tx);
+    if (!existing) {
+      throw new NotFoundError('Identity', 'id', id);
+    }
+    try {
+      return await this.identityRepository.delete(id, tx);
+    } catch (e) {
+      if ((e as { code?: unknown })?.code === 'P2025') {
+        throw new NotFoundError('Identity', 'id', id);
+      }
+      throw e;
+    }
   }
 
   public async update(
@@ -39,7 +77,17 @@ export class IdentityService {
     data: Identity,
     tx?: Prisma.TransactionClient,
   ): Promise<Identity> {
-    const identity = await this.identityRepository.update(id, data, tx);
-    return identity;
+    const existing = await this.identityRepository.findById(id, tx);
+    if (!existing) {
+      throw new NotFoundError('Identity', 'id', id);
+    }
+    try {
+      return await this.identityRepository.update(id, data, tx);
+    } catch (e) {
+      if ((e as { code?: unknown })?.code === 'P2025') {
+        throw new NotFoundError('Identity', 'id', id);
+      }
+      throw e;
+    }
   }
 }

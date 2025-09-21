@@ -1,39 +1,20 @@
-import { Prisma } from '@generated/prisma';
-import type { DomainPermission } from '../entities/permission.entity';
+import { Permission } from '../entities/permission.entity';
 import {
   CreatePermissionInput,
-  ListPermissionsParams,
+  UpdatePermissionInput,
 } from '../types/permission.type';
-import { BaseListResult } from '@app/domain';
 
 export interface PermissionRepository {
-  findById(
-    id: string,
-    tx?: Prisma.TransactionClient,
-  ): Promise<DomainPermission | null>;
-
-  findByKey(
-    key: string,
-    tx?: Prisma.TransactionClient,
-  ): Promise<DomainPermission | null>;
-
-  findAll(
-    params: ListPermissionsParams,
-    tx?: Prisma.TransactionClient,
-  ): Promise<BaseListResult<DomainPermission>>;
-
-  create(
-    data: CreatePermissionInput,
-    tx?: Prisma.TransactionClient,
-  ): Promise<DomainPermission>;
-
+  findAll(options?: unknown, tx?: unknown): Promise<Permission[]>;
+  findById(id: string, tx?: unknown): Promise<Permission | null>;
+  count(where?: unknown, tx?: unknown): Promise<number>;
+  create(account: CreatePermissionInput, tx?: unknown): Promise<Permission>;
   update(
     id: string,
-    data: DomainPermission,
-    tx?: Prisma.TransactionClient,
-  ): Promise<DomainPermission>;
-
-  delete(id: string, tx?: Prisma.TransactionClient): Promise<void>;
+    account: UpdatePermissionInput,
+    tx?: unknown,
+  ): Promise<Permission>;
+  delete(id: string, tx?: unknown): Promise<void>;
 }
 
 export const PERMISSION_REPOSITORY = Symbol('PERMISSION_REPOSITORY');

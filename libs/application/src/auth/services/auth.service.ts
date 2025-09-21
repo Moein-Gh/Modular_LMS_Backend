@@ -1,16 +1,16 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { ConfigService } from '@app/config';
-import type { RequestSmsCodeDto } from '../dtos/request-sms-code.dto';
-import type { VerifySmsCodeDto } from '../dtos/verify-sms-code.dto';
-import type { LogoutDto } from '../dtos/logout.dto';
-import * as crypto from 'crypto';
-import { LogoutResult, RequestSmsCodeResult } from '../dtos/auth.responses';
-import { InvalidOrExpiredCodeError } from '../errors/invalid-or-expired-code.error';
-import { AccessToken, Payload, RefreshToken } from '@app/domain';
-import { IdentityService } from './identity.service';
 import { NotFoundError } from '@app/application/errors/not-found.error';
 import { UsersService } from '@app/application/user/services/users.service';
+import { ConfigService } from '@app/config';
+import { AccessToken, Payload, RefreshToken } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import * as crypto from 'crypto';
+import { LogoutResult, RequestSmsCodeResult } from '../dtos/auth.responses';
+import type { LogoutDto } from '../dtos/logout.dto';
+import type { RequestSmsCodeDto } from '../dtos/request-sms-code.dto';
+import type { VerifySmsCodeDto } from '../dtos/verify-sms-code.dto';
+import { InvalidOrExpiredCodeError } from '../errors/invalid-or-expired-code.error';
+import { IdentityService } from './identity.service';
 
 @Injectable()
 export class AuthService {
@@ -26,7 +26,7 @@ export class AuthService {
     cmd: RequestSmsCodeDto,
   ): Promise<RequestSmsCodeResult> {
     // Find identity by phone number
-    const identity = await this.identityService.findByPhone(cmd.phone);
+    const identity = await this.identityService.findOne({ phone: cmd.phone });
     if (!identity) {
       throw new NotFoundError('Identity', 'phone number', cmd.phone);
     }
@@ -65,7 +65,7 @@ export class AuthService {
 
   // 2. Verify SMS code and issue tokens
   public async verifySmsCode(cmd: VerifySmsCodeDto): Promise<Payload> {
-    const identity = await this.identityService.findByPhone(cmd.phone);
+    const identity = await this.identityService.findOne({ phone: cmd.phone });
     if (!identity) {
       throw new NotFoundError('Identity', 'phone number', cmd.phone);
     }

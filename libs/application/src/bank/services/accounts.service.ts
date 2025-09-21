@@ -18,7 +18,7 @@ export class AccountsService {
     private readonly accountTypesRepo: PrismaAccountTypeRepository,
   ) {}
 
-  async list(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
+  async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
     return paginatePrisma<
       Account,
       Prisma.AccountFindManyArgs,
@@ -37,17 +37,18 @@ export class AccountsService {
     });
   }
 
-  async findById(
-    id: string,
-    tx?: Prisma.TransactionClient,
-  ): Promise<Account | null> {
-    return this.accountsRepo.findUnique(
+  async findById(id: string, tx?: Prisma.TransactionClient): Promise<Account> {
+    const account = await this.accountsRepo.findUnique(
       {
         where: { id },
         include: { accountType: true, user: { include: { identity: true } } },
       },
       tx,
     );
+    if (!account) {
+      throw new NotFoundError('Account', 'id', id);
+    }
+    return account;
   }
 
   async findByUserId(
@@ -82,13 +83,37 @@ export class AccountsService {
   ): Promise<Account> {
     const exists = await this.accountsRepo.findUnique({ where: { id } }, tx);
     if (!exists) {
-      throw new Error('Account not found');
+      throw new NotFoundError('Account', 'id', id);
     }
-    return this.accountsRepo.update(id, account, tx);
+    try {
+      return await this.accountsRepo.update(id, account, tx);
+    } catch (e) {
+      if (this.isPrismaNotFoundError(e)) {
+        throw new NotFoundError('Account', 'id', id);
+      }
+      throw e;
+    }
   }
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
-    await this.accountsRepo.delete(id, tx);
+    const exists = await this.accountsRepo.findUnique({ where: { id } }, tx);
+    if (!exists) {
+      throw new NotFoundError('Account', 'id', id);
+    }
+    try {
+      await this.accountsRepo.delete(id, tx);
+    } catch (e) {
+      if (this.isPrismaNotFoundError(e)) {
+        throw new NotFoundError('Account', 'id', id);
+      }
+      throw e;
+    }
+  }
+
+  // Narrowly detect Prisma's "Record not found" without importing Prisma types
+  private isPrismaNotFoundError(e: unknown): boolean {
+    const code = (e as { code?: unknown })?.code;
+    return code === 'P2025';
   }
 
   // Checks to see if the card number is unique

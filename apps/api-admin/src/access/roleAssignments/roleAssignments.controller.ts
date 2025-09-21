@@ -1,5 +1,10 @@
-import { AccessTokenGuard, RoleAssignmentService } from '@app/application';
-import { RoleAssignment, OrderDirection } from '@app/domain';
+import {
+  AccessTokenGuard,
+  PaginatedResponseDto,
+  PaginationQueryDto,
+  RoleAssignmentService,
+} from '@app/application';
+import { RoleAssignment } from '@app/domain';
 import {
   Body,
   Controller,
@@ -10,9 +15,8 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { CreateRoleAssignmentDto } from './dtos/create-role-assignment.dto';
-import { ListRoleAssignmentQueryDto } from './dtos/list-role-assignment-query.dto';
 import { UUID_V4_PIPE } from '../../common/pipes/UUID.pipe';
+import { CreateRoleAssignmentDto } from './dtos/create-role-assignment.dto';
 @UseGuards(AccessTokenGuard)
 @Controller('role-assignments')
 export class RoleAssignmentsController {
@@ -25,16 +29,17 @@ export class RoleAssignmentsController {
   }
 
   @Get()
-  async findAll(@Query() query: ListRoleAssignmentQueryDto) {
-    return this.roleAssignmentService.findAll({
-      ...query,
-      skip: query.skip ?? 0,
-      take: query.take ?? 20,
-      orderBy: query.orderBy ?? 'createdAt',
-      orderDir: query.orderDir ?? OrderDirection.DESC,
-      userId: query.userId,
-      includeUser: query.includeUser,
-      includeRole: query.includeRole,
+  async findAll(
+    @Query() query: PaginationQueryDto,
+  ): Promise<PaginatedResponseDto<any>> {
+    const { items, totalItems, page, pageSize } =
+      await this.roleAssignmentService.findAll(query);
+    return PaginatedResponseDto.from({
+      items,
+      totalItems,
+      page,
+      pageSize,
+      makeUrl: (p, s) => `/role-assignments?page=${p}&pageSize=${s}`,
     });
   }
 

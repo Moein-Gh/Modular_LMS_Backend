@@ -1,7 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { PaginationQueryDto } from '@app/application/common/dto/pagination-query.dto';
+import { paginatePrisma } from '@app/application/common/pagination.util';
+import { NotFoundError } from '@app/application/errors/not-found.error';
 import { User, USER_REPOSITORY, type IUserRepository } from '@app/domain';
-import { CreateUserInput } from '../types/create-user.type';
 import { Prisma } from '@generated/prisma';
+import { Inject, Injectable } from '@nestjs/common';
+import { CreateUserInput } from '../types/create-user.type';
 import { UpdateUserInput } from '../types/update-user.type';
 
 @Injectable()
@@ -14,50 +17,99 @@ export class UsersService {
     input: CreateUserInput,
     tx?: Prisma.TransactionClient,
   ): Promise<User> {
-    const created = await this.users.createUser(input, tx);
+    const created = await this.users.create(input, tx);
     return created;
+  }
+
+  async findById(id: string, tx?: Prisma.TransactionClient): Promise<User> {
+    const user = await this.users.findById(id, tx);
+    if (!user) {
+      throw new NotFoundError('User', 'id', id);
+    }
+    return user;
   }
 
   async findByIdentityId(
     identityId: string,
     tx?: Prisma.TransactionClient,
   ): Promise<User | null> {
-    const user = await this.users.findByIdentityId(identityId, true, tx);
-    return user;
+    const users = await this.users.findAll({ where: { identityId } }, tx);
+    if (!users.length) return null;
+    return users[0];
   }
 
-  async findById(
-    id: string,
-    tx?: Prisma.TransactionClient,
-  ): Promise<User | null> {
-    const user = await this.users.findById(id, true, tx);
-    return user;
-  }
   async setActive(
     userId: string,
     isActive: boolean,
     tx?: Prisma.TransactionClient,
   ): Promise<void> {
-    await this.users.setActive(userId, isActive, tx);
+    const existing = await this.users.findById(userId, tx);
+    if (!existing) {
+      throw new NotFoundError('User', 'id', userId);
+    }
+    try {
+      await this.users.update(userId, { isActive }, tx);
+    } catch (e) {
+      if (this.isPrismaNotFoundError(e)) {
+        throw new NotFoundError('User', 'id', userId);
+      }
+      throw e;
+    }
   }
 
-  async deleteUser(id: string, tx?: Prisma.TransactionClient): Promise<void> {
-    await this.users.deleteUser(id, tx);
+  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const existing = await this.users.findById(id, tx);
+    if (!existing) {
+      throw new NotFoundError('User', 'id', id);
+    }
+    try {
+      await this.users.delete(id, tx);
+    } catch (e) {
+      if (this.isPrismaNotFoundError(e)) {
+        throw new NotFoundError('User', 'id', id);
+      }
+      throw e;
+    }
   }
 
-  async findAll(
-    include: boolean,
-    tx?: Prisma.TransactionClient,
-  ): Promise<User[]> {
-    const users = await this.users.findAll(include, tx);
-    return users;
+  async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
+    return paginatePrisma<User, Prisma.UserFindManyArgs, Prisma.UserWhereInput>(
+      {
+        repo: this.users,
+        query: query ?? new PaginationQueryDto(),
+        defaultOrderBy: 'createdAt',
+        defaultOrderDir: 'desc',
+        tx,
+        include: {
+          identity: true,
+        },
+      },
+    );
   }
-  async updateUser(
+
+  async update(
     id: string,
-    update: UpdateUserInput,
+    input: UpdateUserInput,
     tx?: Prisma.TransactionClient,
-  ): Promise<User | null> {
-    await this.users.setActive(id, update.isActive, tx);
+  ): Promise<User> {
+    const existing = await this.users.findById(id, tx);
+    if (!existing) {
+      throw new NotFoundError('User', 'id', id);
+    }
+    try {
+      await this.users.update(id, input, tx);
+    } catch (e) {
+      if (this.isPrismaNotFoundError(e)) {
+        throw new NotFoundError('User', 'id', id);
+      }
+      throw e;
+    }
     return this.findById(id, tx);
+  }
+
+  // Narrowly detect Prisma's "Record not found" without importing Prisma types
+  private isPrismaNotFoundError(e: unknown): boolean {
+    const code = (e as { code?: unknown })?.code;
+    return code === 'P2025';
   }
 }

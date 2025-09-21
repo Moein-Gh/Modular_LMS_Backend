@@ -1,13 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import type { Prisma } from '@generated/prisma';
+import type { GrantType, PermissionGrant } from '@app/domain';
 import {
-  PermissionGrantRepository,
   CreatePermissionGrantInput,
+  PermissionGrantRepository,
   UpdatePermissionGrantInput,
-  ListPermissionGrantsParams,
 } from '@app/domain';
-import type { BaseListResult, PermissionGrant, GrantType } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
+import type { Prisma } from '@generated/prisma';
+import { Injectable } from '@nestjs/common';
 
 const permissionGrantSelect: Prisma.PermissionGrantSelect = {
   id: true,
@@ -56,41 +55,24 @@ export class PrismaPermissionGrantRepository
   }
 
   async findAll(
-    params: ListPermissionGrantsParams,
-  ): Promise<BaseListResult<PermissionGrant>> {
-    const {
-      granteeType,
-      granteeId,
-      permissionId,
-      isGranted,
-      skip = 0,
-      take = 20,
-      orderBy = 'createdAt',
-      orderDir = 'desc',
-    } = params;
+    options?: Prisma.PermissionGrantFindManyArgs,
+    tx?: Prisma.TransactionClient,
+  ): Promise<PermissionGrant[]> {
+    const prisma = tx ?? this.prisma;
 
-    const where: Prisma.PermissionGrantWhereInput = {
-      ...(granteeType && { granteeType }),
-      ...(granteeId && { granteeId }),
-      ...(permissionId && { permissionId }),
-      ...(typeof isGranted === 'boolean' ? { isGranted } : {}),
-    };
+    const items = await prisma.permissionGrant.findMany(options);
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.permissionGrant.findMany({
-        where,
-        skip,
-        take,
-        // Cast is safe because orderBy and orderDir are validated at domain layer
-        orderBy: {
-          [orderBy]: orderDir,
-        } as Prisma.PermissionGrantOrderByWithRelationInput,
-        select: permissionGrantSelect,
-      }),
-      this.prisma.permissionGrant.count({ where }),
-    ]);
+    return items.map((m) => toDomain(m));
+  }
 
-    return { items: items.map(toDomain), total };
+  async count(
+    where?: Prisma.PermissionGrantWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    const prisma = (tx ?? this.prisma) as PrismaService;
+    return prisma.permissionGrant.count({
+      where: where as Prisma.PermissionGrantWhereInput,
+    });
   }
 
   async create(input: CreatePermissionGrantInput): Promise<PermissionGrant> {

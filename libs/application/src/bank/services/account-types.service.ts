@@ -1,5 +1,6 @@
 import { PaginationQueryDto } from '@app/application/common/dto/pagination-query.dto';
 import { paginatePrisma } from '@app/application/common/pagination.util';
+import { NotFoundError } from '@app/application/errors/not-found.error';
 import type {
   AccountType,
   CreateAccountTypeInput,
@@ -14,7 +15,7 @@ import { AccountTypeNameTakenError } from '../errors/account-type-name-taken.err
 export class AccountTypesService {
   constructor(private readonly accountTypesRepo: PrismaAccountTypeRepository) {}
 
-  async list(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
+  async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
     return paginatePrisma<
       AccountType,
       Prisma.AccountTypeFindManyArgs,
@@ -32,8 +33,12 @@ export class AccountTypesService {
   async findById(
     id: string,
     tx?: Prisma.TransactionClient,
-  ): Promise<AccountType | null> {
-    return this.accountTypesRepo.findById(id, tx);
+  ): Promise<AccountType> {
+    const accountType = await this.accountTypesRepo.findById(id, tx);
+    if (!accountType) {
+      throw new NotFoundError('AccountType', 'id', id);
+    }
+    return accountType;
   }
 
   async create(
@@ -52,10 +57,32 @@ export class AccountTypesService {
     input: UpdateAccountTypeInput,
     tx?: Prisma.TransactionClient,
   ): Promise<AccountType> {
-    return this.accountTypesRepo.update(id, input, tx);
+    const existing = await this.accountTypesRepo.findById(id, tx);
+    if (!existing) {
+      throw new NotFoundError('AccountType', 'id', id);
+    }
+    try {
+      return await this.accountTypesRepo.update(id, input, tx);
+    } catch (e) {
+      if ((e as { code?: unknown })?.code === 'P2025') {
+        throw new NotFoundError('AccountType', 'id', id);
+      }
+      throw e;
+    }
   }
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
-    await this.accountTypesRepo.delete(id, tx);
+    const existing = await this.accountTypesRepo.findById(id, tx);
+    if (!existing) {
+      throw new NotFoundError('AccountType', 'id', id);
+    }
+    try {
+      await this.accountTypesRepo.delete(id, tx);
+    } catch (e) {
+      if ((e as { code?: unknown })?.code === 'P2025') {
+        throw new NotFoundError('AccountType', 'id', id);
+      }
+      throw e;
+    }
   }
 }

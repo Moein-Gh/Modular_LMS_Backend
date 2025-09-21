@@ -1,15 +1,13 @@
+import type { Role, User } from '@app/domain';
 import {
   CreateRoleAssignmentInput,
   RoleAssignment,
-  ListRoleAssignmentsParams,
-  OrderDirection,
   RoleAssignmentRepository,
 } from '@app/domain';
+import { PrismaService } from '@app/infra/prisma/prisma.service';
+import type { PrismaClient } from '@generated/prisma';
 import { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
-import type { PrismaClient } from '@generated/prisma';
-import type { User, Role, BaseListResult } from '@app/domain';
-import { PrismaService } from '@app/infra/prisma/prisma.service';
 
 const roleAssignmentSelect: Prisma.RoleAssignmentSelect = {
   id: true,
@@ -132,56 +130,20 @@ export class PrismaRoleAssignmentRepository
   }
 
   async findAll(
-    params: ListRoleAssignmentsParams,
-    tx: Prisma.TransactionClient,
-  ): Promise<BaseListResult<RoleAssignment>> {
+    options: Prisma.RoleAssignmentFindManyArgs,
+    tx?: Prisma.TransactionClient,
+  ): Promise<RoleAssignment[]> {
     const prisma = tx ?? this.prisma;
-    const { userId, skip, take, orderBy, orderDir, includeUser, includeRole } =
-      params;
+    const roleAssignments = await prisma.roleAssignment.findMany(options);
+    return roleAssignments.map((m) => toDomain(m as RoleAssignmentModel));
+  }
 
-    const where: Prisma.RoleAssignmentWhereInput = {
-      ...(userId ? { userId } : {}),
-    };
-
-    const orderByClause:
-      | Prisma.RoleAssignmentOrderByWithRelationInput
-      | undefined = orderBy
-      ? {
-          [orderBy]:
-            orderDir === OrderDirection.DESC
-              ? OrderDirection.DESC
-              : OrderDirection.ASC,
-        }
-      : undefined;
-
-    const include: Prisma.RoleAssignmentInclude = {};
-    if (includeUser) {
-      include.user = {
-        select: {
-          id: true,
-          isActive: true,
-        },
-      };
-    }
-    if (includeRole) {
-      include.role = true;
-    }
-
-    const [items, total] = await Promise.all([
-      prisma.roleAssignment.findMany({
-        where,
-        skip,
-        take,
-        orderBy: orderByClause,
-        include: Object.keys(include).length > 0 ? include : undefined,
-      }),
-      prisma.roleAssignment.count({ where }),
-    ]);
-
-    return {
-      items: items.map((i) => toDomain(i as RoleAssignmentModel)),
-      total,
-    };
+  async count(
+    where?: Prisma.RoleAssignmentWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    const prisma = tx ?? this.prisma;
+    return prisma.roleAssignment.count({ where });
   }
 
   async update(

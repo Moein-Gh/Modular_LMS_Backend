@@ -1,4 +1,11 @@
 import {
+  AccessTokenGuard,
+  PaginatedResponseDto,
+  PaginationQueryDto,
+  PermissionGrantService,
+} from '@app/application';
+import { PermissionGrant } from '@app/domain';
+import {
   Body,
   Controller,
   Delete,
@@ -9,11 +16,11 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { UUID_V4_PIPE } from '../../common/pipes/UUID.pipe';
 import {
   CreatePermissionGrantDto,
   UpdatePermissionGrantDto,
 } from './dtos/create-permission-grant.dto';
-import { AccessTokenGuard, PermissionGrantService } from '@app/application';
 
 @UseGuards(AccessTokenGuard)
 @Controller('permission-grants')
@@ -28,22 +35,35 @@ export class PermissionGrantsController {
   }
 
   @Get(':id')
-  getById(@Param('id') id: string) {
+  getById(@Param('id', UUID_V4_PIPE) id: string) {
     return this.permissionGrantService.getById(id);
   }
 
   @Get()
-  findAll(@Query() query: Record<string, any>) {
-    return this.permissionGrantService.findAll(query);
+  async findAll(
+    @Query() query: PaginationQueryDto,
+  ): Promise<PaginatedResponseDto<PermissionGrant>> {
+    const { items, totalItems, page, pageSize } =
+      await this.permissionGrantService.findAll(query);
+    return PaginatedResponseDto.from({
+      items,
+      totalItems,
+      page,
+      pageSize,
+      makeUrl: (p, s) => `/permission-grants?page=${p}&pageSize=${s}`,
+    });
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdatePermissionGrantDto) {
+  update(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @Body() dto: UpdatePermissionGrantDto,
+  ) {
     return this.permissionGrantService.update(id, dto);
   }
 
   @Delete(':id')
-  delete(@Param('id') id: string) {
+  delete(@Param('id', UUID_V4_PIPE) id: string) {
     return this.permissionGrantService.delete(id);
   }
 }

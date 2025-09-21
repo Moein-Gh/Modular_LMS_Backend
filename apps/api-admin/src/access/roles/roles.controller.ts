@@ -1,4 +1,11 @@
 import {
+  AccessTokenGuard,
+  PaginatedResponseDto,
+  PaginationQueryDto,
+  RoleService,
+} from '@app/application';
+import { type Role } from '@app/domain';
+import {
   Body,
   Controller,
   Delete,
@@ -8,11 +15,8 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { AccessTokenGuard, RoleService } from '@app/application';
-import { OrderDirection, type Role } from '@app/domain';
-import { CreateRoleDto } from './dtos/create-role.dto';
-import { ListRolesQuery } from './dtos/list-role.dto';
 import { UUID_V4_PIPE } from '../../common/pipes/UUID.pipe';
+import { CreateRoleDto } from './dtos/create-role.dto';
 
 @UseGuards(AccessTokenGuard)
 @Controller('roles')
@@ -25,13 +29,17 @@ export class RolesController {
   }
 
   @Get()
-  findAll(@Query() q: ListRolesQuery) {
-    return this.roleService.findAll({
-      search: q.search,
-      skip: q.skip ?? 0,
-      take: q.take ?? 20,
-      orderBy: q.orderBy ?? 'createdAt',
-      orderDir: q.orderDir ?? OrderDirection.DESC,
+  async findAll(
+    @Query() query: PaginationQueryDto,
+  ): Promise<PaginatedResponseDto<any>> {
+    const { items, totalItems, page, pageSize } =
+      await this.roleService.findAll(query);
+    return PaginatedResponseDto.from({
+      items,
+      totalItems,
+      page,
+      pageSize,
+      makeUrl: (p, s) => `/roles?page=${p}&pageSize=${s}`,
     });
   }
 

@@ -1,4 +1,11 @@
 import {
+  AccessTokenGuard,
+  PaginatedResponseDto,
+  PaginationQueryDto,
+  PermissionService,
+} from '@app/application';
+import { type Permission } from '@app/domain';
+import {
   Body,
   Controller,
   Delete,
@@ -8,11 +15,8 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { AccessTokenGuard, PermissionService } from '@app/application';
-import { OrderDirection, type DomainPermission } from '@app/domain';
-import { CreatePermissionDto } from './dtos/create-permission.dto';
-import { ListPermissionsQuery } from './dtos/list-permission.dto';
 import { UUID_V4_PIPE } from '../../common/pipes/UUID.pipe';
+import { CreatePermissionDto } from './dtos/create-permission.dto';
 
 @UseGuards(AccessTokenGuard)
 @Controller('permissions')
@@ -20,18 +24,22 @@ export class PermissionsController {
   constructor(private readonly permissionService: PermissionService) {}
 
   @Post()
-  create(@Body() dto: CreatePermissionDto): Promise<DomainPermission> {
+  create(@Body() dto: CreatePermissionDto): Promise<Permission> {
     return this.permissionService.create(dto);
   }
 
   @Get()
-  findAll(@Query() q: ListPermissionsQuery) {
-    return this.permissionService.findAll({
-      ...q,
-      skip: q.skip ?? 0,
-      take: q.take ?? 20,
-      orderBy: q.orderBy ?? 'createdAt',
-      orderDir: q.orderDir ?? OrderDirection.DESC,
+  async findAll(
+    @Query() query: PaginationQueryDto,
+  ): Promise<PaginatedResponseDto<Permission>> {
+    const { items, totalItems, page, pageSize } =
+      await this.permissionService.findAll(query);
+    return PaginatedResponseDto.from({
+      items,
+      totalItems,
+      page,
+      pageSize,
+      makeUrl: (p, s) => `/permissions?page=${p}&pageSize=${s}`,
     });
   }
 

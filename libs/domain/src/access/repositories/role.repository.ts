@@ -1,18 +1,13 @@
-import { Prisma } from '@generated/prisma';
 import type { Role } from '../entities/role.entity';
-import { CreateRoleInput, ListRolesParams } from '../types/role.type';
-import { BaseListResult } from '@app/domain/common/baseListResult.type';
+import { CreateRoleInput, UpdateRoleInput } from '../types/role.type';
 
 export interface RoleRepository {
-  findById(id: string, tx?: Prisma.TransactionClient): Promise<Role | null>;
-  findByKey(key: string, tx?: Prisma.TransactionClient): Promise<Role | null>;
-  findAll(
-    params: ListRolesParams,
-    tx?: Prisma.TransactionClient,
-  ): Promise<BaseListResult<Role>>;
-  create(data: CreateRoleInput, tx?: Prisma.TransactionClient): Promise<Role>;
-  update(id: string, data: Role, tx?: Prisma.TransactionClient): Promise<Role>;
-  delete(id: string, tx?: Prisma.TransactionClient): Promise<void>;
+  findAll(options?: unknown, tx?: unknown): Promise<Role[]>;
+  findById(id: string, tx?: unknown): Promise<Role | null>;
+  count(where?: unknown, tx?: unknown): Promise<number>;
+  create(account: CreateRoleInput, tx?: unknown): Promise<Role>;
+  update(id: string, account: UpdateRoleInput, tx?: unknown): Promise<Role>;
+  delete(id: string, tx?: unknown): Promise<void>;
 }
 
 export const ROLE_REPOSITORY = Symbol('ROLE_REPOSITORY');

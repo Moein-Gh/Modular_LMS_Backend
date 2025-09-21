@@ -1,22 +1,20 @@
-import { Prisma } from '@generated/prisma';
 import type { Identity } from '../entities/identity.entity';
-import { CreateIdentityInput } from '../types/identity.type';
+import {
+  CreateIdentityInput,
+  UpdateIdentityInput,
+} from '../types/identity.type';
 
 export interface IdentityRepository {
-  create(
-    data: CreateIdentityInput,
-    tx?: Prisma.TransactionClient,
-  ): Promise<Identity>;
+  findAll(options?: unknown, tx?: unknown): Promise<Identity[]>;
+  findById(id: string, tx?: unknown): Promise<Identity | null>;
+  count(where?: unknown, tx?: unknown): Promise<number>;
+  create(account: CreateIdentityInput, tx?: unknown): Promise<Identity>;
   update(
     id: string,
-    data: Identity,
-    tx?: Prisma.TransactionClient,
+    account: UpdateIdentityInput,
+    tx?: unknown,
   ): Promise<Identity>;
-  findOne(
-    where: Prisma.IdentityWhereInput,
-    tx?: Prisma.TransactionClient,
-  ): Promise<Identity | null>;
-  delete(id: string, tx?: Prisma.TransactionClient): Promise<void>;
+  delete(id: string, tx?: unknown): Promise<void>;
 }
 
 export const IDENTITY_REPOSITORY = Symbol('IDENTITY_REPOSITORY');
