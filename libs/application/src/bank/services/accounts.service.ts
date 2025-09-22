@@ -11,6 +11,7 @@ import {
 } from '@app/infra';
 import { Prisma } from '@generated/prisma';
 import { BadRequestException, Injectable } from '@nestjs/common';
+
 @Injectable()
 export class AccountsService {
   constructor(

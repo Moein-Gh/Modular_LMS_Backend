@@ -86,13 +86,8 @@ export class PrismaAccountRepository implements AccountRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Account | null> {
     const prisma = tx ?? this.prisma;
-    const { include, where, ...rest } = options ?? {};
-    const args: Prisma.AccountFindUniqueArgs = {
-      where,
-      ...(include ? { include } : { select: accountSelect }),
-      ...rest,
-    };
-    const model = await prisma.account.findUnique(args);
+
+    const model = await prisma.account.findUnique(options);
     return model ? toDomain(model as AccountModelWithRelations) : null;
   }
 
@@ -104,18 +99,12 @@ export class PrismaAccountRepository implements AccountRepository {
   }
 
   async create(
-    account: CreateAccountInput & { name: string },
+    input: CreateAccountInput & { name: string },
     tx?: Prisma.TransactionClient,
   ): Promise<Account> {
     const prisma = tx ?? this.prisma;
     const created = await prisma.account.create({
-      data: {
-        accountTypeId: account.accountTypeId,
-        name: account.name,
-        userId: account.userId,
-        cardNumber: account.cardNumber,
-        bankName: account.bankName,
-      },
+      data: input,
       select: accountSelect,
     });
     return toDomain(created as AccountModel);
@@ -123,24 +112,13 @@ export class PrismaAccountRepository implements AccountRepository {
 
   async update(
     id: string,
-    account: UpdateAccountInput,
+    input: UpdateAccountInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Account> {
     const prisma = tx ?? this.prisma;
     const updated = await prisma.account.update({
       where: { id },
-      data: {
-        ...(account.accountTypeId !== undefined && {
-          accountTypeId: account.accountTypeId,
-        }),
-        ...(account.name !== undefined && { name: account.name }),
-        ...(account.userId !== undefined && { userId: account.userId }),
-        ...(account.cardNumber !== undefined && {
-          cardNumber: account.cardNumber,
-        }),
-        ...(account.bankName !== undefined && { bankName: account.bankName }),
-        ...(account.status !== undefined && { status: account.status }),
-      },
+      data: input,
       select: accountSelect,
     });
     return toDomain(updated as AccountModel);

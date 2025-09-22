@@ -4,14 +4,6 @@ import { PrismaService } from '@app/infra/prisma/prisma.service';
 import type { Prisma, PrismaClient } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 
-const accountTypeSelect: Prisma.AccountTypeSelect = {
-  id: true,
-  name: true,
-  maxAccounts: true,
-  createdAt: true,
-  updatedAt: true,
-};
-
 function toDomain(model: {
   id: string;
   name: string;
@@ -37,12 +29,8 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<AccountType[]> {
     const prisma = tx ?? this.prisma;
-    const { include, ...rest } = options ?? {};
-    const args: Prisma.AccountTypeFindManyArgs = {
-      ...(include ? { include } : { select: accountTypeSelect }),
-      ...rest,
-    };
-    const items = await prisma.accountType.findMany(args);
+
+    const items = await prisma.accountType.findMany(options);
 
     return items.map((m) => toDomain(m));
   }
@@ -67,7 +55,6 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
     return toDomain(accountType);
   }
 
-  // Added: find by name for uniqueness checks
   async findByName(
     name: string,
     tx?: Prisma.TransactionClient,
@@ -85,7 +72,7 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
   ): Promise<AccountType> {
     const prisma = tx ?? this.prisma;
     const created = await prisma.accountType.create({
-      data: { name: input.name },
+      data: input,
     });
     return toDomain(created);
   }
@@ -98,7 +85,7 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
     const prisma = tx ?? this.prisma;
     const updated = await prisma.accountType.update({
       where: { id },
-      data: { name: accountType.name },
+      data: accountType,
     });
     return toDomain(updated);
   }

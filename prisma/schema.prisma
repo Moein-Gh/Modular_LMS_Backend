@@ -10,12 +10,10 @@ generator client {
   output        = "../generated/prisma"
 }
 
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 
 model User {
   id        String   @id @default(uuid()) @db.Uuid
@@ -27,10 +25,11 @@ model User {
   RoleAssignments RoleAssignment[]
 
   // Back-relations: identity and refresh tokens
-  identity   Identity @relation(fields: [identityId], references: [id])
-  identityId String   @unique @db.Uuid
+  identity      Identity       @relation(fields: [identityId], references: [id])
+  identityId    String         @unique @db.Uuid
   refreshTokens RefreshToken[]
-  accounts   Account[]
+  accounts      Account[]
+  loans         Loan[]
 }
 
 model Role {
@@ -43,8 +42,8 @@ model Role {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Back-relation: users assigned to this role via RoleAssignment
-  RoleAssignments       RoleAssignment[]
-  
+  RoleAssignments RoleAssignment[]
+
   @@map("role")
 }
 
@@ -54,69 +53,68 @@ model Permission {
   name        String  @db.Text
   description String? @db.Text
 
-  createdAt       DateTime          @default(now()) @map("created_at")
-  updatedAt       DateTime          @updatedAt @map("updated_at")
-  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("permission")
 }
 
 model RoleAssignment {
-  id         String   @id @default(uuid()) @db.Uuid
-  userId     String   @map("user_id") @db.Uuid
-  roleId     String   @map("role_id") @db.Uuid
-  assignedBy String?  @map("assigned_by")
-  isActive   Boolean  @default(true) @map("is_active")
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  roleId     String    @map("role_id") @db.Uuid
+  assignedBy String?   @map("assigned_by")
+  isActive   Boolean   @default(true) @map("is_active")
   expiresAt  DateTime? @map("expires_at")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 }
 
 model PermissionGrant {
-  id           String   @id @default(uuid()) @db.Uuid
-  granteeType  String   // 'user' or 'role'
-  granteeId    String   // references User.id or Role.id (no FK constraint)
-  permissionId String   @db.Uuid
-  grantedBy    String?  @db.Uuid
-  isGranted    Boolean  @default(true)
+  id           String    @id @default(uuid()) @db.Uuid
+  granteeType  String // 'user' or 'role'
+  granteeId    String // references User.id or Role.id (no FK constraint)
+  permissionId String    @db.Uuid
+  grantedBy    String?   @db.Uuid
+  isGranted    Boolean   @default(true)
   reason       String?
   expiresAt    DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@map("permission_grant")
 }
 
 model Identity {
-  id              String   @id @default(uuid()) @db.Uuid
-  phone           String   @unique @db.Text
-  email           String?  @unique @db.Text
-  name            String?  @db.Text @map("name")
-  countryCode     String?  @db.Text @map("country_code")
-  nationalCode    String?  @db.Text @map("national_code")
-  lastLoginAt     DateTime? @map("last_login_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id           String    @id @default(uuid()) @db.Uuid
+  phone        String    @unique @db.Text
+  email        String?   @unique @db.Text
+  name         String?   @map("name") @db.Text
+  countryCode  String?   @map("country_code") @db.Text
+  nationalCode String?   @map("national_code") @db.Text
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
-    user User?
+  user User?
 
   @@map("identity")
 }
 
 model RefreshToken {
-  id                 String   @id @default(uuid()) @db.Uuid
-  userId             String   @db.Uuid @map("user_id")
-  tokenHash          String   @db.Text @map("token_hash")
-  revoked            Boolean  @default(false)
-  expiresAt          DateTime @map("expires_at")
-  createdAt          DateTime @default(now()) @map("created_at")
-  revokedAt          DateTime? @map("revoked_at")
-  replacedByTokenId  String?  @db.Uuid @map("replaced_by_token_id")
-  userAgent          String?  @db.Text @map("user_agent")
-  ipAddress          String?  @db.Text @map("ip_address")
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  tokenHash         String    @map("token_hash") @db.Text
+  revoked           Boolean   @default(false)
+  expiresAt         DateTime  @map("expires_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  revokedAt         DateTime? @map("revoked_at")
+  replacedByTokenId String?   @map("replaced_by_token_id") @db.Uuid
+  userAgent         String?   @map("user_agent") @db.Text
+  ipAddress         String?   @map("ip_address") @db.Text
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -126,15 +124,15 @@ model RefreshToken {
 }
 
 model SmsCode {
-  id          String   @id @default(uuid()) @db.Uuid
-  phone       String   @db.Text
-  code        String   @db.Text
-  purpose     String   @db.Text
-  attempts    Int      @default(0)
-  maxAttempts Int      @default(5) @map("max_attempts")
-  expiresAt   DateTime @map("expires_at")
+  id          String    @id @default(uuid()) @db.Uuid
+  phone       String    @db.Text
+  code        String    @db.Text
+  purpose     String    @db.Text
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(5) @map("max_attempts")
+  expiresAt   DateTime  @map("expires_at")
   consumedAt  DateTime? @map("consumed_at")
-  createdAt   DateTime @default(now()) @map("created_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
 
   @@index([phone], map: "sms_code_phone_idx")
   @@index([phone, code], map: "sms_code_phone_code_idx")
@@ -142,52 +140,99 @@ model SmsCode {
 }
 
 model AccountType {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
   name        String    @unique
-  maxAccounts Int?     
+  maxAccounts Int?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   accounts    Account[]
 }
 
 model Account {
-  id            String        @id @default(uuid()) @db.Uuid
-  accountTypeId String        @db.Uuid
-  accountType   AccountType   @relation(fields: [accountTypeId], references: [id])
+  id            String      @id @default(uuid()) @db.Uuid
+  accountTypeId String      @db.Uuid
+  accountType   AccountType @relation(fields: [accountTypeId], references: [id])
 
-  name          String
-  userId        String        @db.Uuid
-  user          User          @relation(fields: [userId], references: [id])
+  name   String
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
 
-  cardNumber    String        @unique
-  bankName      String
-  status        String        @default("active")
+  cardNumber String @unique
+  bankName   String
+  status     String @default("active")
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Back-relation: bank using this account
-  bank          Bank?
+  bank Bank?
+  loans Loan[]
 }
 
 /// Singleton bank configuration for the platform (exactly one row expected with id = 1)
 model Bank {
-  id                     String   @id @default(uuid()) @db.Uuid
+  id                     String  @id @default(uuid()) @db.Uuid
   name                   String
-  subscriptionFee        Decimal  @db.Decimal(18, 4)
-  commissionPercentage   Decimal  @default(10) @db.Decimal(5, 2)
-  defaultMaxInstallments Int      @default(10)
+  subscriptionFee        Decimal @db.Decimal(18, 4)
+  commissionPercentage   Decimal @default(10) @db.Decimal(5, 2)
+  defaultMaxInstallments Int     @default(10)
 
-  installmentOptions     Int[]    @default(dbgenerated("ARRAY[5,10,12]"))
-  status                 String   @default("active")
-  currency               String   @default("Toman")
-  timeZone               String   @default("Asia/Tehran")
+  installmentOptions Int[]  @default(dbgenerated("ARRAY[5,10,12]"))
+  status             String @default("active")
+  currency           String @default("Toman")
+  timeZone           String @default("Asia/Tehran")
 
-  accountId  String?  @unique @db.Uuid
-  account    Account? @relation(fields: [accountId], references: [id])
+  accountId String?  @unique @db.Uuid
+  account   Account? @relation(fields: [accountId], references: [id])
 
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("bank")
+}
+
+model LoanType {
+  id                   String  @id @default(uuid()) @db.Uuid
+  name                 String  @unique
+  commissionPercentage Decimal @db.Decimal(5, 2)
+  defaultInstallments  Int     @default(10)
+  maxInstallments      Int     @default(20)
+  minInstallments      Int     @default(5)
+  creditRequirementPct Decimal @db.Decimal(5, 2)
+  description          String?
+
+  loans Loan[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum LoanStatus {
+  PENDING // created, awaiting approval
+  APPROVED // approved but not yet disbursed
+  ACTIVE // disbursed, being repaid
+  CLOSED // fully repaid
+  DEFAULTED // borrower failed to repay
+}
+
+model Loan {
+  id   String @id @default(uuid()) @db.Uuid
+  name String
+
+  accountId String @db.Uuid
+  account   Account @relation(fields: [accountId], references: [id])
+  userId    String @db.Uuid
+  user      User    @relation(fields: [userId], references: [id])
+
+  loanTypeId String   @db.Uuid
+  loanType   LoanType @relation(fields: [loanTypeId], references: [id])
+
+  amount Decimal @db.Decimal(18, 4)
+
+  startDate     DateTime
+  paymentMonths Int
+  status        LoanStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
