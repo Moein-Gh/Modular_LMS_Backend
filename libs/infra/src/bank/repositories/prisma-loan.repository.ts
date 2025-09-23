@@ -5,14 +5,17 @@ import type {
   UpdateLoanInput,
 } from '@app/domain/bank/types/loan.type';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
-import type { Prisma, PrismaClient } from '@generated/prisma';
+import type {
+  Prisma,
+  PrismaClient,
+  LoanStatus as PrismaLoanStatus,
+} from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 
 const loanSelect: Prisma.LoanSelect = {
   id: true,
   name: true,
   accountId: true,
-  userId: true,
   loanTypeId: true,
   amount: true,
   startDate: true,
@@ -25,7 +28,6 @@ const loanSelect: Prisma.LoanSelect = {
 type LoanModel = Prisma.LoanGetPayload<{ select: typeof loanSelect }>;
 type LoanModelWithRelations = LoanModel & {
   account?: Loan['account'];
-  user?: Loan['user'];
   loanType?: Loan['loanType'];
 };
 
@@ -36,7 +38,6 @@ function toDomain(model: LoanModel | LoanModelWithRelations): Loan {
     id: m.id,
     name: m.name,
     accountId: m.accountId,
-    userId: m.userId,
     loanTypeId: m.loanTypeId,
     amount: m.amount.toString(),
     startDate: m.startDate,
@@ -45,7 +46,6 @@ function toDomain(model: LoanModel | LoanModelWithRelations): Loan {
     createdAt: m.createdAt,
     updatedAt: m.updatedAt,
     account: m.account,
-    user: m.user,
     loanType: m.loanType,
   };
 }
@@ -93,8 +93,17 @@ export class PrismaLoanRepository implements LoanRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Loan> {
     const prisma = tx ?? this.prisma;
+    const data: Prisma.LoanCreateInput = {
+      name: input.name,
+      amount: input.amount,
+      startDate: input.startDate,
+      paymentMonths: input.paymentMonths,
+      status: (input.status as unknown as PrismaLoanStatus) ?? undefined,
+      account: { connect: { id: input.accountId } },
+      loanType: { connect: { id: input.loanTypeId } },
+    };
     const created = await prisma.loan.create({
-      data: input,
+      data,
       select: loanSelect,
     });
     return toDomain(created as LoanModel);
@@ -106,9 +115,26 @@ export class PrismaLoanRepository implements LoanRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Loan> {
     const prisma = tx ?? this.prisma;
+    const data: Prisma.LoanUpdateInput = {
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.amount !== undefined ? { amount: input.amount } : {}),
+      ...(input.startDate !== undefined ? { startDate: input.startDate } : {}),
+      ...(input.paymentMonths !== undefined
+        ? { paymentMonths: input.paymentMonths }
+        : {}),
+      ...(input.status !== undefined
+        ? { status: input.status as unknown as PrismaLoanStatus }
+        : {}),
+      ...(input.accountId !== undefined
+        ? { account: { connect: { id: input.accountId } } }
+        : {}),
+      ...(input.loanTypeId !== undefined
+        ? { loanType: { connect: { id: input.loanTypeId } } }
+        : {}),
+    };
     const updated = await prisma.loan.update({
       where: { id },
-      data: input,
+      data,
       select: loanSelect,
     });
     return toDomain(updated as LoanModel);

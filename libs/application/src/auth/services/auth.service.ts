@@ -10,14 +10,14 @@ import type { LogoutDto } from '../dtos/logout.dto';
 import type { RequestSmsCodeDto } from '../dtos/request-sms-code.dto';
 import type { VerifySmsCodeDto } from '../dtos/verify-sms-code.dto';
 import { InvalidOrExpiredCodeError } from '../errors/invalid-or-expired-code.error';
-import { IdentityService } from './identity.service';
+import { IdentitiesService } from './identities.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
-    private readonly identityService: IdentityService,
+    private readonly identityService: IdentitiesService,
     private readonly usersService: UsersService,
   ) {}
 

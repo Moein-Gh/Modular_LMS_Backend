@@ -1,6 +1,6 @@
 import {
   AccessTokenGuard,
-  LoanTypesService,
+  LoansService,
   PaginatedResponseDto,
   PaginationQueryDto,
 } from '@app/application';
@@ -18,52 +18,49 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
-import { CreateLoanTypeDto } from './dtos/loan-types/create-loanType.dto';
-import { UpdateLoanTypeDto } from './dtos/loan-types/update-loanType.dto';
+import { CreateLoanDto } from './dtos/loans/create-loan.dto';
+import { UpdateLoanDto } from './dtos/loans/update-loan.dto';
 
-@Controller('loan-types')
+@Controller('loans')
 @UseGuards(AccessTokenGuard)
-export class LoanTypesController {
-  constructor(private readonly loanTypes: LoanTypesService) {}
+export class LoansController {
+  constructor(private readonly loans: LoansService) {}
 
   @Get()
   async findAll(
     @Query() query: PaginationQueryDto,
   ): Promise<PaginatedResponseDto<any>> {
     const { items, totalItems, page, pageSize } =
-      await this.loanTypes.findAll(query);
+      await this.loans.findAll(query);
     return PaginatedResponseDto.from({
       items,
       totalItems,
       page,
       pageSize,
-      makeUrl: (p, s) => `/loanTypes?page=${p}&pageSize=${s}`,
+      makeUrl: (p, s) => `/loans?page=${p}&pageSize=${s}`,
     });
   }
 
   @Get(':id')
   get(@Param('id', UUID_V4_PIPE) id: string) {
-    return this.loanTypes.findById(id);
+    return this.loans.findById(id);
   }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreateLoanTypeDto) {
-    return this.loanTypes.create(dto);
+  create(@Body() dto: CreateLoanDto) {
+    return this.loans.create(dto);
   }
 
   @Patch(':id')
-  update(
-    @Param('id', UUID_V4_PIPE) id: string,
-    @Body() dto: UpdateLoanTypeDto,
-  ) {
-    return this.loanTypes.update(id, dto);
+  update(@Param('id', UUID_V4_PIPE) id: string, @Body() dto: UpdateLoanDto) {
+    return this.loans.update(id, dto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id', UUID_V4_PIPE) id: string) {
-    await this.loanTypes.delete(id);
+    await this.loans.delete(id);
     return;
   }
 }

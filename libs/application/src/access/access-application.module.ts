@@ -1,23 +1,23 @@
-import { Module } from '@nestjs/common';
 import { AccessInfraModule } from '@app/infra';
-import { RoleService } from './services/role.service';
-import { PermissionService } from './services/permission.service';
-import { PermissionGrantService } from './services/permission-grant.service';
-import { RoleAssignmentService } from './services/role_assignment.service';
+import { Module } from '@nestjs/common';
+import { PermissionGrantsService } from './services/permission-grants.service';
+import { PermissionsService } from './services/permissions.service';
+import { RoleAssignmentsService } from './services/role_assignments.service';
+import { RolesService } from './services/roles.service';
 
 @Module({
   imports: [AccessInfraModule],
   providers: [
-    RoleService,
-    PermissionService,
-    PermissionGrantService,
-    RoleAssignmentService,
+    RolesService,
+    PermissionsService,
+    PermissionGrantsService,
+    RoleAssignmentsService,
   ],
   exports: [
-    RoleService,
-    PermissionService,
-    PermissionGrantService,
-    RoleAssignmentService,
+    RolesService,
+    PermissionsService,
+    PermissionGrantsService,
+    RoleAssignmentsService,
   ],
 })
 export class AccessApplicationModule {}

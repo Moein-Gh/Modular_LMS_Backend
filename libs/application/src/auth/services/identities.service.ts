@@ -5,7 +5,7 @@ import { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class IdentityService {
+export class IdentitiesService {
   constructor(
     @Inject(IDENTITY_REPOSITORY)
     private readonly identityRepository: IdentityRepository,

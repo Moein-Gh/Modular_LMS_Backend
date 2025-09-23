@@ -2,7 +2,7 @@ import {
   AccessTokenGuard,
   PaginatedResponseDto,
   PaginationQueryDto,
-  PermissionService,
+  PermissionsService,
 } from '@app/application';
 import { type Permission } from '@app/domain';
 import {
@@ -21,7 +21,7 @@ import { CreatePermissionDto } from './dtos/create-permission.dto';
 @UseGuards(AccessTokenGuard)
 @Controller('permissions')
 export class PermissionsController {
-  constructor(private readonly permissionService: PermissionService) {}
+  constructor(private readonly permissionService: PermissionsService) {}
 
   @Post()
   create(@Body() dto: CreatePermissionDto): Promise<Permission> {

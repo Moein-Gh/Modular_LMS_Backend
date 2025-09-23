@@ -11,7 +11,7 @@ import { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class PermissionGrantService {
+export class PermissionGrantsService {
   constructor(
     @Inject(PERMISSION_GRANT_REPOSITORY)
     private readonly permissionGrants: PermissionGrantRepository,

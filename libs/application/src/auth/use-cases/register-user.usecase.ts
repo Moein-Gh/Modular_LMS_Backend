@@ -6,12 +6,12 @@ import {
   RegisterUserResult,
 } from '../dtos/register-user.usecase.dto';
 import { IdentityAlreadyExistsError } from '../errors/identityAlreadyExists';
-import { IdentityService } from '../services/identity.service';
+import { IdentitiesService } from '../services/identities.service';
 
 @Injectable()
 export class RegisterUserUseCase {
   constructor(
-    private readonly identityService: IdentityService,
+    private readonly identityService: IdentitiesService,
     private readonly usersService: UsersService,
     private readonly transactionalRepository: PrismaTransactionalRepository,
   ) {}

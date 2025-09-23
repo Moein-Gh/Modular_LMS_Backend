@@ -8,7 +8,7 @@ import { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class RoleService {
+export class RolesService {
   constructor(
     @Inject(ROLE_REPOSITORY) private readonly roles: RoleRepository,
   ) {}

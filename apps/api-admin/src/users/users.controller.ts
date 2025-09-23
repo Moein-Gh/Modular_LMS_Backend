@@ -14,7 +14,7 @@ import {
 
 import {
   AccessTokenGuard,
-  IdentityService,
+  IdentitiesService,
   NotFoundError,
   PaginatedResponseDto,
   PaginationQueryDto,
@@ -31,7 +31,7 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    private readonly identityService: IdentityService,
+    private readonly identityService: IdentitiesService,
     private readonly registerUserUseCase: RegisterUserUseCase,
   ) {}
 

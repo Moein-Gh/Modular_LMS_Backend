@@ -2,7 +2,7 @@ import {
   AccessTokenGuard,
   PaginatedResponseDto,
   PaginationQueryDto,
-  RoleService,
+  RolesService,
 } from '@app/application';
 import { type Role } from '@app/domain';
 import {
@@ -21,7 +21,7 @@ import { CreateRoleDto } from './dtos/create-role.dto';
 @UseGuards(AccessTokenGuard)
 @Controller('roles')
 export class RolesController {
-  constructor(private readonly roleService: RoleService) {}
+  constructor(private readonly roleService: RolesService) {}
 
   @Post()
   create(@Body() dto: CreateRoleDto): Promise<Role> {

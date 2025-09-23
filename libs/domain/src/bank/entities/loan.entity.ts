@@ -1,4 +1,4 @@
-import { Account, User } from '@app/domain';
+import { Account } from '@app/domain';
 import type { LoanType } from './loan-type.entity';
 
 export enum LoanStatus {
@@ -16,13 +16,10 @@ export interface Loan {
   accountId: string;
   account?: Account; // relation
 
-  userId: string;
-  user?: User; // relation
-
   loanTypeId: string;
   loanType?: LoanType; // relation
 
-  amount: string; // Decimal(18,4) as string
+  amount: string;
 
   startDate: Date;
   paymentMonths: number;

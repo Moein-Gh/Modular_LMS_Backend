@@ -1,13 +1,16 @@
 import { NotFoundError, PaginationQueryDto } from '@app/application';
 import { paginatePrisma } from '@app/application/common/pagination.util';
 import type { CreateLoanInput, Loan, UpdateLoanInput } from '@app/domain';
-import { PrismaLoanRepository } from '@app/infra';
+import { PrismaLoanRepository, PrismaLoanTypeRepository } from '@app/infra';
 import { Prisma } from '@generated/prisma';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class LoansService {
-  constructor(private readonly loansRepo: PrismaLoanRepository) {}
+  constructor(
+    private readonly loansRepo: PrismaLoanRepository,
+    private readonly loanTypeRepo: PrismaLoanTypeRepository,
+  ) {}
 
   async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
     return paginatePrisma<Loan, Prisma.LoanFindManyArgs, Prisma.LoanWhereInput>(
@@ -34,6 +37,8 @@ export class LoansService {
     input: CreateLoanInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Loan> {
+    await this.validateLoanTypeId(input.loanTypeId, tx);
+
     return this.loansRepo.create(input, tx);
   }
 
@@ -75,5 +80,16 @@ export class LoansService {
   private isPrismaNotFoundError(e: unknown): boolean {
     const code = (e as { code?: unknown })?.code;
     return code === 'P2025';
+  }
+
+  private async validateLoanTypeId(
+    loanTypeId: string,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const loanType = await this.loanTypeRepo.findById(loanTypeId, tx);
+    if (!loanType) {
+      throw new NotFoundError('LoanType', 'id', loanTypeId);
+    }
+    return loanType;
   }
 }

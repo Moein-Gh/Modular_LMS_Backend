@@ -21,15 +21,13 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Back-relation: roles assigned to this user
-  RoleAssignments RoleAssignment[]
-
   // Back-relations: identity and refresh tokens
   identity      Identity       @relation(fields: [identityId], references: [id])
   identityId    String         @unique @db.Uuid
   refreshTokens RefreshToken[]
   accounts      Account[]
-  loans         Loan[]
+  // Back-relation: roles assigned to this user
+  RoleAssignments RoleAssignment[]
 }
 
 model Role {
@@ -221,8 +219,6 @@ model Loan {
 
   accountId String @db.Uuid
   account   Account @relation(fields: [accountId], references: [id])
-  userId    String @db.Uuid
-  user      User    @relation(fields: [userId], references: [id])
 
   loanTypeId String   @db.Uuid
   loanType   LoanType @relation(fields: [loanTypeId], references: [id])

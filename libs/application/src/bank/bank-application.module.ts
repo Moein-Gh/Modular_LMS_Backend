@@ -1,12 +1,26 @@
-import { Module } from '@nestjs/common';
 import { BankInfraModule } from '@app/infra/bank/bank.infra.module';
+import { Module } from '@nestjs/common';
 import { AccountTypesService } from './services/account-types.service';
 import { AccountsService } from './services/accounts.service';
-import { BankService } from './services/bank.service';
+import { BankService } from './services/banks.service';
+import { LoanTypesService } from './services/loan-types.service';
+import { LoansService } from './services/loans.service';
 
 @Module({
   imports: [BankInfraModule],
-  providers: [AccountTypesService, AccountsService, BankService],
-  exports: [AccountTypesService, AccountsService, BankService],
+  providers: [
+    AccountTypesService,
+    AccountsService,
+    LoansService,
+    LoanTypesService,
+    BankService,
+  ],
+  exports: [
+    AccountTypesService,
+    AccountsService,
+    LoansService,
+    LoanTypesService,
+    BankService,
+  ],
 })
 export class BankApplicationModule {}

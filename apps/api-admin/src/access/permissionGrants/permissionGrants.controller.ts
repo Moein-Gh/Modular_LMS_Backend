@@ -2,7 +2,7 @@ import {
   AccessTokenGuard,
   PaginatedResponseDto,
   PaginationQueryDto,
-  PermissionGrantService,
+  PermissionGrantsService,
 } from '@app/application';
 import { PermissionGrant } from '@app/domain';
 import {
@@ -26,7 +26,7 @@ import {
 @Controller('permission-grants')
 export class PermissionGrantsController {
   constructor(
-    private readonly permissionGrantService: PermissionGrantService,
+    private readonly permissionGrantService: PermissionGrantsService,
   ) {}
 
   @Post()

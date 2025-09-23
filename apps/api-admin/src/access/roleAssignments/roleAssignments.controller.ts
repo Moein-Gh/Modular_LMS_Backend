@@ -2,7 +2,7 @@ import {
   AccessTokenGuard,
   PaginatedResponseDto,
   PaginationQueryDto,
-  RoleAssignmentService,
+  RoleAssignmentsService,
 } from '@app/application';
 import { RoleAssignment } from '@app/domain';
 import {
@@ -20,7 +20,7 @@ import { CreateRoleAssignmentDto } from './dtos/create-role-assignment.dto';
 @UseGuards(AccessTokenGuard)
 @Controller('role-assignments')
 export class RoleAssignmentsController {
-  constructor(private readonly roleAssignmentService: RoleAssignmentService) {}
+  constructor(private readonly roleAssignmentService: RoleAssignmentsService) {}
 
   @Post()
   async create(@Body() dto: CreateRoleAssignmentDto): Promise<RoleAssignment> {
