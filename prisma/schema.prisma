@@ -21,13 +21,13 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Back-relations: identity and refresh tokens
   identity      Identity       @relation(fields: [identityId], references: [id])
   identityId    String         @unique @db.Uuid
   refreshTokens RefreshToken[]
   accounts      Account[]
-  // Back-relation: roles assigned to this user
+
   RoleAssignments RoleAssignment[]
+  Transaction     Transaction[]
 }
 
 model Role {
@@ -163,8 +163,9 @@ model Account {
   updatedAt DateTime @updatedAt
 
   // Back-relation: bank using this account
-  bank Bank?
-  loans Loan[]
+  bank            Bank?
+  loans           Loan[]
+  SubscriptionFee SubscriptionFee[]
 }
 
 /// Singleton bank configuration for the platform (exactly one row expected with id = 1)
@@ -217,7 +218,7 @@ model Loan {
   id   String @id @default(uuid()) @db.Uuid
   name String
 
-  accountId String @db.Uuid
+  accountId String  @db.Uuid
   account   Account @relation(fields: [accountId], references: [id])
 
   loanTypeId String   @db.Uuid
@@ -229,6 +230,198 @@ model Loan {
   paymentMonths Int
   status        LoanStatus @default(PENDING)
 
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  installments Installment[]
+}
+
+enum InstallmentStatus {
+  PENDING
+  ACTIVE
+  PAID
+}
+
+model Installment {
+  id                String            @id @default(uuid()) @db.Uuid
+  loanId            String            @db.Uuid
+  amount            Decimal           @db.Decimal(18, 4)
+  installmentNumber Int
+  dueDate           DateTime
+  status            InstallmentStatus @default(PENDING)
+  paymentDate       DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  loan Loan @relation(fields: [loanId], references: [id])
+}
+
+enum SubscriptionFeeStatus {
+  DUE
+  PAID
+  WAIVED
+}
+
+model SubscriptionFee {
+  id           String                @id @default(uuid()) @db.Uuid
+  accountId    String                @db.Uuid
+  periodStart  DateTime
+  amount       Decimal               @db.Decimal(18, 4)
+  status       SubscriptionFeeStatus @default(DUE)
+  dueDate      DateTime?
+  paidAt       DateTime?
+  waivedAt     DateTime?
+  waiverReason String?               @db.Text
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id])
+
+  @@unique([accountId, periodStart])
+  @@index([status, periodStart])
+}
+
+// ========================= LEDGER MODULE =========================
+
+enum LedgerAccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  INCOME
+  EXPENSE
+}
+
+enum LedgerAccountStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum JournalStatus {
+  PENDING
+  POSTED
+  VOIDED
+}
+
+enum DebitCredit {
+  DEBIT
+  CREDIT
+}
+
+model LedgerAccount {
+  id        String              @id @default(uuid()) @db.Uuid
+  code      String              @unique @db.Text
+  name      String              @db.Text
+  type      LedgerAccountType
+  status    LedgerAccountStatus @default(ACTIVE)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  entries JournalEntry[]
+}
+
+model Journal {
+  id            String        @id @default(uuid()) @db.Uuid
+  transactionId String?       @db.Uuid
+  note          String?       @db.Text
+  status        JournalStatus @default(PENDING)
+  postedAt      DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  entries     JournalEntry[]
+  transaction Transaction?   @relation(fields: [transactionId], references: [id], onDelete: NoAction)
+
+  @@index([transactionId])
+}
+
+enum JournalTargetType {
+  INSTALLMENT
+  LOAN
+  SUBSCRIPTION_FEE
+  ACCOUNT
+  FEE
+  COMMISSION
+  ADJUSTMENT
+  REFUND
+  REVERSAL
+}
+
+model JournalEntry {
+  id              String             @id @default(uuid()) @db.Uuid
+  journalId       String             @db.Uuid
+  ledgerAccountId String             @db.Uuid
+  dc              DebitCredit
+  amount          Decimal            @db.Decimal(18, 4)
+  targetType      JournalTargetType?
+  targetId        String?            @db.Uuid
+  createdAt       DateTime           @default(now())
+
+  journal       Journal       @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  ledgerAccount LedgerAccount @relation(fields: [ledgerAccountId], references: [id])
+
+  @@index([journalId])
+  @@index([ledgerAccountId])
+  @@index([targetType, targetId])
+  @@index([ledgerAccountId, createdAt])
+}
+
+// ========================= TRANSACTION MODULE =========================
+
+enum TransactionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TransactionKind {
+  DEPOSIT
+  WITHDRAWAL
+  LOAN_DISBURSEMENT
+  LOAN_REPAYMENT
+  SUBSCRIPTION_PAYMENT
+  FEE
+}
+
+model Transaction {
+  id          String            @id @default(uuid()) @db.Uuid
+  kind        TransactionKind
+  amount      Decimal           @db.Decimal(18, 4)
+  status      TransactionStatus @default(PENDING)
+  externalRef String?           @db.Text
+  note        String?           @db.Text
+  userId      String            @db.Uuid
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relations
+  user    User               @relation(fields: [userId], references: [id])
+  images  TransactionImage[]
+  journal Journal[]
+}
+
+model TransactionImage {
+  id            String @id @default(uuid()) @db.Uuid
+  transactionId String @db.Uuid
+  fileId        String @db.Uuid
+
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  // Relations
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  file        File        @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId])
+  @@index([fileId])
+}
+
+// ========================= FILE MODULE =========================
+model File {
+  id        String   @id @default(uuid()) @db.Uuid
+  url       String   @db.Text
+  mimeType  String   @db.Text
+  size      Int
+  createdAt DateTime @default(now())
+
+  transactionImages TransactionImage[]
 }

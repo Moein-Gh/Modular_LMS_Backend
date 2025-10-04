@@ -8,3 +8,4 @@ export * from './access/index';
 export * from './auth/index';
 // BANK
 export * from './bank/index';
+export * from './ledger/index';

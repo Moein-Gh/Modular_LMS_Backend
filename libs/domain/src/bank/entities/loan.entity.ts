@@ -3,14 +3,12 @@ import type { LoanType } from './loan-type.entity';
 
 export enum LoanStatus {
   PENDING = 'PENDING',
-  APPROVED = 'APPROVED',
   ACTIVE = 'ACTIVE',
   CLOSED = 'CLOSED',
-  DEFAULTED = 'DEFAULTED',
 }
 
 export interface Loan {
-  id: string; // UUID
+  id: string;
   name: string;
 
   accountId: string;

@@ -1,7 +1,15 @@
-import { AuthApplicationModule, BankApplicationModule } from '@app/application';
+import {
+  AuthApplicationModule,
+  BankApplicationModule,
+  JournalsService,
+  LedgerAccountsService,
+} from '@app/application';
 import { UserApplicationModule } from '@app/application/user/user-application.module';
 import { ConfigModule } from '@app/config';
-import { UserInfraModule } from '@app/infra';
+import {
+  PrismaJournalRepository,
+  PrismaLedgerAccountRepository,
+} from '@app/infra';
 import { PrismaModule } from '@app/infra/prisma/prisma.module';
 import { LoggerModule } from '@app/logger';
 import { ProblemDetailsModule } from '@app/problem-details';
@@ -14,22 +22,24 @@ import { ApiAdminService } from './api-admin.service';
 import { AuthController } from './auth/auth.controller';
 import { AccountTypesController } from './bank/account-types.controller';
 import { AccountsController } from './bank/accounts.controller';
+import { InstallmentsController } from './bank/installments.controller';
 import { LoanTypesController } from './bank/loan-types.controller';
 import { LoansController } from './bank/loans.controller';
+import { JournalsController } from './ledger/journals.controller';
+import { LedgerAccountsController } from './ledger/ledger-accounts.controller';
 import { UsersController } from './users/users.controller';
 
 @Module({
   imports: [
     PrismaModule,
     LoggerModule,
-    AccessModule,
     ProblemDetailsModule,
     ThrottlerModule.forRoot([{ ttl: 60, limit: 100 }]),
-    UserInfraModule,
     ConfigModule,
     AuthApplicationModule,
     UserApplicationModule,
     BankApplicationModule,
+    AccessModule,
   ],
   controllers: [
     ApiAdminController,
@@ -37,12 +47,22 @@ import { UsersController } from './users/users.controller';
     AuthController,
     AccountsController,
     LoansController,
+    InstallmentsController,
     LoanTypesController,
     AccountTypesController,
+    LedgerAccountsController,
+    JournalsController,
   ],
   providers: [
     ApiAdminService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    LedgerAccountsService,
+    JournalsService,
+    {
+      provide: 'LedgerAccountRepository',
+      useClass: PrismaLedgerAccountRepository,
+    },
+    { provide: 'JournalRepository', useClass: PrismaJournalRepository },
   ],
 })
 export class ApiAdminModule {}

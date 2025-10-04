@@ -1,13 +1,21 @@
-import { Module } from '@nestjs/common';
-import { ApiUserController } from './api-user.controller';
-import { ApiUserService } from './api-user.service';
+import {
+  AuthApplicationModule,
+  JournalsService,
+  LedgerAccountsService,
+} from '@app/application';
+import { UserApplicationModule } from '@app/application/user/user-application.module';
+import {
+  PrismaJournalRepository,
+  PrismaLedgerAccountRepository,
+} from '@app/infra';
 import { PrismaModule } from '@app/infra/prisma/prisma.module';
 import { LoggerModule } from '@app/logger';
 import { ProblemDetailsModule } from '@app/problem-details';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { AuthApplicationModule } from '@app/application';
-import { UserApplicationModule } from '@app/application/user/user-application.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ApiUserController } from './api-user.controller';
+import { ApiUserService } from './api-user.service';
 
 @Module({
   imports: [
@@ -19,6 +27,17 @@ import { UserApplicationModule } from '@app/application/user/user-application.mo
     UserApplicationModule,
   ],
   controllers: [ApiUserController],
-  providers: [ApiUserService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    ApiUserService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+
+    JournalsService,
+    LedgerAccountsService,
+    {
+      provide: 'LedgerAccountRepository',
+      useClass: PrismaLedgerAccountRepository,
+    },
+    { provide: 'JournalRepository', useClass: PrismaJournalRepository },
+  ],
 })
 export class ApiUserModule {}

@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { AccountTypesService } from './services/account-types.service';
 import { AccountsService } from './services/accounts.service';
 import { BankService } from './services/banks.service';
+import { InstallmentsService } from './services/installments.service';
 import { LoanTypesService } from './services/loan-types.service';
 import { LoansService } from './services/loans.service';
 
@@ -12,6 +13,7 @@ import { LoansService } from './services/loans.service';
     AccountTypesService,
     AccountsService,
     LoansService,
+    InstallmentsService,
     LoanTypesService,
     BankService,
   ],
@@ -19,6 +21,7 @@ import { LoansService } from './services/loans.service';
     AccountTypesService,
     AccountsService,
     LoansService,
+    InstallmentsService,
     LoanTypesService,
     BankService,
   ],
