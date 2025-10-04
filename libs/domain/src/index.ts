@@ -15,4 +15,10 @@ export * from './auth/index';
 
 // BANK
 export * from './bank/index';
+
+// LEDGER
 export * from './ledger/index';
+
+// TRANSACTION
+
+export * from './transaction/index';
