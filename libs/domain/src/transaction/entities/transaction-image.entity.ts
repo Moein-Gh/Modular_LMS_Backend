@@ -4,4 +4,5 @@ export interface TransactionImage {
   fileId: string;
   description?: string | null;
   createdAt: Date;
+  // file: File;
 }

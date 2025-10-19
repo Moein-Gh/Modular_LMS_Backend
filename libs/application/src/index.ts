@@ -24,3 +24,7 @@ export * from './ledger/ledger-application.module';
 // COMMON DTOs
 export * from './common/dto/paginated-response.dto';
 export * from './common/dto/pagination-query.dto';
+
+// TRANSACTION
+export * from './transaction';
+export * from './transaction/transaction-application.module';

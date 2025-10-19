@@ -7,6 +7,7 @@ import {
 export interface TransactionRepository {
   findAll(options?: unknown, tx?: unknown): Promise<Transaction[]>;
   findById(id: string, tx?: unknown): Promise<Transaction | null>;
+  findByIdWithRelations(id: string, tx?: unknown): Promise<Transaction | null>;
   count(where?: unknown, tx?: unknown): Promise<number>;
   create(account: CreateTransactionInput, tx?: unknown): Promise<Transaction>;
   update(

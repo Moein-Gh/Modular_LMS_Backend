@@ -8,7 +8,8 @@ RUN corepack enable && corepack prepare pnpm@10.14.0 --activate && pnpm install 
 # Copy only api-admin app and libs after installing dependencies
 COPY . .
 RUN pnpm exec prisma generate
-RUN pnpm run build api-admin           # => dist/apps/api-admin
+# Explicitly build the api-admin project
+RUN pnpm exec nest build api-admin           # => dist/apps/api-admin
 
 FROM node:20-alpine3.20 AS prod
 WORKDIR /app
@@ -30,4 +31,5 @@ COPY . .
 RUN pnpm exec prisma generate
 ENV NODE_ENV=development
 EXPOSE 3000
-CMD ["pnpm", "run", "start:dev"]
+# Start the correct project in watch mode
+CMD ["pnpm", "run", "start:admin"]

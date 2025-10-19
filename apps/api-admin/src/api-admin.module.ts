@@ -3,6 +3,7 @@ import {
   BankApplicationModule,
   JournalsService,
   LedgerAccountsService,
+  TransactionApplicationModule,
 } from '@app/application';
 import { UserApplicationModule } from '@app/application/user/user-application.module';
 import { ConfigModule } from '@app/config';
@@ -27,6 +28,7 @@ import { LoanTypesController } from './bank/loan-types.controller';
 import { LoansController } from './bank/loans.controller';
 import { JournalsController } from './ledger/journals.controller';
 import { LedgerAccountsController } from './ledger/ledger-accounts.controller';
+import { TransactionsController } from './transactions/transactions.controller';
 import { UsersController } from './users/users.controller';
 
 @Module({
@@ -39,6 +41,7 @@ import { UsersController } from './users/users.controller';
     AuthApplicationModule,
     UserApplicationModule,
     BankApplicationModule,
+    TransactionApplicationModule,
     AccessModule,
   ],
   controllers: [
@@ -50,6 +53,7 @@ import { UsersController } from './users/users.controller';
     InstallmentsController,
     LoanTypesController,
     AccountTypesController,
+    TransactionsController,
     LedgerAccountsController,
     JournalsController,
   ],

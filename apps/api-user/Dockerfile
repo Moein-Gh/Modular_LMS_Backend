@@ -9,7 +9,8 @@ RUN corepack enable && corepack prepare pnpm@10.14.0 --activate && pnpm install 
 # Copy only api-user app and libs after installing dependencies
 COPY . .
 RUN pnpm exec prisma generate
-RUN pnpm run build api-user
+# Explicitly build the api-user project (avoid relying on default project)
+RUN pnpm exec nest build api-user
 
 # ---------- production ----------
 FROM node:20-alpine AS prod
@@ -33,4 +34,5 @@ COPY . .
 RUN pnpm exec prisma generate
 ENV NODE_ENV=development
 EXPOSE 3000
-CMD ["pnpm", "run", "start:dev"]
+# Start the correct project in watch mode
+CMD ["pnpm", "run", "start:user"]

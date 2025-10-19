@@ -1,8 +1,8 @@
-import { NestFactory } from '@nestjs/core';
-import { ApiAdminModule } from './api-admin.module';
 import { setupDocs } from '@app/infra/docs/openapi';
 import { ProcessErrorHandlers } from '@app/logger';
 import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { ApiAdminModule } from './api-admin.module';
 
 async function bootstrap(): Promise<void> {
   ProcessErrorHandlers.setupProcessHandlers();

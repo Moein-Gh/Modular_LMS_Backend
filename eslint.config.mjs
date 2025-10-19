@@ -19,8 +19,10 @@ export default tseslint.config(
       },
       sourceType: 'commonjs',
       parserOptions: {
-        projectService: true,
+        // Use explicit project configuration for type-aware linting
+        projectService: false,
         tsconfigRootDir: import.meta.dirname,
+        project: ['./tsconfig.eslint.json'],
       },
     },
   },

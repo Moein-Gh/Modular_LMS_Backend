@@ -1,5 +1,9 @@
 onlyBuiltDependencies:
   - '@nestjs/core'
   - '@prisma/client'
+  - '@prisma/engines'
+  - '@scarf/scarf'
   - '@sentry-internal/node-cpu-profiler'
+  - '@swc/core'
   - nestjs-pino
+  - prisma

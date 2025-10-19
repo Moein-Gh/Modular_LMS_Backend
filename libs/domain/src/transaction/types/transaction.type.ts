@@ -1,15 +1,9 @@
-type TransactionKind =
-  | 'DEPOSIT'
-  | 'WITHDRAWAL'
-  | 'LOAN_DISBURSEMENT'
-  | 'LOAN_REPAYMENT'
-  | 'SUBSCRIPTION_PAYMENT'
-  | 'FEE';
-
-type TransactionStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+import {
+  TransactionKind,
+  TransactionStatus,
+} from '../entities/transaction.entity';
 
 export type CreateTransactionInput = {
-  id: string;
   userId: string;
   kind: TransactionKind;
   amount: string;
