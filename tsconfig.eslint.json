@@ -3,6 +3,13 @@
   "compilerOptions": {
     "noEmit": true
   },
-  "include": ["apps/**/*", "libs/**/*", "**/*.spec.ts", "**/*.test.ts"],
+  "include": [
+    "apps/**/*",
+    "libs/**/*",
+    "prisma/**/*",
+    "generated/**/*.d.ts",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

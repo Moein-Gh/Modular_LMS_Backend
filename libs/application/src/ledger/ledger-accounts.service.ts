@@ -1,4 +1,7 @@
-import { LedgerAccountRepository } from '@app/domain';
+import { PaginationQueryDto } from '@app/application/common/dto/pagination-query.dto';
+import { paginatePrisma } from '@app/application/common/pagination.util';
+import { LedgerAccount, LedgerAccountRepository } from '@app/domain';
+import { Prisma } from '@generated/prisma';
 import {
   ConflictException,
   Inject,
@@ -23,8 +26,18 @@ export class LedgerAccountsService {
     return this.accountsRepo.create(dto);
   }
 
-  async findAll() {
-    return this.accountsRepo.findAll({ orderBy: { code: 'asc' } });
+  async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
+    return paginatePrisma<
+      LedgerAccount,
+      Prisma.LedgerAccountFindManyArgs,
+      Prisma.LedgerAccountWhereInput
+    >({
+      repo: this.accountsRepo,
+      query: query ?? new PaginationQueryDto(),
+      defaultOrderBy: 'code',
+      defaultOrderDir: 'asc',
+      tx,
+    });
   }
 
   async findOne(id: string) {

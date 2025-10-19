@@ -1,6 +1,10 @@
+import { Journal } from '@app/domain';
 import { JournalStatus } from '@app/domain/ledger/entities/journal.entity';
 import { PrismaJournalRepository } from '@app/infra';
+import { Prisma } from '@generated/prisma';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { paginatePrisma } from '../common/pagination.util';
 import type { CreateJournalDto } from './dto/create-journal.dto';
 
 @Injectable()
@@ -25,8 +29,18 @@ export class JournalsService {
     return j;
   }
 
-  async list() {
-    return this.journalRepository.list({ orderBy: { postedAt: 'desc' } });
+  async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
+    return paginatePrisma<
+      Journal,
+      Prisma.JournalFindManyArgs,
+      Prisma.JournalWhereInput
+    >({
+      repo: this.journalRepository,
+      query: query ?? new PaginationQueryDto(),
+      defaultOrderBy: 'createdAt',
+      defaultOrderDir: 'desc',
+      tx,
+    });
   }
 
   async remove(id: string) {

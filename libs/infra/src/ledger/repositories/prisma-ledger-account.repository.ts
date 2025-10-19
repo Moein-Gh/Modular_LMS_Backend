@@ -50,6 +50,14 @@ export class PrismaLedgerAccountRepository implements LedgerAccountRepository {
     return rows.map((r) => toDomain(r as LedgerAccountModel));
   }
 
+  async count(
+    where?: Prisma.LedgerAccountWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    const prisma = tx ?? this.prisma;
+    return prisma.ledgerAccount.count({ where });
+  }
+
   async findById(id: string, tx?: Prisma.TransactionClient) {
     const prisma = tx ?? this.prisma;
     const row = await prisma.ledgerAccount.findUnique({

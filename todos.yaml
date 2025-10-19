@@ -1,0 +1,216 @@
+# Project TODOs — machine-readable and human-friendly
+#
+# How to use:
+# - Allowed status values: not-started | in-progress | completed
+# - Keep ids as unique integers (sequential is recommended)
+# - Add new items to the end of the list
+# - Update 'updatedAt' when you make edits (ISO 8601)
+# - Optional fields (priority, tags, area, files, due, links) are for your convenience; I will ignore them if absent
+#
+# I (Copilot) will read and sync this file with my internal todo tracker.
+# If you want me to update this file after finishing a task, just say so.
+
+version: 1
+updatedAt: '2025-10-19T12:32:00Z'
+
+# Uncomment the example below and edit to get started, or add your own under items:
+# items:
+#   - id: 1
+#     title: "Wire ledger journal repository"
+#     description: "Implement IJournalRepository and bind Prisma repo in api-admin module"
+#     status: not-started
+#     priority: medium # low | medium | high (optional)
+#     tags: [ledger, prisma, api-admin] # optional
+#     area: libs/infra/src/ledger # optional, e.g., app or lib folder this relates to
+#     files: # optional references to files to change
+#       - libs/domain/src/ledger/repositories/journal.repository.ts
+#       - libs/infra/src/ledger/journal.prisma.repository.ts
+#     due: 2025-10-31 # optional (YYYY-MM-DD)
+#     links: # optional links to tickets/PRs/docs
+#       - https://example.com/issue/123
+
+items:
+	- id: 1
+		title: "Add Prisma enums & models"
+		description: "Add Transaction, Journal, JournalEntry, LedgerAccount + enums (TransactionType, JournalStatus, DC, TargetType)"
+		status: completed
+		tags: [prisma, ledger, transactions]
+		files:
+			- prisma/schema.prisma
+
+	- id: 2
+		title: "Migrate and generate Prisma client"
+		description: "Run prisma migrate dev and generate to apply new models"
+		status: completed
+		tags: [prisma]
+
+	- id: 3
+		title: "Ledger domain entities & repos"
+		description: "Create types and repository interfaces for Journal, JournalEntry, LedgerAccount"
+		status: not-started
+		tags: [domain, ledger]
+		files:
+			- libs/domain/src/ledger/entities/journal.ts
+			- libs/domain/src/ledger/entities/journal-entry.ts
+			- libs/domain/src/ledger/entities/ledger-account.ts
+			- libs/domain/src/ledger/repositories/journal.repository.ts
+			- libs/domain/src/ledger/repositories/journal-entry.repository.ts
+			- libs/domain/src/ledger/repositories/ledger-account.repository.ts
+			- libs/domain/src/index.ts
+
+	- id: 4
+		title: "Ledger Prisma repositories"
+		description: "Implement Prisma repositories for ledger entities and map DB <-> domain"
+		status: not-started
+		tags: [infra, prisma, ledger]
+		files:
+			- libs/infra/src/ledger/journal.prisma.repository.ts
+			- libs/infra/src/ledger/journal-entry.prisma.repository.ts
+			- libs/infra/src/ledger/ledger-account.prisma.repository.ts
+
+	- id: 5
+		title: "Journal service (workflow)"
+		description: "Implement createPending, addEntry, post (validate, set postedAt, freeze)"
+		status: not-started
+		tags: [application, ledger]
+		files:
+			- libs/application/src/ledger/journal/journal.service.ts
+			- libs/application/src/ledger/journal/dto/create-journal.dto.ts
+			- libs/application/src/ledger/journal/dto/add-entry.dto.ts
+
+	- id: 6
+		title: "Posting invariants"
+		description: "Enforce Σ(DEBIT)=Σ(CREDIT), amounts>0; block edits after POSTED; set postedAt"
+		status: not-started
+		tags: [application, ledger, rules]
+		files:
+			- libs/application/src/ledger/journal/journal.service.ts
+
+	- id: 7
+		title: "Ledger controller endpoints"
+		description: "Add API for journals: create, add entry, post, get balance"
+		status: not-started
+		tags: [api, ledger]
+		files:
+			- apps/api-admin/src/ledger/ledger.controller.ts
+			- apps/api-admin/src/api-admin.module.ts
+
+	- id: 8
+		title: "Account balance query"
+		description: "Balance per account from POSTED Customer Deposits: Σ(CR)−Σ(DR)"
+		status: not-started
+		tags: [application, ledger]
+		files:
+			- libs/application/src/ledger/accounts/balance.service.ts
+
+	- id: 9
+		title: "Transaction domain & repos"
+		description: "Create Transaction entity (+Image, metadata) and repository interface"
+		status: not-started
+		tags: [domain, transactions]
+		files:
+			- libs/domain/src/transactions/entities/transaction.ts
+			- libs/domain/src/transactions/entities/transaction-image.ts
+			- libs/domain/src/transactions/repositories/transaction.repository.ts
+			- libs/domain/src/index.ts
+
+	- id: 10
+		title: "Transaction Prisma repository"
+		description: "Implement Prisma repository for Transaction (with images, metadata)"
+		status: not-started
+		tags: [infra, prisma, transactions]
+		files:
+			- libs/infra/src/transactions/transaction.prisma.repository.ts
+
+	- id: 11
+		title: "Transaction service (external flows)"
+		description: "Create service to record Transaction and delegate to ledger for journaling"
+		status: not-started
+		tags: [application, transactions, ledger]
+		files:
+			- libs/application/src/transactions/transaction.service.ts
+			- libs/application/src/transactions/dto/create-transaction.dto.ts
+
+	- id: 12
+		title: "Transactions controller"
+		description: "API endpoints for deposit, withdrawal, loan disbursement/repayment, subscription payment, fees"
+		status: not-started
+		tags: [api, transactions]
+		files:
+			- apps/api-admin/src/transactions/transactions.controller.ts
+			- apps/api-admin/src/api-admin.module.ts
+
+	- id: 13
+		title: "Flow mappings (journals)"
+		description: "Map typical flows to journal lines: deposit, withdrawal, loan repayment"
+		status: not-started
+		tags: [application, ledger, transactions]
+		files:
+			- libs/application/src/transactions/transaction.service.ts
+
+	- id: 14
+		title: "Internal transfer (journal only)"
+		description: "Service to post DR Customer Deposits(A), CR Customer Deposits(B) without Transaction"
+		status: not-started
+		tags: [application, ledger]
+		files:
+			- libs/application/src/ledger/transfers/transfer.service.ts
+
+	- id: 15
+		title: "Subscription fee rule"
+		description: "On payment, post single CR to Customer Deposits = SubscriptionFee.amount, tag SUBSCRIPTION_FEE; mark fee PAID when posted"
+		status: not-started
+		tags: [application, ledger, subscriptions]
+		files:
+			- libs/application/src/subscriptions/fee.service.ts
+
+	- id: 16
+		title: "Guard edits after POSTED"
+		description: "Prevent insert/update/delete of entries for POSTED journals at repo/service layer"
+		status: not-started
+		tags: [infra, application, ledger]
+		files:
+			- libs/infra/src/ledger/journal-entry.prisma.repository.ts
+			- libs/application/src/ledger/journal/journal.service.ts
+
+	- id: 17
+		title: "Wire DI and exports"
+		description: "Bind repositories to interfaces, import PrismaModule, export symbols in index.ts"
+		status: not-started
+		tags: [wiring, di]
+		files:
+			- apps/api-admin/src/api-admin.module.ts
+			- libs/domain/src/index.ts
+			- libs/application/src/index.ts
+
+	- id: 18
+		title: "Unit tests: posting invariants"
+		description: "Tests for balanced journals, positive amounts, postedAt set, immutability after post"
+		status: not-started
+		tags: [tests, ledger]
+		files:
+			- libs/application/src/ledger/journal/journal.service.spec.ts
+
+	- id: 19
+		title: "Unit tests: balance calculation"
+		description: "Tests for Σ(CR)−Σ(DR) per account including SUBSCRIPTION_FEE links"
+		status: not-started
+		tags: [tests, ledger]
+		files:
+			- libs/application/src/ledger/accounts/balance.service.spec.ts
+
+	- id: 20
+		title: "E2E: transaction flows"
+		description: "E2E tests: deposit, withdrawal, loan repayment; journals posted and balances updated"
+		status: not-started
+		tags: [tests, e2e]
+		files:
+			- apps/api-admin/test/transactions.e2e-spec.ts
+
+	- id: 21
+		title: "Seed fixed LedgerAccounts"
+		description: "Upsert Cash, Loans Receivable, Customer Deposits in prisma/seed.ts"
+		status: completed
+		tags: [prisma, seed, ledger]
+		files:
+			- prisma/seed.ts

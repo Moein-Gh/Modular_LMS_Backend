@@ -1,3 +1,5 @@
+import { Transaction } from '@app/domain/transaction';
+
 export enum JournalStatus {
   PENDING = 'PENDING',
   POSTED = 'POSTED',
@@ -13,5 +15,5 @@ export interface Journal {
   createdAt: Date;
   updatedAt: Date;
 
-  // Add transaction here after implementing it
+  transaction?: Transaction;
 }

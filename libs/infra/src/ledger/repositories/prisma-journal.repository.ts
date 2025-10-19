@@ -72,6 +72,21 @@ export class PrismaJournalRepository implements JournalRepository {
     return rows.map((r) => toJournal(r as JournalModel));
   }
 
+  async findAll(
+    options?: Prisma.JournalFindManyArgs,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Journal[]> {
+    return this.list(options, tx);
+  }
+
+  async count(
+    where?: Prisma.JournalWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    const prisma = tx ?? this.prisma;
+    return prisma.journal.count({ where });
+  }
+
   async create(
     input: CreateJournalInput,
     tx?: Prisma.TransactionClient,

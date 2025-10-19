@@ -6,6 +6,7 @@ import {
 
 export interface LedgerAccountRepository {
   findAll(options?: unknown, tx?: unknown): Promise<LedgerAccount[]>;
+  count(where?: unknown, tx?: unknown): Promise<number>;
   findById(id: string, tx?: unknown): Promise<LedgerAccount | null>;
   findByCode(code: string, tx?: unknown): Promise<LedgerAccount | null>;
   create(input: CreateLedgerAccountInput, tx?: unknown): Promise<LedgerAccount>;

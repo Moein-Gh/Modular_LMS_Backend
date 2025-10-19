@@ -10,5 +10,7 @@ export interface JournalRepository {
     input: Partial<CreateJournalInput>,
     tx?: unknown,
   ): Promise<Journal | null>;
-  list(options?: unknown, tx?: unknown): Promise<Journal[]>;
+
+  findAll(options?: unknown, tx?: unknown): Promise<Journal[]>;
+  count(where?: unknown, tx?: unknown): Promise<number>;
 }
