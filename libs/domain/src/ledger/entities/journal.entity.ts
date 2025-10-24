@@ -1,4 +1,5 @@
 import { Transaction } from '@app/domain/transaction';
+import { JournalEntry } from './journal-entry.entity';
 
 export enum JournalStatus {
   PENDING = 'PENDING',
@@ -16,4 +17,5 @@ export interface Journal {
   updatedAt: Date;
 
   transaction?: Transaction;
+  entries?: JournalEntry[];
 }

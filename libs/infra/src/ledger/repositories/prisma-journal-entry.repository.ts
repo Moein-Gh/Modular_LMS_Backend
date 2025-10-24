@@ -82,6 +82,22 @@ export class PrismaJournalEntryRepository implements JournalEntryRepository {
     return toDomain(created as JournalEntryModel);
   }
 
+  async createMany(
+    inputs: CreateJournalEntryInput[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<JournalEntry[]> {
+    const prisma = tx ?? this.prisma;
+    const createdEntries = await Promise.all(
+      inputs.map((input) =>
+        prisma.journalEntry.create({
+          data: input,
+          select: selectJournalEntry,
+        }),
+      ),
+    );
+    return createdEntries.map((entry) => toDomain(entry as JournalEntryModel));
+  }
+
   async update(
     id: string,
     input: UpdateJournalEntryInput,

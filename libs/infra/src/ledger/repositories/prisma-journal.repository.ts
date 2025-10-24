@@ -1,5 +1,5 @@
-import type { Journal } from '@app/domain';
-import { JournalRepository } from '@app/domain';
+import type { Journal, JournalEntry } from '@app/domain';
+import { DebitCredit, JournalRepository } from '@app/domain';
 import type { CreateJournalInput } from '@app/domain/ledger/types/journal.type';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import type { Prisma, PrismaClient } from '@generated/prisma';
@@ -15,10 +15,42 @@ const journalSelect = {
   updatedAt: true,
 };
 
-type JournalModel = Prisma.JournalGetPayload<{ select: typeof journalSelect }>;
+const journalSelectWithEntries = {
+  ...journalSelect,
+  entries: {
+    include: {
+      ledgerAccount: true,
+    },
+  },
+} as const;
 
-function toJournal(model: JournalModel): Journal {
+type JournalModel = Prisma.JournalGetPayload<{ select: typeof journalSelect }>;
+type JournalModelWithEntries = Prisma.JournalGetPayload<{
+  select: typeof journalSelectWithEntries;
+}>;
+type EntryModel = JournalModelWithEntries['entries'][number];
+
+function toJournalEntry(entry: EntryModel): JournalEntry {
   return {
+    id: entry.id,
+    journalId: entry.journalId,
+    ledgerAccountId: entry.ledgerAccountId,
+    dc: entry.dc as DebitCredit,
+    amount: entry.amount.toString(),
+    targetType: entry.targetType ?? undefined,
+    targetId: entry.targetId ?? undefined,
+    createdAt: entry.createdAt,
+    ledgerAccount: entry.ledgerAccount
+      ? {
+          code: entry.ledgerAccount.code,
+          name: entry.ledgerAccount.name,
+        }
+      : undefined,
+  };
+}
+
+function toJournal(model: JournalModel | JournalModelWithEntries): Journal {
+  const journal: Journal = {
     id: model.id,
     transactionId: model.transactionId ?? undefined,
     postedAt: model.postedAt ?? undefined,
@@ -27,6 +59,12 @@ function toJournal(model: JournalModel): Journal {
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
   };
+
+  if ('entries' in model && model.entries) {
+    journal.entries = model.entries.map(toJournalEntry);
+  }
+
+  return journal;
 }
 
 @Injectable()
@@ -45,6 +83,20 @@ export class PrismaJournalRepository implements JournalRepository {
     if (!journal) return null;
 
     return toJournal(journal as JournalModel);
+  }
+
+  async findByIdWithEntries(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Journal | null> {
+    const prisma = tx ?? this.prisma;
+    const journal = await prisma.journal.findUnique({
+      where: { id },
+      select: journalSelectWithEntries,
+    });
+    if (!journal) return null;
+
+    return toJournal(journal as JournalModelWithEntries);
   }
 
   async update(
@@ -77,6 +129,18 @@ export class PrismaJournalRepository implements JournalRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Journal[]> {
     return this.list(options, tx);
+  }
+
+  async findAllWithEntries(
+    options?: Prisma.JournalFindManyArgs,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Journal[]> {
+    const prisma = tx ?? this.prisma;
+    const rows = await prisma.journal.findMany({
+      select: journalSelectWithEntries,
+      ...(options ?? {}),
+    });
+    return rows.map((r) => toJournal(r as JournalModelWithEntries));
   }
 
   async count(

@@ -23,6 +23,7 @@ import { ApiAdminService } from './api-admin.service';
 import { AuthController } from './auth/auth.controller';
 import { AccountTypesController } from './bank/account-types.controller';
 import { AccountsController } from './bank/accounts.controller';
+import { BankFinancialsController } from './bank/bank-financials.controller';
 import { InstallmentsController } from './bank/installments.controller';
 import { LoanTypesController } from './bank/loan-types.controller';
 import { LoansController } from './bank/loans.controller';
@@ -53,6 +54,7 @@ import { UsersController } from './users/users.controller';
     InstallmentsController,
     LoanTypesController,
     AccountTypesController,
+    BankFinancialsController,
     TransactionsController,
     LedgerAccountsController,
     JournalsController,

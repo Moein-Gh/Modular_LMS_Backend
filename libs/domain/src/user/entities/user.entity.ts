@@ -4,5 +4,5 @@ export interface User {
   id: string;
   identityId: string;
   isActive: boolean;
-  identity?: Identity;
+  identity?: Partial<Identity>;
 }

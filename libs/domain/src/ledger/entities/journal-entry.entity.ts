@@ -28,5 +28,5 @@ export interface JournalEntry {
   targetId?: string;
   createdAt: Date;
   journal?: Journal;
-  ledgerAccount?: LedgerAccount;
+  ledgerAccount?: Partial<LedgerAccount>;
 }

@@ -4,5 +4,5 @@ export class GetUserDto {
   id: string;
   isActive: boolean;
   identityId: string;
-  identity: Identity;
+  identity: Partial<Identity>;
 }

@@ -1,5 +1,6 @@
 export * from './entities/account-type.entity';
 export * from './entities/account.entity';
+export * from './entities/bank-financial-summary';
 export * from './entities/bank.entity';
 export * from './entities/installment.entity';
 export * from './entities/loan-type.entity';

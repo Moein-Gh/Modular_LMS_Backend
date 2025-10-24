@@ -52,8 +52,8 @@ export class TransactionsController {
   @ApiResponse({ status: 200, description: 'Returns transaction with images' })
   @ApiResponse({ status: 404, description: 'Transaction not found' })
   @UsePipes(UUID_V4_PIPE)
-  get(@Param('id', UUID_V4_PIPE) id: string) {
-    return this.transactionsService.findById(id);
+  async get(@Param('id', UUID_V4_PIPE) id: string) {
+    return await this.transactionsService.findById(id);
   }
 
   @Post()
@@ -61,7 +61,7 @@ export class TransactionsController {
   @ApiOperation({ summary: 'Create a new transaction' })
   @ApiResponse({ status: 201, description: 'Transaction created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
-  create(@Body() dto: CreateTransactionDto) {
+  async create(@Body() dto: CreateTransactionDto) {
     const input: CreateTransactionInput = {
       userId: dto.userId,
       kind: dto.kind as TransactionKind,
@@ -70,7 +70,7 @@ export class TransactionsController {
       note: dto.note || null,
       status: 'PENDING',
     };
-    return this.transactionsService.create(input);
+    return await this.transactionsService.create(input);
   }
 
   @Patch(':id')

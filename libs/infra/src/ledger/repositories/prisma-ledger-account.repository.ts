@@ -1,5 +1,6 @@
 import type { LedgerAccount } from '@app/domain';
 import { LedgerAccountRepository } from '@app/domain';
+import { LedgerAccountNotFoundError } from '@app/domain/ledger/errors/ledger-account-not-found.error';
 import type {
   CreateLedgerAccountInput,
   UpdateLedgerAccountInput,
@@ -105,5 +106,77 @@ export class PrismaLedgerAccountRepository implements LedgerAccountRepository {
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
     const prisma = tx ?? this.prisma;
     await prisma.ledgerAccount.delete({ where: { id } });
+  }
+
+  async getAccountBalance(
+    accountCode: string,
+    asOfDate?: Date,
+    tx?: Prisma.TransactionClient,
+  ): Promise<string> {
+    const prisma = tx ?? this.prisma;
+
+    // First, get the account to determine its type
+    const account = await prisma.ledgerAccount.findUnique({
+      where: { code: accountCode },
+      select: { id: true, type: true },
+    });
+
+    if (!account) {
+      throw new LedgerAccountNotFoundError(accountCode);
+    }
+
+    // Build the where clause for journal entries
+    const whereClause: Prisma.JournalEntryWhereInput = {
+      ledgerAccountId: account.id,
+    };
+
+    // Add date filter if provided
+    if (asOfDate) {
+      whereClause.createdAt = {
+        lte: asOfDate,
+      };
+    }
+
+    // Get separate totals for debits and credits
+    const [debitResult, creditResult] = await Promise.all([
+      prisma.journalEntry.aggregate({
+        where: {
+          ...whereClause,
+          dc: 'DEBIT',
+        },
+        _sum: {
+          amount: true,
+        },
+      }),
+      prisma.journalEntry.aggregate({
+        where: {
+          ...whereClause,
+          dc: 'CREDIT',
+        },
+        _sum: {
+          amount: true,
+        },
+      }),
+    ]);
+
+    const totalDebits = debitResult._sum.amount?.toString() ?? '0';
+    const totalCredits = creditResult._sum.amount?.toString() ?? '0';
+
+    // Calculate balance based on account type
+    // Assets and Expenses: Debits increase, Credits decrease
+    // Liabilities, Equity, Income: Credits increase, Debits decrease
+    const debits = parseFloat(totalDebits);
+    const credits = parseFloat(totalCredits);
+
+    let balance: number;
+    if (account.type === 'ASSET' || account.type === 'EXPENSE') {
+      balance = debits - credits;
+    } else {
+      // LIABILITY, EQUITY, INCOME
+      balance = credits - debits;
+    }
+
+    // Return as string to preserve precision
+    return balance.toFixed(4);
   }
 }

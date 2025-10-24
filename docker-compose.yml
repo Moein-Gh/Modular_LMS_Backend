@@ -23,7 +23,8 @@ services:
       - .env
     environment:
       NODE_ENV: ${NODE_ENV:-development}
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/loan_db}
+      POSTGRES_HOST: db
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-loan_db}
     depends_on: [db]
     ports:
       - "${USER_API_PORT:-3001}:3000"
@@ -59,7 +60,8 @@ services:
       - .env
     environment:
       NODE_ENV: ${NODE_ENV:-development}
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/loan_db}
+      POSTGRES_HOST: db
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-loan_db}
     depends_on: [db]
     ports:
       - "${ADMIN_API_PORT:-3000}:3000"

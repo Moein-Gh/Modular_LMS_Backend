@@ -9,6 +9,10 @@ export interface JournalEntryRepository {
   findById(id: string, tx?: unknown): Promise<JournalEntry | null>;
   count(where?: unknown, tx?: unknown): Promise<number>;
   create(account: CreateJournalEntryInput, tx?: unknown): Promise<JournalEntry>;
+  createMany(
+    accounts: CreateJournalEntryInput[],
+    tx?: unknown,
+  ): Promise<JournalEntry[]>;
   update(
     id: string,
     account: UpdateJournalEntryInput,

@@ -27,15 +27,6 @@ async function main(): Promise<void> {
 }
 
 async function seedLedgerAccounts(): Promise<void> {
-  // Check if ledger accounts already exist
-  const existingCount = await prisma.ledgerAccount.count();
-  if (existingCount > 0) {
-    console.log(
-      `LedgerAccounts already exist (${existingCount} found); skipping seed`,
-    );
-    return;
-  }
-
   const accounts: Array<{
     code: string;
     name: string;
@@ -43,15 +34,37 @@ async function seedLedgerAccounts(): Promise<void> {
   }> = [
     { code: '1000', name: 'Cash', type: 'ASSET' },
     { code: '1100', name: 'Loans Receivable', type: 'ASSET' },
+
     { code: '2000', name: 'Customer Deposits', type: 'LIABILITY' },
-    { code: '4100', name: 'Fee/Commision Income', type: 'INCOME' },
+    { code: '2050', name: 'Unapplied Receipts', type: 'LIABILITY' },
+    { code: '2100', name: 'Unapplied Disbursements', type: 'LIABILITY' },
+
+    { code: '4100', name: 'Fee/Commission Income', type: 'INCOME' },
   ];
 
-  await prisma.ledgerAccount.createMany({
-    data: accounts,
-  });
+  let createdCount = 0;
+  let skippedCount = 0;
 
-  console.log(`Seeded ${accounts.length} LedgerAccounts`);
+  for (const account of accounts) {
+    const existing = await prisma.ledgerAccount.findUnique({
+      where: { code: account.code },
+    });
+
+    if (existing) {
+      console.log(`  ✓ Account ${account.code} already exists; skipping`);
+      skippedCount++;
+    } else {
+      await prisma.ledgerAccount.create({
+        data: account,
+      });
+      console.log(`  ✓ Created account ${account.code} - ${account.name}`);
+      createdCount++;
+    }
+  }
+
+  console.log(
+    `LedgerAccounts: ${createdCount} created, ${skippedCount} skipped`,
+  );
 }
 
 main()

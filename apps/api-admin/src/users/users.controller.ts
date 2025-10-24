@@ -79,7 +79,10 @@ export class UsersController {
       id: user.id,
       isActive: user.isActive,
       identityId: user.identityId,
-      identity: user.identity!,
+      identity: {
+        id: user.identity!.id!,
+        name: user.identity!.name!,
+      },
     };
   }
 
@@ -100,7 +103,10 @@ export class UsersController {
       id: updated.id,
       isActive: updated.isActive,
       identityId: updated.identityId,
-      identity: updated.identity!,
+      identity: {
+        id: user.identity!.id!,
+        name: user.identity!.name!,
+      },
     };
   }
 }

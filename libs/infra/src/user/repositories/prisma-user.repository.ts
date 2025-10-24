@@ -1,4 +1,8 @@
-import { CreateUserInput, UpdateUserInput } from '@app/application';
+import {
+  CreateUserInput,
+  NotFoundError,
+  UpdateUserInput,
+} from '@app/application';
 import type { IUserRepository, User } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import { Prisma } from '@generated/prisma';
@@ -48,13 +52,18 @@ export class PrismaUserRepository implements IUserRepository {
 
   public async findById(
     id: string,
-    include: boolean,
     tx?: Prisma.TransactionClient,
   ): Promise<User | null> {
     const prisma = tx ?? this.prisma;
     const user = await prisma.user.findUnique({
       where: { id },
-      include: { identity: include },
+      include: {
+        identity: {
+          select: {
+            name: true,
+          },
+        },
+      },
     });
     if (!user) return null;
     return user;
@@ -80,7 +89,13 @@ export class PrismaUserRepository implements IUserRepository {
     const prisma = tx ?? this.prisma;
     const user = await prisma.user.findUnique({
       where: { identityId },
-      include: { identity: include },
+      include: {
+        identity: include ?? {
+          select: {
+            name: true,
+          },
+        },
+      },
     });
     return user;
   }
@@ -100,5 +115,19 @@ export class PrismaUserRepository implements IUserRepository {
   ): Promise<void> {
     const prisma = tx ?? this.prisma;
     await prisma.user.delete({ where: { id } });
+  }
+
+  public async findActiveUserOrThrow(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<User> {
+    const prisma = tx ?? this.prisma;
+    const user = await prisma.user.findUnique({
+      where: { id, isActive: true },
+    });
+    if (!user) {
+      throw new NotFoundError('User', 'id', id);
+    }
+    return user;
   }
 }

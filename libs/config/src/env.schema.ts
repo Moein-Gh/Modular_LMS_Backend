@@ -18,6 +18,7 @@ export const envSchema = z.object({
   POSTGRES_DB: z.string().nonempty(),
   POSTGRES_USER: z.string().nonempty(),
   POSTGRES_PASSWORD: z.string().nonempty(),
+  POSTGRES_HOST: z.string().default('localhost'),
   DATABASE_URL: z.string().url(),
 
   /* Logging */
