@@ -24,6 +24,9 @@ async function main(): Promise<void> {
 
   // Seed fixed Ledger Accounts (idempotent)
   await seedLedgerAccounts();
+
+  // Seed test user (idempotent)
+  await seedTestUser();
 }
 
 async function seedLedgerAccounts(): Promise<void> {
@@ -65,6 +68,49 @@ async function seedLedgerAccounts(): Promise<void> {
   console.log(
     `LedgerAccounts: ${createdCount} created, ${skippedCount} skipped`,
   );
+}
+
+async function seedTestUser(): Promise<void> {
+  const testPhone = '9100971433';
+
+  // Check if identity already exists
+  let identity = await prisma.identity.findUnique({
+    where: { phone: testPhone },
+  });
+
+  if (!identity) {
+    identity = await prisma.identity.create({
+      data: {
+        nationalCode: '0022358218',
+        countryCode: '98',
+        phone: testPhone,
+        name: 'معین قربانعلی',
+        email: 'moein@test.com',
+      },
+    });
+    console.log('✓ Created test identity');
+  } else {
+    console.log('✓ Test identity already exists');
+  }
+
+  // Check if user already exists
+  const existingUser = await prisma.user.findUnique({
+    where: { identityId: identity.id },
+  });
+
+  if (!existingUser) {
+    await prisma.user.create({
+      data: {
+        identityId: identity.id,
+        isActive: true,
+      },
+    });
+    console.log('✓ Created test user');
+  } else {
+    console.log('✓ Test user already exists');
+  }
+
+  console.log(`Test user credentials: phone=${testPhone}`);
 }
 
 main()

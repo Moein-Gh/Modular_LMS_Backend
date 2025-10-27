@@ -10,6 +10,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 const selectTransaction = {
   id: true,
+  code: true,
   kind: true,
   amount: true,
   status: true,
@@ -22,6 +23,7 @@ const selectTransaction = {
 
 const selectTransactionWithRelations = {
   id: true,
+  code: true,
   kind: true,
   amount: true,
   status: true,
@@ -31,7 +33,13 @@ const selectTransactionWithRelations = {
   createdAt: true,
   updatedAt: true,
   user: {
-    include: {
+    select: {
+      id: true,
+      code: true,
+      identityId: true,
+      isActive: true,
+      createdAt: true,
+      updatedAt: true,
       identity: true,
     },
   },
@@ -56,6 +64,7 @@ function mapTransactionBase(
 ): Omit<Transaction, 'user' | 'images'> {
   return {
     id: model.id,
+    code: model.code,
     kind: model.kind as unknown as Transaction['kind'],
     amount: String(model.amount),
     status: model.status as unknown as Transaction['status'],
@@ -86,6 +95,7 @@ function toDomainWithRelations(
   if (model.user) {
     result.user = {
       id: model.user.id,
+      code: model.user.code,
       identityId: model.user.identityId,
       isActive: model.user.isActive,
       identity: model.user.identity,

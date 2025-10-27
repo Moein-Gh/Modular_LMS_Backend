@@ -10,6 +10,7 @@ import {
 } from '@app/domain';
 import type {
   CreateTransactionInput,
+  CreateTransactionWithJournalEntriesInput,
   UpdateTransactionInput,
 } from '@app/domain/transaction/types/transaction.type';
 import {
@@ -87,7 +88,7 @@ export class TransactionsService {
       const transaction = await this.transactionsRepo.create(input, trx);
 
       // 4. Build journal entry specifications based on transaction kind
-      const journalEntries = this.buildJournalEntrySpecs(transaction);
+      const journalEntries = this.createTransactionJournalEntries(transaction);
 
       // 5. Create journal with balanced entries using the use case
       await this.createJournalUseCase.execute(
@@ -102,11 +103,34 @@ export class TransactionsService {
     return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
   }
 
+  async createSpecificTransaction(
+    input: CreateTransactionWithJournalEntriesInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const run = async (trx: Prisma.TransactionClient) => {
+      await this.usersRepo.findActiveUserOrThrow(input.userId, trx);
+
+      const transaction = await this.transactionsRepo.create(input, trx);
+
+      await this.createJournalUseCase.execute(
+        transaction.id,
+        input.journalEntries,
+        trx,
+      );
+
+      return transaction;
+    };
+
+    return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
+  }
+
   /**
    * Builds journal entry specifications for a transaction.
    * Determines debit/credit entries based on whether cash is coming in or out.
    */
-  private buildJournalEntrySpecs(transaction: Transaction): JournalEntrySpec[] {
+  private createTransactionJournalEntries(
+    transaction: Transaction,
+  ): JournalEntrySpec[] {
     const isCashIn = TransactionKindHelper.isCashIn(transaction.kind);
 
     if (isCashIn) {

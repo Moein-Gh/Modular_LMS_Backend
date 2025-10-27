@@ -1,8 +1,8 @@
 import { Type } from 'class-transformer';
 import {
-  IsDecimal,
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   Min,
@@ -13,10 +13,8 @@ export class CreateLoanTypeDto {
   @IsNotEmpty()
   name!: string;
 
-  // Decimal represented as string (aligns with domain entity)
-  @IsString()
-  @IsDecimal()
-  commissionPercentage!: string;
+  @IsNumber()
+  commissionPercentage: number;
 
   @Type(() => Number)
   @IsInt()
@@ -33,10 +31,8 @@ export class CreateLoanTypeDto {
   @Min(1)
   minInstallments!: number;
 
-  // Percentage (0-100) as decimal string; stored as string in domain
-  @IsString()
-  @IsDecimal()
-  creditRequirementPct!: string;
+  @IsNumber()
+  creditRequirementPct: number;
 
   @IsOptional()
   @IsString()

@@ -7,6 +7,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 const journalSelect = {
   id: true,
+  code: true,
   transactionId: true,
   postedAt: true,
   note: true,
@@ -33,11 +34,12 @@ type EntryModel = JournalModelWithEntries['entries'][number];
 function toJournalEntry(entry: EntryModel): JournalEntry {
   return {
     id: entry.id,
+    code: entry.code,
     journalId: entry.journalId,
     ledgerAccountId: entry.ledgerAccountId,
     dc: entry.dc as DebitCredit,
     amount: entry.amount.toString(),
-    targetType: entry.targetType ?? undefined,
+    targetType: entry.targetType as JournalEntry['targetType'],
     targetId: entry.targetId ?? undefined,
     createdAt: entry.createdAt,
     ledgerAccount: entry.ledgerAccount
@@ -52,6 +54,7 @@ function toJournalEntry(entry: EntryModel): JournalEntry {
 function toJournal(model: JournalModel | JournalModelWithEntries): Journal {
   const journal: Journal = {
     id: model.id,
+    code: model.code,
     transactionId: model.transactionId ?? undefined,
     postedAt: model.postedAt ?? undefined,
     note: model.note ?? undefined,

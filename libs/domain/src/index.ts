@@ -20,5 +20,7 @@ export * from './bank/index';
 export * from './ledger/index';
 
 // TRANSACTION
-
 export * from './transaction/index';
+
+// FILE
+export * from './file/index';

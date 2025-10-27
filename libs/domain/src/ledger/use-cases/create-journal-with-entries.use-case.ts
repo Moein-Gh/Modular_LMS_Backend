@@ -1,28 +1,20 @@
 import { TransactionalRepository } from '@app/domain/common/transactional-repository.interface';
 import { Prisma } from '@generated/prisma';
-import { DebitCredit } from '../entities/journal-entry.entity';
+import {
+  DebitCredit,
+  JournalEntryTarget,
+} from '../entities/journal-entry.entity';
 import { Journal, JournalStatus } from '../entities/journal.entity';
 import { UnbalancedJournalError } from '../errors/unbalanced-journal.error';
 import { JournalEntryRepository } from '../repositories/journal-entry.repository';
 import { JournalRepository } from '../repositories/journal.repository';
 import { LedgerAccountRepository } from '../repositories/ledger-account.repository';
 
-type possibleTargetTypes =
-  | 'INSTALLMENT'
-  | 'LOAN'
-  | 'SUBSCRIPTION_FEE'
-  | 'ACCOUNT'
-  | 'FEE'
-  | 'COMMISSION'
-  | 'ADJUSTMENT'
-  | 'REFUND'
-  | 'REVERSAL';
-
 export interface JournalEntrySpec {
   ledgerAccountCode: string;
   amount: string;
   dc: DebitCredit;
-  targetType?: possibleTargetTypes;
+  targetType?: JournalEntryTarget;
   targetId?: string;
 }
 

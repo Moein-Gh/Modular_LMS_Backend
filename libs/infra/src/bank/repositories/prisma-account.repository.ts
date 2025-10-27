@@ -10,6 +10,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 const accountSelect: Prisma.AccountSelect = {
   id: true,
+  code: true,
   accountTypeId: true,
   name: true,
   userId: true,
@@ -29,6 +30,7 @@ type AccountModelWithRelations = AccountModel & {
 function toDomain(model: AccountModelWithRelations): Account {
   return {
     id: model.id,
+    code: model.code,
     accountTypeId: model.accountTypeId,
     name: model.name,
     userId: model.userId,
@@ -63,14 +65,18 @@ export class PrismaAccountRepository implements AccountRepository {
 
   async findById(
     id: string,
+    options?: { includeUser?: boolean },
     tx?: Prisma.TransactionClient,
   ): Promise<Account | null> {
     const prisma = tx ?? this.prisma;
-    const model = await prisma.account.findUnique({
+    const queryOptions: Prisma.AccountFindUniqueArgs = {
       where: { id },
-      select: accountSelect,
-    });
-    return model ? toDomain(model as AccountModel) : null;
+      ...(options?.includeUser
+        ? { include: { user: true } }
+        : { select: accountSelect }),
+    };
+    const model = await prisma.account.findUnique(queryOptions);
+    return model ? toDomain(model as AccountModelWithRelations) : null;
   }
 
   async count(

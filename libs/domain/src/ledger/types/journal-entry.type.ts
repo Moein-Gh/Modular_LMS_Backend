@@ -1,20 +1,11 @@
-type possibleTargetTypes =
-  | 'INSTALLMENT'
-  | 'LOAN'
-  | 'SUBSCRIPTION_FEE'
-  | 'ACCOUNT'
-  | 'FEE'
-  | 'COMMISSION'
-  | 'ADJUSTMENT'
-  | 'REFUND'
-  | 'REVERSAL';
+import { JournalEntryTarget } from '../entities/journal-entry.entity';
 
 export type CreateJournalEntryInput = {
   journalId: string;
   ledgerAccountId: string;
   dc: 'DEBIT' | 'CREDIT';
   amount: string;
-  targetType?: possibleTargetTypes;
+  targetType?: JournalEntryTarget;
   targetId?: string;
 };
 

@@ -3,7 +3,7 @@ import { Permission } from '../entities/permission.entity';
 
 export type CreatePermissionInput = Omit<
   Permission,
-  'id' | 'createdAt' | 'updatedAt'
+  'id' | 'code' | 'createdAt' | 'updatedAt'
 >;
 
 export type UpdatePermissionInput = Partial<CreatePermissionInput>;

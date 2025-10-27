@@ -8,6 +8,7 @@ export enum InstallmentStatus {
 
 export interface Installment {
   id: string;
+  code: number;
   loanId: string;
   installmentNumber: number;
   dueDate: Date;

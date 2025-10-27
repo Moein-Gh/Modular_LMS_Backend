@@ -1,13 +1,22 @@
 import { NotFoundError, PaginationQueryDto } from '@app/application';
 import { paginatePrisma } from '@app/application/common/pagination.util';
+import { TransactionsService } from '@app/application/transaction/services/transactions.service';
 import {
+  Account,
+  CreateTransactionWithJournalEntriesInput,
+  DebitCredit,
   InstallmentStatus,
+  JournalEntryTarget,
+  LEDGER_ACCOUNT_CODES,
   LoanStatus,
   LoanType,
+  Transaction,
+  User,
   type CreateLoanInput,
   type Loan,
   type UpdateLoanInput,
 } from '@app/domain';
+
 import {
   PrismaAccountRepository,
   PrismaInstallmentRepository,
@@ -32,6 +41,7 @@ export class LoansService {
     private readonly prismaTransactionalRepo: PrismaTransactionalRepository,
     private readonly installmentRepo: PrismaInstallmentRepository,
     private readonly bankFinancialsService: BankFinancialsService,
+    private readonly transactionsService: TransactionsService,
   ) {}
 
   async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
@@ -60,20 +70,39 @@ export class LoansService {
     tx?: Prisma.TransactionClient,
   ): Promise<Loan> {
     const run = async (DBtx: Prisma.TransactionClient) => {
-      // Validate loan type ID
+      // 1. Validate and fetch dependencies
       const loanType = await this.validateLoanTypeId(input.loanTypeId, DBtx);
-      // validate loan amount against loan type limits
+      const account = await this.validateAccountId(input.accountId, DBtx);
+      const user = this.validateActiveUser(account);
+
+      // 2. Perform business rule validations
       this.validateLoanLimits(input, loanType);
-      // validate bank financials
       await this.checkBankFinancialsForNewLoan(input, DBtx);
-      // validate account Id
-      await this.validateAccountId(input.accountId, DBtx);
-      // does this account have an active loan already?
       await this.checkLoanConflict(input.accountId, DBtx);
-      // create the loan
+
+      // 3. Create the loan record
       const loan = await this.loansRepo.create(input, DBtx);
-      // create installments for loan
+
+      // 4. Calculate financial amounts
+      const { commissionAmount, netDisbursement } =
+        this.calculateLoanFinancials(
+          input.amount,
+          loanType.commissionPercentage,
+        );
+
+      // 5. Create accounting transaction with journal entries
+      await this.createLoanDisbursementTransaction(
+        user.id,
+        loan.id,
+        input.amount,
+        netDisbursement,
+        commissionAmount,
+        DBtx,
+      );
+
+      // 6. Generate installment schedule
       await this.createInstallmentsForLoan(loan, DBtx);
+
       return loan;
     };
 
@@ -134,8 +163,12 @@ export class LoansService {
   private async validateAccountId(
     accountId: string,
     tx?: Prisma.TransactionClient,
-  ) {
-    const account = await this.accountRepo.findById(accountId, tx);
+  ): Promise<Account> {
+    const account = await this.accountRepo.findById(
+      accountId,
+      { includeUser: true },
+      tx,
+    );
     if (!account) {
       throw new NotFoundError('Account', 'id', accountId);
     }
@@ -203,6 +236,84 @@ export class LoansService {
     if (paymentMonths < minInstallments || paymentMonths > maxInstallments) {
       throw new BadRequestException(
         `Loan payment months must be between ${minInstallments} and ${maxInstallments}.`,
+      );
+    }
+  }
+
+  private validateActiveUser(account: Account): User {
+    const user = account.user;
+    if (!user) {
+      throw new BadRequestException('Account has no associated user');
+    }
+    if (!user.isActive) {
+      throw new ConflictException('Account owner is not active');
+    }
+    return user;
+  }
+
+  private calculateLoanFinancials(
+    amount: string,
+    commissionPercentage: number,
+  ): { commissionAmount: number; netDisbursement: number } {
+    const loanAmount = Number(amount);
+    const commissionAmount = Math.floor(
+      (commissionPercentage / 100) * loanAmount,
+    );
+    const netDisbursement = loanAmount - commissionAmount;
+
+    return { commissionAmount, netDisbursement };
+  }
+
+  private async createLoanDisbursementTransaction(
+    userId: string,
+    loanId: string,
+    loanAmount: string,
+    netDisbursement: number,
+    commissionAmount: number,
+    tx: Prisma.TransactionClient,
+  ): Promise<Transaction> {
+    const transactionInput: CreateTransactionWithJournalEntriesInput = {
+      userId,
+      kind: 'LOAN_DISBURSEMENT',
+      amount: loanAmount,
+      note: 'تراکنش مربوط به وام',
+      status: 'PENDING',
+      journalEntries: [
+        {
+          ledgerAccountCode: LEDGER_ACCOUNT_CODES.LOANS_RECEIVABLE,
+          amount: loanAmount,
+          dc: DebitCredit.DEBIT,
+          targetType: JournalEntryTarget.LOAN,
+          targetId: loanId,
+        },
+        {
+          ledgerAccountCode: LEDGER_ACCOUNT_CODES.CASH,
+          amount: netDisbursement.toString(),
+          dc: DebitCredit.CREDIT,
+        },
+        {
+          ledgerAccountCode: LEDGER_ACCOUNT_CODES.FEE_COMMISSION_INCOME,
+          amount: commissionAmount.toString(),
+          dc: DebitCredit.CREDIT,
+        },
+      ],
+    };
+
+    return this.createTransactionForLoan(transactionInput, tx);
+  }
+
+  private async createTransactionForLoan(
+    transactionInput: CreateTransactionWithJournalEntriesInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Transaction> {
+    try {
+      return await this.transactionsService.createSpecificTransaction(
+        transactionInput,
+        tx,
+      );
+    } catch {
+      throw new BadRequestException(
+        'something went wrong while creating transaction',
       );
     }
   }

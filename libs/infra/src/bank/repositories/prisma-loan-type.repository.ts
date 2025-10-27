@@ -10,6 +10,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 const loanTypeSelect: Prisma.LoanTypeSelect = {
   id: true,
+  code: true,
   name: true,
   commissionPercentage: true,
   defaultInstallments: true,
@@ -27,12 +28,13 @@ type LoanTypeModel = Prisma.LoanTypeGetPayload<{
 function toDomain(model: LoanTypeModel): LoanType {
   return {
     id: model.id,
+    code: model.code,
     name: model.name,
-    commissionPercentage: model.commissionPercentage.toString(),
+    commissionPercentage: model.commissionPercentage,
     defaultInstallments: model.defaultInstallments,
     maxInstallments: model.maxInstallments,
     minInstallments: model.minInstallments,
-    creditRequirementPct: model.creditRequirementPct.toString(),
+    creditRequirementPct: model.creditRequirementPct,
     description: model.description ?? null,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,

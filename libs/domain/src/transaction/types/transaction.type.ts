@@ -1,3 +1,4 @@
+import { JournalEntrySpec } from '@app/domain/ledger';
 import {
   TransactionKind,
   TransactionStatus,
@@ -11,5 +12,10 @@ export type CreateTransactionInput = {
   note?: string | null;
   status: TransactionStatus;
 };
+
+export type CreateTransactionWithJournalEntriesInput =
+  CreateTransactionInput & {
+    journalEntries: JournalEntrySpec[];
+  };
 
 export type UpdateTransactionInput = Partial<CreateTransactionInput>;

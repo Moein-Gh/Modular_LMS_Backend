@@ -17,6 +17,7 @@ datasource db {
 
 model User {
   id        String   @id @default(uuid()) @db.Uuid
+  code      Int      @unique @default(autoincrement())
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -32,6 +33,7 @@ model User {
 
 model Role {
   id          String  @id @default(uuid()) @db.Uuid
+  code        Int     @unique @default(autoincrement())
   key         String  @unique @db.Text
   name        String  @db.Text
   description String? @db.Text
@@ -47,6 +49,7 @@ model Role {
 
 model Permission {
   id          String  @id @default(uuid()) @db.Uuid
+  code        Int     @unique @default(autoincrement())
   key         String  @unique @db.Text
   name        String  @db.Text
   description String? @db.Text
@@ -139,6 +142,7 @@ model SmsCode {
 
 model AccountType {
   id          String    @id @default(uuid()) @db.Uuid
+  code        Int       @unique @default(autoincrement())
   name        String    @unique
   maxAccounts Int?
   createdAt   DateTime  @default(now())
@@ -148,6 +152,7 @@ model AccountType {
 
 model Account {
   id            String      @id @default(uuid()) @db.Uuid
+  code          Int         @unique @default(autoincrement())
   accountTypeId String      @db.Uuid
   accountType   AccountType @relation(fields: [accountTypeId], references: [id])
 
@@ -193,11 +198,12 @@ model Bank {
 model LoanType {
   id                   String  @id @default(uuid()) @db.Uuid
   name                 String  @unique
-  commissionPercentage Decimal @db.Decimal(5, 2)
+  code                 Int     @unique @default(autoincrement())
+  commissionPercentage Int     @default(1)
   defaultInstallments  Int     @default(10)
   maxInstallments      Int     @default(20)
   minInstallments      Int     @default(5)
-  creditRequirementPct Decimal @db.Decimal(5, 2)
+  creditRequirementPct Int     @default(20)
   description          String?
 
   loans Loan[]
@@ -216,6 +222,7 @@ enum LoanStatus {
 
 model Loan {
   id   String @id @default(uuid()) @db.Uuid
+  code Int    @unique @default(autoincrement())
   name String
 
   accountId String  @db.Uuid
@@ -243,6 +250,7 @@ enum InstallmentStatus {
 
 model Installment {
   id                String            @id @default(uuid()) @db.Uuid
+  code              Int               @unique @default(autoincrement())
   loanId            String            @db.Uuid
   amount            Decimal           @db.Decimal(18, 4)
   installmentNumber Int
@@ -264,6 +272,7 @@ enum SubscriptionFeeStatus {
 
 model SubscriptionFee {
   id           String                @id @default(uuid()) @db.Uuid
+  code         Int                   @unique @default(autoincrement())
   accountId    String                @db.Uuid
   periodStart  DateTime
   amount       Decimal               @db.Decimal(18, 4)
@@ -321,6 +330,7 @@ model LedgerAccount {
 
 model Journal {
   id            String        @id @default(uuid()) @db.Uuid
+  code          Int           @unique @default(autoincrement())
   transactionId String?       @db.Uuid
   note          String?       @db.Text
   status        JournalStatus @default(PENDING)
@@ -339,15 +349,11 @@ enum JournalTargetType {
   LOAN
   SUBSCRIPTION_FEE
   ACCOUNT
-  FEE
-  COMMISSION
-  ADJUSTMENT
-  REFUND
-  REVERSAL
 }
 
 model JournalEntry {
   id              String             @id @default(uuid()) @db.Uuid
+  code            Int                @unique @default(autoincrement())
   journalId       String             @db.Uuid
   ledgerAccountId String             @db.Uuid
   dc              DebitCredit
@@ -384,6 +390,7 @@ enum TransactionKind {
 
 model Transaction {
   id          String            @id @default(uuid()) @db.Uuid
+  code        Int               @unique @default(autoincrement())
   kind        TransactionKind
   amount      Decimal           @db.Decimal(18, 4)
   status      TransactionStatus @default(PENDING)
@@ -418,6 +425,7 @@ model TransactionImage {
 // ========================= FILE MODULE =========================
 model File {
   id        String   @id @default(uuid()) @db.Uuid
+  code      Int      @unique @default(autoincrement())
   url       String   @db.Text
   mimeType  String   @db.Text
   size      Int

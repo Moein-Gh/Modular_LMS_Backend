@@ -10,6 +10,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 const installmentSelect: Prisma.InstallmentSelect = {
   id: true,
+  code: true,
   installmentNumber: true,
   loanId: true,
   dueDate: true,
@@ -33,6 +34,7 @@ function toDomain(
   const m = model as InstallmentModelWithRelations;
   return {
     id: m.id,
+    code: m.code,
     installmentNumber: m.installmentNumber,
     loanId: m.loanId,
     dueDate: m.dueDate,

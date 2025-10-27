@@ -45,6 +45,7 @@ export class UsersController {
 
     return {
       id: user.id,
+      code: user.code,
       isActive: user.isActive,
       identityId: user.identityId,
       identity,

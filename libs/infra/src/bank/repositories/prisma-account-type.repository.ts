@@ -4,15 +4,23 @@ import { PrismaService } from '@app/infra/prisma/prisma.service';
 import type { Prisma, PrismaClient } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 
-function toDomain(model: {
-  id: string;
-  name: string;
-  maxAccounts: number | null;
-  createdAt: Date;
-  updatedAt: Date;
-}): AccountType {
+const accountTypeSelect: Prisma.AccountTypeSelect = {
+  id: true,
+  code: true,
+  name: true,
+  maxAccounts: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
+type AccountTypeModel = Prisma.AccountTypeGetPayload<{
+  select: typeof accountTypeSelect;
+}>;
+
+function toDomain(model: AccountTypeModel): AccountType {
   return {
     id: model.id,
+    code: model.code,
     name: model.name,
     maxAccounts: model.maxAccounts,
     createdAt: model.createdAt,
@@ -29,10 +37,13 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<AccountType[]> {
     const prisma = tx ?? this.prisma;
-
-    const items = await prisma.accountType.findMany(options);
-
-    return items.map((m) => toDomain(m));
+    const { include, ...rest } = options ?? {};
+    const args: Prisma.AccountTypeFindManyArgs = {
+      ...(include ? { include } : { select: accountTypeSelect }),
+      ...rest,
+    };
+    const items = await prisma.accountType.findMany(args);
+    return items.map((m) => toDomain(m as AccountTypeModel));
   }
 
   async count(
@@ -50,9 +61,10 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
     const prisma = tx ?? this.prisma;
     const accountType = await prisma.accountType.findUnique({
       where: { id },
+      select: accountTypeSelect,
     });
     if (!accountType) return null;
-    return toDomain(accountType);
+    return toDomain(accountType as AccountTypeModel);
   }
 
   async findByName(
@@ -62,8 +74,9 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
     const prisma = tx ?? this.prisma;
     const accountType = await prisma.accountType.findFirst({
       where: { name },
+      select: accountTypeSelect,
     });
-    return accountType ? toDomain(accountType) : null;
+    return accountType ? toDomain(accountType as AccountTypeModel) : null;
   }
 
   async create(
@@ -73,8 +86,9 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
     const prisma = tx ?? this.prisma;
     const created = await prisma.accountType.create({
       data: input,
+      select: accountTypeSelect,
     });
-    return toDomain(created);
+    return toDomain(created as AccountTypeModel);
   }
 
   async update(
@@ -86,8 +100,9 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
     const updated = await prisma.accountType.update({
       where: { id },
       data: accountType,
+      select: accountTypeSelect,
     });
-    return toDomain(updated);
+    return toDomain(updated as AccountTypeModel);
   }
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {

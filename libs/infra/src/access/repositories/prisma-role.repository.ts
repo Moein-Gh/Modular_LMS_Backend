@@ -12,6 +12,7 @@ import { Inject, Injectable } from '@nestjs/common';
 type RoleModel = {
   id: string;
   key: string;
+  code: number;
   name: string;
   description: string | null;
   createdAt: Date;
@@ -22,6 +23,7 @@ const roleSelect = {
   id: true,
   key: true,
   name: true,
+  code: true,
   description: true,
   createdAt: true,
   updatedAt: true,
@@ -31,6 +33,7 @@ function toDomain(model: RoleModel): Role {
   return {
     id: model.id,
     key: model.key,
+    code: model.code,
     name: model.name,
     description: model.description ?? undefined,
     createdAt: model.createdAt,

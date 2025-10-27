@@ -5,6 +5,7 @@ export * from './entities/bank.entity';
 export * from './entities/installment.entity';
 export * from './entities/loan-type.entity';
 export * from './entities/loan.entity';
+export * from './entities/subscription-fee.entity';
 export * from './repositories/account-type.repository';
 export * from './repositories/account.repository';
 export * from './repositories/bank.repository';

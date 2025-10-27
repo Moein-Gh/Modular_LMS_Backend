@@ -14,6 +14,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 const loanSelect: Prisma.LoanSelect = {
   id: true,
+  code: true,
   name: true,
   accountId: true,
   loanTypeId: true,
@@ -36,6 +37,7 @@ function toDomain(model: LoanModel | LoanModelWithRelations): Loan {
   const m = model as LoanModelWithRelations;
   return {
     id: m.id,
+    code: m.code,
     name: m.name,
     accountId: m.accountId,
     loanTypeId: m.loanTypeId,

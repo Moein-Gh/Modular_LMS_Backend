@@ -8,6 +8,7 @@ export enum AccountStatus {
 
 export interface Account {
   id: string;
+  code: number;
   accountTypeId: string;
   name: string;
   userId: string;

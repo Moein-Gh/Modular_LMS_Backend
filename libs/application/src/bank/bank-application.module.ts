@@ -2,6 +2,7 @@ import { BankInfraModule } from '@app/infra/bank/bank.infra.module';
 import { LedgerInfraModule } from '@app/infra/ledger/ledger.infra.module';
 import { PrismaLedgerAccountRepository } from '@app/infra/ledger/repositories/prisma-ledger-account.repository';
 import { Module } from '@nestjs/common';
+import { TransactionApplicationModule } from '../transaction/transaction-application.module';
 import { AccountTypesService } from './services/account-types.service';
 import { AccountsService } from './services/accounts.service';
 import { BankFinancialsService } from './services/bank-financials.service';
@@ -11,7 +12,7 @@ import { LoanTypesService } from './services/loan-types.service';
 import { LoansService } from './services/loans.service';
 
 @Module({
-  imports: [BankInfraModule, LedgerInfraModule],
+  imports: [BankInfraModule, LedgerInfraModule, TransactionApplicationModule],
   providers: [
     {
       provide: 'LedgerAccountRepository',

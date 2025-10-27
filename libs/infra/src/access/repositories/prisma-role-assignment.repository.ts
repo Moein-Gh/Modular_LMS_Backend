@@ -33,6 +33,7 @@ type RoleAssignmentModel = {
 
 type UserModel = {
   id: string;
+  code: number;
   identityId: string;
   isActive: boolean;
 };
@@ -41,6 +42,7 @@ type RoleModel = {
   id: string;
   name: string;
   key: string;
+  code: number;
   description?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -49,6 +51,7 @@ type RoleModel = {
 function toDomainUser(model: UserModel): User {
   return {
     id: model.id,
+    code: model.code,
     identityId: model.identityId,
     isActive: model.isActive,
   };
@@ -59,6 +62,7 @@ function toDomainRole(model: RoleModel): Role {
     id: model.id,
     name: model.name,
     key: model.key,
+    code: model.code,
     description: model.description ?? undefined,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,

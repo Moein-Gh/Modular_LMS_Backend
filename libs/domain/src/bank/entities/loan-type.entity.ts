@@ -1,11 +1,12 @@
 export interface LoanType {
   id: string;
+  code: number;
   name: string;
-  commissionPercentage: string;
+  commissionPercentage: number;
   defaultInstallments: number;
   maxInstallments: number;
   minInstallments: number;
-  creditRequirementPct: string;
+  creditRequirementPct: number;
   description?: string | null;
 
   createdAt: Date;

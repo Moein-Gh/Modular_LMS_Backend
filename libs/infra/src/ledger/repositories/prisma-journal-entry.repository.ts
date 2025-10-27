@@ -11,6 +11,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 const selectJournalEntry = {
   id: true,
+  code: true,
   journalId: true,
   ledgerAccountId: true,
   dc: true,
@@ -27,11 +28,12 @@ type JournalEntryModel = Prisma.JournalEntryGetPayload<{
 function toDomain(model: JournalEntryModel): JournalEntry {
   return {
     id: model.id,
+    code: model.code,
     journalId: model.journalId,
     ledgerAccountId: model.ledgerAccountId,
     dc: model.dc as unknown as JournalEntry['dc'],
     amount: String(model.amount),
-    targetType: model.targetType ?? undefined,
+    targetType: model.targetType as JournalEntry['targetType'],
     targetId: model.targetId ?? undefined,
     createdAt: model.createdAt,
   };

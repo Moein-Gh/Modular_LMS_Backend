@@ -9,6 +9,7 @@ export enum LoanStatus {
 
 export interface Loan {
   id: string;
+  code: number;
   name: string;
 
   accountId: string;

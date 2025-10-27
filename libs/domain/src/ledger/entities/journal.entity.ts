@@ -9,6 +9,7 @@ export enum JournalStatus {
 
 export interface Journal {
   id: string;
+  code: number;
   transactionId?: string;
   postedAt?: Date;
   note?: string;

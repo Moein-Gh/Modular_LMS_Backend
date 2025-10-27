@@ -12,6 +12,7 @@ export type TransactionKind =
 export type TransactionStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export interface Transaction {
   id: string;
+  code: number;
   kind: TransactionKind;
   amount: string;
   status: TransactionStatus;

@@ -14,12 +14,14 @@ const permissionSelect = {
   description: true,
   createdAt: true,
   updatedAt: true,
+  code: true,
 } satisfies Prisma.PermissionSelect;
 
 type PermissionModel = {
   id: string;
   key: string;
   name: string;
+  code: number;
   description: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -29,6 +31,7 @@ function toDomain(model: PermissionModel): Permission {
   return {
     id: model.id,
     key: model.key,
+    code: model.code,
     name: model.name,
     description: model.description ?? undefined,
     createdAt: model.createdAt,
