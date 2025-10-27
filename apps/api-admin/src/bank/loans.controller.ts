@@ -57,6 +57,11 @@ export class LoansController {
     return this.loans.update(id, dto);
   }
 
+  @Post('/approve/:id')
+  approve(@Param('id', UUID_V4_PIPE) id: string) {
+    return this.loans.approve(id);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id', UUID_V4_PIPE) id: string) {

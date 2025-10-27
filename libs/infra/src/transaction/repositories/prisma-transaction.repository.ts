@@ -5,7 +5,7 @@ import type {
   UpdateTransactionInput,
 } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
-import type { Prisma, PrismaClient } from '@generated/prisma';
+import { Prisma, type PrismaClient } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 
 const selectTransaction = {
@@ -155,6 +155,7 @@ export class PrismaTransactionRepository implements TransactionRepository {
       data: input,
       select: selectTransaction,
     });
+
     return toDomain(transaction as TransactionModel);
   }
 

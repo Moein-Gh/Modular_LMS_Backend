@@ -126,16 +126,19 @@ export class PrismaLedgerAccountRepository implements LedgerAccountRepository {
     }
 
     // Build the where clause for journal entries
+    // CRITICAL: Only include entries from POSTED journals
     const whereClause: Prisma.JournalEntryWhereInput = {
       ledgerAccountId: account.id,
+      journal: {
+        status: 'POSTED',
+        // Add date filter if provided (use postedAt for accurate as-of-date reporting)
+        ...(asOfDate && {
+          postedAt: {
+            lte: asOfDate,
+          },
+        }),
+      },
     };
-
-    // Add date filter if provided
-    if (asOfDate) {
-      whereClause.createdAt = {
-        lte: asOfDate,
-      };
-    }
 
     // Get separate totals for debits and credits
     const [debitResult, creditResult] = await Promise.all([

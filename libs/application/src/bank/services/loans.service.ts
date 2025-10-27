@@ -22,6 +22,7 @@ import {
   PrismaInstallmentRepository,
   PrismaLoanRepository,
   PrismaLoanTypeRepository,
+  PrismaService,
 } from '@app/infra';
 import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
 import { Prisma } from '@generated/prisma';
@@ -40,6 +41,7 @@ export class LoansService {
     private readonly accountRepo: PrismaAccountRepository,
     private readonly prismaTransactionalRepo: PrismaTransactionalRepository,
     private readonly installmentRepo: PrismaInstallmentRepository,
+    private readonly prismaService: PrismaService,
     private readonly bankFinancialsService: BankFinancialsService,
     private readonly transactionsService: TransactionsService,
   ) {}
@@ -77,7 +79,7 @@ export class LoansService {
 
       // 2. Perform business rule validations
       this.validateLoanLimits(input, loanType);
-      await this.checkBankFinancialsForNewLoan(input, DBtx);
+      await this.checkBankFinancialsForNewLoan(input.amount, DBtx);
       await this.checkLoanConflict(input.accountId, DBtx);
 
       // 3. Create the loan record
@@ -126,6 +128,48 @@ export class LoansService {
       }
       throw e;
     }
+  }
+
+  /**
+   * Approve a loan by:
+   * 1. Validating loan exists and is pending
+   * 2. Finding and approving the associated transaction (which posts the journal)
+   * 3. Updating loan status to ACTIVE
+   * 4. Activating all installments for the loan
+   */
+  async approve(id: string, tx?: Prisma.TransactionClient): Promise<Loan> {
+    const run = async (DBtx: Prisma.TransactionClient) => {
+      // 1. Fetch and validate loan
+      const loan = await this.findById(id, DBtx);
+      if (loan.status === LoanStatus.ACTIVE) {
+        return loan; // Already approved
+      }
+
+      // 2. Find the transaction associated with this loan
+      const transaction = await this.findTransactionForLoan(loan.id, DBtx);
+      if (!transaction) {
+        throw new BadRequestException(
+          'No transaction found for this loan. Cannot approve.',
+        );
+      }
+
+      // 3. Approve the transaction (this also posts the journal atomically)
+      await this.transactionsService.approve(transaction.id, DBtx);
+
+      // 4. Update loan status to ACTIVE
+      const updatedLoan = await this.loansRepo.update(
+        id,
+        { status: LoanStatus.ACTIVE },
+        DBtx,
+      );
+
+      // 5. Activate all installments for this loan
+      await this.activateInstallmentsForLoan(loan.id, DBtx);
+
+      return updatedLoan;
+    };
+
+    return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
   }
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
@@ -319,11 +363,11 @@ export class LoansService {
   }
 
   private async checkBankFinancialsForNewLoan(
-    input: CreateLoanInput,
+    loanAmount: string,
     tx?: Prisma.TransactionClient,
   ) {
     const canApprove = await this.bankFinancialsService.canApproveLoan(
-      input.amount,
+      loanAmount,
       tx,
     );
     if (!canApprove) {
@@ -331,5 +375,76 @@ export class LoansService {
         'Bank has insufficient funds to approve this loan.',
       );
     }
+  }
+
+  /**
+   * Find the transaction associated with a loan by searching for journal entries
+   * that target the loan. Returns the transaction through: JournalEntry -> Journal -> Transaction
+   */
+  private async findTransactionForLoan(
+    loanId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Transaction | null> {
+    const prisma = tx ?? this.prismaService;
+
+    // Query journal entries with loan target, including the transaction
+    const journalEntry = await prisma.journalEntry.findFirst({
+      where: {
+        targetType: JournalEntryTarget.LOAN,
+        targetId: loanId,
+      },
+      include: {
+        journal: {
+          include: {
+            transaction: true,
+          },
+        },
+      },
+    });
+
+    if (!journalEntry?.journal?.transaction) {
+      return null;
+    }
+
+    // Map Prisma transaction to domain Transaction
+    const tx_data = journalEntry.journal.transaction;
+    return {
+      id: tx_data.id,
+      code: tx_data.code,
+      kind: tx_data.kind as Transaction['kind'],
+      amount: String(tx_data.amount),
+      status: tx_data.status as Transaction['status'],
+      externalRef: tx_data.externalRef ?? undefined,
+      note: tx_data.note ?? undefined,
+      userId: tx_data.userId,
+      createdAt: tx_data.createdAt,
+      updatedAt: tx_data.updatedAt,
+      images: [],
+    };
+  }
+
+  /**
+   * Activate all installments for a given loan.
+   */
+  private async activateInstallmentsForLoan(
+    loanId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const installments = await this.installmentRepo.findAll(
+      {
+        where: { loanId },
+      },
+      tx,
+    );
+
+    await Promise.all(
+      installments.map((installment) =>
+        this.installmentRepo.update(
+          installment.id,
+          { status: InstallmentStatus.ACTIVE },
+          tx,
+        ),
+      ),
+    );
   }
 }

@@ -73,6 +73,18 @@ export class TransactionsController {
     return await this.transactionsService.create(input);
   }
 
+  @Post('/approve/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Approve a transaction' })
+  @ApiResponse({
+    status: 200,
+    description: 'Transaction approved successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Transaction not found' })
+  async approve(@Param('id', UUID_V4_PIPE) id: string) {
+    return await this.transactionsService.approve(id);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update transaction' })
   @ApiResponse({ status: 200, description: 'Transaction updated successfully' })
