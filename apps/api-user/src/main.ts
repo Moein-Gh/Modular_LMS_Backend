@@ -1,12 +1,20 @@
-import { NestFactory } from '@nestjs/core';
-import { ApiUserModule } from './api-user.module';
 import { ProcessErrorHandlers } from '@app/logger';
 import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { ApiUserModule } from './api-user.module';
 
 async function bootstrap(): Promise<void> {
   ProcessErrorHandlers.setupProcessHandlers();
 
   const app = await NestFactory.create(ApiUserModule);
+
+  // Enable CORS
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN?.split(',') || '*',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -18,7 +26,7 @@ async function bootstrap(): Promise<void> {
   );
 
   // ProblemDetailsFilter is registered via ProblemDetailsModule
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.USER_API_PORT ?? 3000);
 }
 
 void bootstrap();

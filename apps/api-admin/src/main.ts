@@ -11,6 +11,14 @@ async function bootstrap(): Promise<void> {
     logger: ['warn', 'error'],
   });
 
+  // Enable CORS
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN?.split(',') || '*',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  });
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -22,7 +30,7 @@ async function bootstrap(): Promise<void> {
 
   setupDocs(app, 'Loan Platform – Admin API');
 
-  const port = Number(process.env.port ?? 3000);
+  const port = Number(process.env.ADMIN_API_PORT ?? 3000);
   await app.listen(port);
   console.log('---------------------------------------');
   console.log(`------ Admin API ready on :${port} -------`);
