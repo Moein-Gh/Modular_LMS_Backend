@@ -10,7 +10,10 @@ async function bootstrap(): Promise<void> {
 
   // Enable CORS
   app.enableCors({
-    origin: process.env.CORS_ORIGIN?.split(',') || '*',
+    origin: process.env.CORS_ORIGIN?.split(',') || [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+    ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
@@ -26,7 +29,7 @@ async function bootstrap(): Promise<void> {
   );
 
   // ProblemDetailsFilter is registered via ProblemDetailsModule
-  await app.listen(process.env.USER_API_PORT ?? 3000);
+  await app.listen(process.env.USER_API_PORT ?? 3000, '0.0.0.0');
 }
 
 void bootstrap();

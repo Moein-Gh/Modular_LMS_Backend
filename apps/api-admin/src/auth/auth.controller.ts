@@ -7,14 +7,14 @@ import {
   VerifySmsCodeDto,
 } from '@app/application';
 import {
+  BadRequestException,
   Body,
   Controller,
   HttpCode,
   HttpStatus,
   Post,
-  Res,
   Req,
-  BadRequestException,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
@@ -64,8 +64,12 @@ export class AuthController {
       maxAge: result.refreshTokenExpiresIn * 1000,
       path: '/',
     });
-    // Do not return tokens in body
-    return { success: true, userId: result.userId };
+    // Return userId and sessionId so frontend can use them
+    return {
+      success: true,
+      userId: result.userId,
+      sessionId: result.sessionId,
+    };
   }
 
   @Post('refresh')
@@ -93,7 +97,11 @@ export class AuthController {
       maxAge: result.refreshTokenExpiresIn * 1000,
       path: '/',
     });
-    return { success: true, userId: result.userId };
+    return {
+      success: true,
+      userId: result.userId,
+      sessionId: result.sessionId,
+    };
   }
 
   @UseGuards(AccessTokenGuard)

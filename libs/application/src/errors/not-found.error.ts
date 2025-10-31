@@ -5,8 +5,8 @@ export class NotFoundError extends AppError {
     super({
       code: 'NOT_FOUND',
       status: 404,
-      title: `${entity} not found`,
-      detail: `${entity} with ${by} "${String(value)}" was not found`,
+      title: `${entity} یافت نشد`,
+      detail: `${entity} با ${by} "${String(value)}" یافت نشد`,
       type: 'https://httpstatuses.com/404',
     });
   }

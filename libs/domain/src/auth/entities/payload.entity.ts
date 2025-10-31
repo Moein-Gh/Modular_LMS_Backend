@@ -5,4 +5,5 @@ export interface Payload {
   accessTokenExpiresIn: number;
   refreshTokenExpiresIn: number;
   userId: string;
+  sessionId: string;
 }

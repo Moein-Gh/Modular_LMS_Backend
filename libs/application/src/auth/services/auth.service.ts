@@ -28,14 +28,14 @@ export class AuthService {
     // Find identity by phone number
     const identity = await this.identityService.findOne({ phone: cmd.phone });
     if (!identity) {
-      throw new NotFoundError('Identity', 'phone number', cmd.phone);
+      throw new NotFoundError('کاربر', 'شماره تلفن', cmd.phone);
     }
     const user = await this.usersService.findByIdentityId(identity.id);
     if (!user) {
-      throw new NotFoundError('User', 'identity ID', identity.id);
+      throw new NotFoundError('کاربر', 'شناسه', identity.id);
     }
     if (!user.isActive) {
-      throw new BadRequestException('User is not active');
+      throw new BadRequestException('کاربر فعال نیست');
     }
 
     // Generate a random 6-digit code
@@ -105,7 +105,7 @@ export class AuthService {
       this.config.get('ACCESS_TOKEN_EXPIRES_IN') ?? 900,
     );
     const refreshTokenVO = RefreshToken.create(refreshTokenExpiresIn);
-    await this.prisma.refreshToken.create({
+    const refreshTokenRecord = await this.prisma.refreshToken.create({
       data: {
         userId: user.id,
         tokenHash: refreshTokenVO.hash,
@@ -129,6 +129,7 @@ export class AuthService {
       accessTokenExpiresIn,
       refreshTokenExpiresIn,
       userId: user.id,
+      sessionId: refreshTokenRecord.id,
     };
   }
 
@@ -160,7 +161,7 @@ export class AuthService {
       where: { id: session.id },
       data: { revoked: true, revokedAt: new Date(), replacedByTokenId: null },
     });
-    await this.prisma.refreshToken.create({
+    const newRefreshTokenRecord = await this.prisma.refreshToken.create({
       data: {
         userId: session.userId,
         tokenHash: newRefreshTokenVO.hash,
@@ -191,6 +192,7 @@ export class AuthService {
       accessTokenExpiresIn,
       refreshTokenExpiresIn,
       userId: user.id,
+      sessionId: newRefreshTokenRecord.id,
     };
   }
 
