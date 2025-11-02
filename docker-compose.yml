@@ -1,8 +1,24 @@
+# Development Docker Compose Configuration
+# =========================================
+# This file is optimized for local development with hot-reload support.
+# 
+# Usage:
+#   docker-compose up -d
+#   docker-compose watch  # For automatic file sync
+#
+# Features:
+# - Hot-reload for code changes
+# - Volume mounts for source code
+# - Development dependencies included
+# - Debug ports exposed
+
 services:
+  # =========================================
+  # PostgreSQL Database
+  # =========================================
   db:
-    image: postgres:16
-    # Remove the container_name to allow Docker to generate unique names
-    # container_name: modular_lms_db
+    image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-loan_db}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -11,23 +27,49 @@ services:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-loan_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
+  # =========================================
+  # API User Service (Development)
+  # =========================================
   api-user:
     build:
       context: .
       dockerfile: apps/api-user/Dockerfile
       target: ${API_BUILD_TARGET:-dev}
-    # Remove the container_name
-    # container_name: modular_lms_api_user
+    restart: unless-stopped
     env_file:
       - .env
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       POSTGRES_HOST: db
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-loan_db}
-    depends_on: [db]
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-loan_db}?schema=public
+      PORT: 3000
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "${USER_API_PORT:-3001}:3000"
+    networks:
+      - backend
+    # Volume mounts for hot-reload
+    volumes:
+      - ./apps/api-user/src:/app/apps/api-user/src:cached
+      - ./libs:/app/libs:cached
+      - /app/node_modules
+      - /app/dist
+    # Docker Compose Watch configuration for file sync
     develop:
       watch:
         - action: sync
@@ -46,25 +88,42 @@ services:
           path: package.json
         - action: rebuild
           path: pnpm-lock.yaml
-        - action: rebuild
-          path: pnpm-workspace.yaml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
+  # =========================================
+  # API Admin Service (Development)
+  # =========================================
   api-admin:
     build:
       context: .
       dockerfile: apps/api-admin/Dockerfile
       target: ${API_BUILD_TARGET:-dev}
-    # Remove the container_name
-    # container_name: modular_lms_api_admin
+    restart: unless-stopped
     env_file:
       - .env
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       POSTGRES_HOST: db
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-loan_db}
-    depends_on: [db]
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-loan_db}?schema=public
+      PORT: 3000
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "${ADMIN_API_PORT:-3000}:3000"
+    networks:
+      - backend
+    # Volume mounts for hot-reload
+    volumes:
+      - ./apps/api-admin/src:/app/apps/api-admin/src:cached
+      - ./libs:/app/libs:cached
+      - /app/node_modules
+      - /app/dist
+    # Docker Compose Watch configuration for file sync
     develop:
       watch:
         - action: sync
@@ -83,8 +142,22 @@ services:
           path: package.json
         - action: rebuild
           path: pnpm-lock.yaml
-        - action: rebuild
-          path: pnpm-workspace.yaml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
+# =========================================
+# Networks
+# =========================================
+networks:
+  backend:
+    driver: bridge
+
+# =========================================
+# Volumes
+# =========================================
 volumes:
   pgdata:
+    driver: local

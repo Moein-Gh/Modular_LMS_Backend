@@ -1,7 +1,111 @@
 # .dockerignore
-# ─────────────
+# =========================================
+# Optimized Docker build context exclusions
+# This significantly reduces build time and image size
+
+# Dependencies
 node_modules
-.pnpm-debug.log*
-.env.prod
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store
+
+# Build outputs
 dist
+build
+*.tsbuildinfo
+.swc
+
+# Testing
+coverage
+*.spec.ts
+*.test.ts
+test
+tests
+__tests__
+*.spec.js
+*.test.js
+
+# Environment files
+.env
+.env.*
+!.env.example
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+
+# Version control
 .git
+.gitignore
+.gitattributes
+.github
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Documentation
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+docs
+*.md
+!prisma/*.md
+
+# CI/CD
+.circleci
+.gitlab-ci.yml
+.travis.yml
+azure-pipelines.yml
+.drone.yml
+Jenkinsfile
+
+# Docker files (exclude from build context to avoid confusion)
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Logs
+logs
+*.log
+
+# Temporary files
+tmp
+temp
+.tmp
+.cache
+
+# OS generated files
+Thumbs.db
+.DS_Store
+
+# Monorepo specific
+.turbo
+.nx
+
+# Husky
+.husky
+.git-hooks
+
+# ESLint
+.eslintcache
+
+# Prettier
+.prettierignore
+
+# Other
+*.bak
+*.backup
+*.old
+todo.txt
+todos.yaml
+
