@@ -35,7 +35,7 @@ COPY --from=dependencies /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspa
 
 # Copy source code and configuration files
 COPY prisma ./prisma
-COPY tsconfig*.json nest-cli.json ./
+COPY tsconfig*.json nest-cli.json webpack.config.js ./
 COPY apps ./apps
 COPY libs ./libs
 
