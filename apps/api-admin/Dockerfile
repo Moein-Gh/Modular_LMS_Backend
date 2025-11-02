@@ -16,10 +16,8 @@ RUN corepack enable && corepack prepare pnpm@10.17.0 --activate
 FROM base AS dependencies
 WORKDIR /app
 
-# Copy package files
+# Copy package files (monorepo - no individual app package.json files)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/api-admin/package.json ./apps/api-admin/
-COPY libs/*/package.json ./libs/*/
 
 # Install all dependencies (including dev dependencies for build)
 ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
