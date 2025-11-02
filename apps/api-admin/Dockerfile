@@ -54,9 +54,9 @@ WORKDIR /app
 # Copy package files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-# Install production dependencies only
+# Install production dependencies only (skip postinstall scripts like husky)
 ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Copy and generate Prisma client for production
 COPY prisma ./prisma
