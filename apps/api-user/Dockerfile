@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 # Use the exact pnpm version pinned in package.json
 ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
-RUN corepack enable && corepack prepare pnpm@10.14.0 --activate && pnpm install --frozen-lockfile
+RUN corepack enable && corepack prepare pnpm@10.17.0 --activate && pnpm install --frozen-lockfile
 # Copy only api-user app and libs after installing dependencies
 COPY . .
 RUN pnpm exec prisma generate
@@ -28,7 +28,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 # Use the exact pnpm version pinned in package.json
 ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
-RUN corepack enable && corepack prepare pnpm@10.14.0 --activate && pnpm install
+RUN corepack enable && corepack prepare pnpm@10.17.0 --activate && pnpm install
 # Copy only api-user app and libs after installing dependencies
 COPY . .
 RUN pnpm exec prisma generate
