@@ -8,6 +8,7 @@ ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
 RUN corepack enable && corepack prepare pnpm@10.17.0 --activate && pnpm install --frozen-lockfile
 # Copy only api-user app and libs after installing dependencies
 COPY . .
+RUN pnpm exec prisma migrate deploy
 RUN pnpm exec prisma generate
 # Explicitly build the api-user project (avoid relying on default project)
 RUN pnpm exec nest build api-user
