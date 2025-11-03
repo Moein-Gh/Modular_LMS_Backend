@@ -1,70 +1,137 @@
-#!/bin/bash#!/bin/bash
+#!/bin/bash#!/bin/bash#!/bin/bash
 
-# =========================================
 
-set -e  # Exit on error# Production Deployment Script
 
-# =========================================
+set -e  # Exit on error# =========================================
 
-echo "🚀 Starting deployment..."# This script automates the deployment process for production environments.
 
-#
+
+echo "🚀 Starting deployment..."set -e  # Exit on error# Production Deployment Script
+
+
+
+# Check if .env.production exists# =========================================
+
+if [ ! -f .env.production ]; then
+
+    echo "❌ Error: .env.production file not found!"echo "🚀 Starting deployment..."# This script automates the deployment process for production environments.
+
+    echo "Please create it from .env.production.example"
+
+    exit 1#
+
+fi
 
 # Check if .env.production exists# Usage:
 
-if [ ! -f .env.production ]; then#   ./deploy.sh [environment] [version]
+# Load environment variables
 
-    echo "❌ Error: .env.production file not found!"#
-
-    echo "Please create it from .env.production.example"# Examples:
-
-    exit 1#   ./deploy.sh production v1.0.0
-
-fi#   ./deploy.sh staging latest
-
-
-
-# Load environment variablesset -e  # Exit on error
-
-set -aset -u  # Exit on undefined variable
+set -aif [ ! -f .env.production ]; then#   ./deploy.sh [environment] [version]
 
 source .env.production
 
-set +a# =========================================
+set +a    echo "❌ Error: .env.production file not found!"#
 
-# Configuration
 
-echo "📦 Pulling latest code..."# =========================================
+
+echo "📦 Pulling latest code..."    echo "Please create it from .env.production.example"# Examples:
+
+git pull origin main || echo "⚠️  Git pull skipped (not in git repository or already up to date)"
+
+    exit 1#   ./deploy.sh production v1.0.0
+
+echo "🗄️  Ensuring database exists..."
+
+# Extract database name from DATABASE_URL or use POSTGRES_DBfi#   ./deploy.sh staging latest
+
+DB_NAME=${POSTGRES_DB:-lms-db}
+
+DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\([^:]*\):.*/\1/p')
+
+DB_USER=${POSTGRES_USER:-postgres}
+
+# Load environment variablesset -e  # Exit on error
+
+# Check if database exists, create if it doesn't
+
+echo "Checking if database '$DB_NAME' exists..."set -aset -u  # Exit on undefined variable
+
+DB_EXISTS=$(docker run --rm postgres:15-alpine psql -h "$DB_HOST" -U "$DB_USER" -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME';" 2>/dev/null || echo "")
+
+source .env.production
+
+if [ -z "$DB_EXISTS" ]; then
+
+    echo "Creating database '$DB_NAME'..."set +a# =========================================
+
+    docker run --rm postgres:15-alpine psql -h "$DB_HOST" -U "$DB_USER" -d postgres -c "CREATE DATABASE \"$DB_NAME\";"
+
+    echo "✅ Database created successfully"# Configuration
+
+else
+
+    echo "✅ Database already exists"echo "📦 Pulling latest code..."# =========================================
+
+fi
 
 git pull origin main || echo "⚠️  Git pull skipped (not in git repository or already up to date)"SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-PROJECT_NAME="modular-lms"
+echo "🏗️  Building Docker images..."
 
-echo "🗄️  Ensuring database exists..."COMPOSE_FILE="docker-compose.prod.yml"
+docker-compose -f docker-compose.prod.yml build --no-cachePROJECT_NAME="modular-lms"
+
+
+
+echo "🔄 Stopping old containers..."echo "🗄️  Ensuring database exists..."COMPOSE_FILE="docker-compose.prod.yml"
+
+docker-compose -f docker-compose.prod.yml down
 
 # Extract database name from DATABASE_URL or use POSTGRES_DB
 
-DB_NAME=${POSTGRES_DB:-lms-db}# Default values
+echo "🚀 Starting new containers..."
 
-DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\([^:]*\):.*/\1/p')ENVIRONMENT="${1:-production}"
+docker-compose -f docker-compose.prod.yml --env-file .env.production up -dDB_NAME=${POSTGRES_DB:-lms-db}# Default values
+
+
+
+echo "⏳ Waiting for services to be healthy..."DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\([^:]*\):.*/\1/p')ENVIRONMENT="${1:-production}"
+
+sleep 10
 
 DB_USER=${POSTGRES_USER:-postgres}VERSION="${2:-latest}"
 
-REGISTRY="${DOCKER_REGISTRY:-}"
+echo "📊 Running database migrations..."
 
-# Check if database exists, create if it doesn'tENV_FILE=".env.${ENVIRONMENT}"
+docker-compose -f docker-compose.prod.yml --env-file .env.production exec -T api-admin pnpm prisma migrate deployREGISTRY="${DOCKER_REGISTRY:-}"
 
-echo "Checking if database '$DB_NAME' exists..."
+
+
+echo "✅ Deployment complete!"# Check if database exists, create if it doesn'tENV_FILE=".env.${ENVIRONMENT}"
+
+echo ""
+
+echo "📋 Container status:"echo "Checking if database '$DB_NAME' exists..."
+
+docker-compose -f docker-compose.prod.yml ps
 
 DB_EXISTS=$(docker run --rm postgres:15-alpine psql -h "$DB_HOST" -U "$DB_USER" -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME';" 2>/dev/null || echo "")# Colors for output
 
-RED='\033[0;31m'
+echo ""
 
-if [ -z "$DB_EXISTS" ]; thenGREEN='\033[0;32m'
+echo "🌐 API endpoints:"RED='\033[0;31m'
 
-    echo "Creating database '$DB_NAME'..."YELLOW='\033[1;33m'
+echo "  Admin API: http://localhost:${API_ADMIN_PORT:-3200}"
 
-    docker run --rm postgres:15-alpine psql -h "$DB_HOST" -U "$DB_USER" -d postgres -c "CREATE DATABASE \"$DB_NAME\";"BLUE='\033[0;34m'
+echo "  User API:  http://localhost:${API_USER_PORT:-3100}"if [ -z "$DB_EXISTS" ]; thenGREEN='\033[0;32m'
+
+echo ""
+
+echo "📜 Showing logs (Ctrl+C to exit)..."    echo "Creating database '$DB_NAME'..."YELLOW='\033[1;33m'
+
+echo ""
+
+docker-compose -f docker-compose.prod.yml logs -f    docker run --rm postgres:15-alpine psql -h "$DB_HOST" -U "$DB_USER" -d postgres -c "CREATE DATABASE \"$DB_NAME\";"BLUE='\033[0;34m'
+
 
     echo "✅ Database created successfully"NC='\033[0m' # No Color
 
