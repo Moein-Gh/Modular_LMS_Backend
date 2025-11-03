@@ -24,14 +24,15 @@ echo "🗄️  Ensuring database exists..."
 DB_NAME=${POSTGRES_DB:-lms-db}
 DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\([^:]*\):.*/\1/p')
 DB_USER=${POSTGRES_USER:-postgres}
+DB_PASSWORD=${POSTGRES_PASSWORD}
 
 # Check if database exists, create if it doesn't
 echo "Checking if database '$DB_NAME' exists..."
-DB_EXISTS=$(docker run --rm postgres:15-alpine psql -h "$DB_HOST" -U "$DB_USER" -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME';" 2>/dev/null || echo "")
+DB_EXISTS=$(docker run --rm -e PGPASSWORD="$DB_PASSWORD" postgres:15-alpine psql -h "$DB_HOST" -U "$DB_USER" -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME';" 2>/dev/null || echo "")
 
 if [ -z "$DB_EXISTS" ]; then
     echo "Creating database '$DB_NAME'..."
-    docker run --rm postgres:15-alpine psql -h "$DB_HOST" -U "$DB_USER" -d postgres -c "CREATE DATABASE \"$DB_NAME\";"
+    docker run --rm -e PGPASSWORD="$DB_PASSWORD" postgres:15-alpine psql -h "$DB_HOST" -U "$DB_USER" -d postgres -c "CREATE DATABASE \"$DB_NAME\";"
     echo "✅ Database created successfully"
 else
     echo "✅ Database already exists"
