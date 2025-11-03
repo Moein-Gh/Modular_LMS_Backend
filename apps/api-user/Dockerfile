@@ -79,7 +79,10 @@ COPY --from=prod-dependencies --chown=nestjs:nodejs /app/package.json ./
 # Copy built application
 COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/api-user ./dist
 
-# Copy Prisma files for migrations (optional, can be removed if migrations run separately)
+# Copy generated Prisma client with engine binaries
+COPY --from=builder --chown=nestjs:nodejs /app/generated/prisma ./generated/prisma
+
+# Copy Prisma schema files
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 
 # Set production environment
