@@ -58,9 +58,8 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
-# Copy generated Prisma client from builder stage
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+# Copy generated Prisma client from builder stage (custom output location)
+COPY --from=builder /app/generated/prisma ./generated/prisma
 COPY prisma ./prisma
 
 # ============================================
