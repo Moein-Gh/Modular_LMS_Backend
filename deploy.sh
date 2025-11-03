@@ -39,7 +39,10 @@ else
 fi
 
 echo "🏗️  Building Docker images..."
-docker-compose -f docker-compose.prod.yml build --no-cache
+docker-compose -f docker-compose.prod.yml build
+
+echo "🧹 Cleaning up old images..."
+docker image prune -f
 
 echo "🔄 Stopping old containers..."
 docker-compose -f docker-compose.prod.yml down
