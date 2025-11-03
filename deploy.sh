@@ -47,14 +47,20 @@ docker image prune -f
 echo "🔄 Stopping old containers..."
 docker-compose -f docker-compose.prod.yml down
 
+echo "📊 Running database migrations..."
+# Run migrations using a temporary container with Prisma CLI
+docker run --rm \
+  -v $(pwd)/prisma:/app/prisma \
+  -w /app \
+  -e DATABASE_URL="$DATABASE_URL" \
+  node:20-alpine \
+  sh -c "corepack enable && corepack prepare pnpm@10.17.0 --activate && pnpm add -g prisma && prisma migrate deploy"
+
 echo "🚀 Starting new containers..."
 docker-compose -f docker-compose.prod.yml --env-file .env.production up -d
 
 echo "⏳ Waiting for services to be healthy..."
 sleep 10
-
-echo "�� Running database migrations..."
-docker-compose -f docker-compose.prod.yml --env-file .env.production exec -T api-admin pnpm prisma migrate deploy
 
 echo "✅ Deployment complete!"
 echo ""
