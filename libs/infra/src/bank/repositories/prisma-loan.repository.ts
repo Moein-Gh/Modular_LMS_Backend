@@ -70,14 +70,13 @@ export class PrismaLoanRepository implements LoanRepository {
     return items.map((m) => toDomain(m as LoanModelWithRelations));
   }
 
-  async findById(
-    id: string,
+  async findOne(
+    options: Prisma.LoanFindUniqueArgs,
     tx?: Prisma.TransactionClient,
   ): Promise<Loan | null> {
     const prisma = tx ?? this.prisma;
     const model = await prisma.loan.findUnique({
-      where: { id },
-      select: loanSelect,
+      ...options,
     });
     return model ? toDomain(model as LoanModel) : null;
   }
@@ -119,19 +118,9 @@ export class PrismaLoanRepository implements LoanRepository {
     const prisma = tx ?? this.prisma;
     const data: Prisma.LoanUpdateInput = {
       ...(input.name !== undefined ? { name: input.name } : {}),
-      ...(input.amount !== undefined ? { amount: input.amount } : {}),
-      ...(input.startDate !== undefined ? { startDate: input.startDate } : {}),
-      ...(input.paymentMonths !== undefined
-        ? { paymentMonths: input.paymentMonths }
-        : {}),
+
       ...(input.status !== undefined
         ? { status: input.status as unknown as PrismaLoanStatus }
-        : {}),
-      ...(input.accountId !== undefined
-        ? { account: { connect: { id: input.accountId } } }
-        : {}),
-      ...(input.loanTypeId !== undefined
-        ? { loanType: { connect: { id: input.loanTypeId } } }
         : {}),
     };
     const updated = await prisma.loan.update({

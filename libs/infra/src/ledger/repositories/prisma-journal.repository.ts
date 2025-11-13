@@ -2,7 +2,7 @@ import type { Journal, JournalEntry } from '@app/domain';
 import { DebitCredit, JournalRepository } from '@app/domain';
 import type { CreateJournalInput } from '@app/domain/ledger/types/journal.type';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
-import type { Prisma, PrismaClient } from '@generated/prisma';
+import { type Prisma, type PrismaClient } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 
 const journalSelect = {
@@ -19,8 +19,29 @@ const journalSelect = {
 const journalSelectWithEntries = {
   ...journalSelect,
   entries: {
-    include: {
-      ledgerAccount: true,
+    select: {
+      id: true,
+      code: true,
+      journalId: true,
+      ledgerAccountId: true,
+      dc: true,
+      amount: true,
+      targetType: true,
+      targetId: true,
+      removable: true,
+      createdAt: true,
+      ledgerAccount: {
+        select: {
+          id: true,
+          code: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          name: true,
+          nameFa: true,
+          type: true,
+        },
+      },
     },
   },
 } as const;
@@ -41,11 +62,13 @@ function toJournalEntry(entry: EntryModel): JournalEntry {
     amount: entry.amount.toString(),
     targetType: entry.targetType as JournalEntry['targetType'],
     targetId: entry.targetId ?? undefined,
+    removable: entry.removable,
     createdAt: entry.createdAt,
     ledgerAccount: entry.ledgerAccount
       ? {
           code: entry.ledgerAccount.code,
           name: entry.ledgerAccount.name,
+          nameFa: entry.ledgerAccount.nameFa ?? undefined,
         }
       : undefined,
   };
@@ -115,6 +138,19 @@ export class PrismaJournalRepository implements JournalRepository {
     return toJournal(journal);
   }
 
+  async updateMany(
+    where: Prisma.JournalWhereInput,
+    input: Partial<CreateJournalInput>,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    const prisma = tx ?? this.prisma;
+    const result = await prisma.journal.updateMany({
+      where,
+      data: input,
+    });
+    return result.count;
+  }
+
   async list(
     options?: Prisma.JournalFindManyArgs,
     tx?: Prisma.TransactionClient,
@@ -168,6 +204,8 @@ export class PrismaJournalRepository implements JournalRepository {
 
   async delete(id: string, tx?: Prisma.TransactionClient) {
     const prisma = tx ?? this.prisma;
-    await prisma.journal.delete({ where: { id } });
+    await prisma.journal.delete({
+      where: { id },
+    });
   }
 }

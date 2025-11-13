@@ -1,4 +1,9 @@
-import { TransactionalRepository } from '@app/domain/common/transactional-repository.interface';
+import {
+  PrismaJournalEntryRepository,
+  PrismaJournalRepository,
+  PrismaLedgerAccountRepository,
+} from '@app/infra';
+import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
 import { Prisma } from '@generated/prisma';
 import {
   DebitCredit,
@@ -6,9 +11,6 @@ import {
 } from '../entities/journal-entry.entity';
 import { Journal, JournalStatus } from '../entities/journal.entity';
 import { UnbalancedJournalError } from '../errors/unbalanced-journal.error';
-import { JournalEntryRepository } from '../repositories/journal-entry.repository';
-import { JournalRepository } from '../repositories/journal.repository';
-import { LedgerAccountRepository } from '../repositories/ledger-account.repository';
 
 export interface JournalEntrySpec {
   ledgerAccountCode: string;
@@ -20,10 +22,10 @@ export interface JournalEntrySpec {
 
 export class CreateJournalWithEntriesUseCase {
   constructor(
-    private readonly journalRepo: JournalRepository,
-    private readonly journalEntryRepo: JournalEntryRepository,
-    private readonly ledgerAccountRepo: LedgerAccountRepository,
-    private readonly transactionalRepo: TransactionalRepository,
+    private readonly journalRepo: PrismaJournalRepository,
+    private readonly journalEntryRepo: PrismaJournalEntryRepository,
+    private readonly ledgerAccountRepo: PrismaLedgerAccountRepository,
+    private readonly transactionalRepo: PrismaTransactionalRepository,
   ) {}
 
   async execute(

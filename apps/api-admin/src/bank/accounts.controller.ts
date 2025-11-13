@@ -2,8 +2,8 @@ import {
   AccessTokenGuard,
   AccountsService,
   PaginatedResponseDto,
-  PaginationQueryDto,
 } from '@app/application';
+import { Account } from '@app/domain';
 import {
   Body,
   Controller,
@@ -19,6 +19,7 @@ import {
 } from '@nestjs/common';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { CreateAccountDto } from './dtos/accounts/create-account.dto';
+import { GetAccountsQueryDto } from './dtos/accounts/get-accounts-query.dto';
 import { UpdateAccountDto } from './dtos/accounts/update-account.dto';
 
 @Controller('accounts')
@@ -28,8 +29,8 @@ export class AccountsController {
 
   @Get()
   async findAll(
-    @Query() query: PaginationQueryDto,
-  ): Promise<PaginatedResponseDto<any>> {
+    @Query() query: GetAccountsQueryDto,
+  ): Promise<PaginatedResponseDto<Account>> {
     const { items, totalItems, page, pageSize } =
       await this.accounts.findAll(query);
     return PaginatedResponseDto.from({

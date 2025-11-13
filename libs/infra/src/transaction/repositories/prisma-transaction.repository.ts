@@ -116,10 +116,13 @@ export class PrismaTransactionRepository implements TransactionRepository {
     const prisma = tx ?? this.prisma;
     const args: Prisma.TransactionFindManyArgs = {
       ...(options ?? {}),
-      select: selectTransaction,
+      // Only add select if include is not provided
+      ...(!options?.include && { select: selectTransactionWithRelations }),
     };
     const transactions = await prisma.transaction.findMany(args);
-    return transactions.map((t) => toDomain(t as TransactionModel));
+    return transactions.map((t) =>
+      toDomainWithRelations(t as TransactionWithRelationsModel),
+    );
   }
 
   async count(

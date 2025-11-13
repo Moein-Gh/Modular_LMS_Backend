@@ -262,6 +262,8 @@ model Installment {
   updatedAt DateTime @updatedAt
 
   loan Loan @relation(fields: [loanId], references: [id])
+
+  @@unique([loanId, installmentNumber])
 }
 
 enum SubscriptionFeeStatus {
@@ -320,6 +322,7 @@ model LedgerAccount {
   id        String              @id @default(uuid()) @db.Uuid
   code      String              @unique @db.Text
   name      String              @db.Text
+  nameFa    String?             @db.Text
   type      LedgerAccountType
   status    LedgerAccountStatus @default(ACTIVE)
   createdAt DateTime            @default(now())
@@ -359,6 +362,7 @@ model JournalEntry {
   dc              DebitCredit
   amount          Decimal            @db.Decimal(18, 4)
   targetType      JournalTargetType?
+  removable       Boolean            @default(false)
   targetId        String?            @db.Uuid
   createdAt       DateTime           @default(now())
 

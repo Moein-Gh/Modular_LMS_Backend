@@ -17,7 +17,6 @@ import {
   Post,
   Query,
   UseGuards,
-  UsePipes,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
@@ -51,7 +50,6 @@ export class TransactionsController {
   @ApiOperation({ summary: 'Get transaction by ID with images' })
   @ApiResponse({ status: 200, description: 'Returns transaction with images' })
   @ApiResponse({ status: 404, description: 'Transaction not found' })
-  @UsePipes(UUID_V4_PIPE)
   async get(@Param('id', UUID_V4_PIPE) id: string) {
     return await this.transactionsService.findById(id);
   }
@@ -89,7 +87,6 @@ export class TransactionsController {
   @ApiOperation({ summary: 'Update transaction' })
   @ApiResponse({ status: 200, description: 'Transaction updated successfully' })
   @ApiResponse({ status: 404, description: 'Transaction not found' })
-  @UsePipes(UUID_V4_PIPE)
   update(
     @Param('id', UUID_V4_PIPE) id: string,
     @Body() dto: UpdateTransactionDto,
@@ -102,7 +99,6 @@ export class TransactionsController {
   @ApiOperation({ summary: 'Delete transaction' })
   @ApiResponse({ status: 204, description: 'Transaction deleted successfully' })
   @ApiResponse({ status: 404, description: 'Transaction not found' })
-  @UsePipes(UUID_V4_PIPE)
   async remove(@Param('id', UUID_V4_PIPE) id: string) {
     await this.transactionsService.delete(id);
     return;

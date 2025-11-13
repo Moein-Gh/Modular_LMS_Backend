@@ -5,6 +5,7 @@ import {
 } from '@app/application';
 import { UserApplicationModule } from '@app/application/user/user-application.module';
 import {
+  PrismaJournalEntryRepository,
   PrismaJournalRepository,
   PrismaLedgerAccountRepository,
 } from '@app/infra';
@@ -30,14 +31,18 @@ import { ApiUserService } from './api-user.service';
   providers: [
     ApiUserService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
-
     JournalsService,
     LedgerAccountsService,
+    PrismaLedgerAccountRepository,
     {
       provide: 'LedgerAccountRepository',
       useClass: PrismaLedgerAccountRepository,
     },
     { provide: 'JournalRepository', useClass: PrismaJournalRepository },
+    {
+      provide: 'JournalEntryRepository',
+      useClass: PrismaJournalEntryRepository,
+    },
   ],
 })
 export class ApiUserModule {}

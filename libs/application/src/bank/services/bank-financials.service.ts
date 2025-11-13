@@ -1,4 +1,5 @@
-import { BankFinancialSummary, LedgerAccountRepository } from '@app/domain';
+import { BankFinancialSummary } from '@app/domain';
+import { PrismaLedgerAccountRepository } from '@app/infra';
 import { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -23,7 +24,7 @@ const LEDGER_ACCOUNTS = {
 export class BankFinancialsService {
   constructor(
     @Inject('LedgerAccountRepository')
-    private readonly ledgerAccountRepo: LedgerAccountRepository,
+    private readonly ledgerAccountRepo: PrismaLedgerAccountRepository,
   ) {}
 
   /**

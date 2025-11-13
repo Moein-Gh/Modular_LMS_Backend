@@ -25,6 +25,12 @@ async function main(): Promise<void> {
   // Seed fixed Ledger Accounts (idempotent)
   await seedLedgerAccounts();
 
+  // Seed AccountTypes (idempotent)
+  await seedAccountTypes();
+
+  // Seed LoanTypes (idempotent)
+  await seedLoanTypes();
+
   // Seed test user (idempotent)
   await seedTestUser();
 }
@@ -33,16 +39,71 @@ async function seedLedgerAccounts(): Promise<void> {
   const accounts: Array<{
     code: string;
     name: string;
+    nameFa?: string;
     type: LedgerAccountType;
   }> = [
-    { code: '1000', name: 'Cash', type: 'ASSET' },
-    { code: '1100', name: 'Loans Receivable', type: 'ASSET' },
+    // Assets
+    { code: '1000', name: 'Cash', nameFa: 'وجه نقد', type: 'ASSET' },
+    {
+      code: '1100',
+      name: 'Loans Receivable',
+      nameFa: 'وام های دریافتنی',
+      type: 'ASSET',
+    },
 
-    { code: '2000', name: 'Customer Deposits', type: 'LIABILITY' },
-    { code: '2050', name: 'Unapplied Receipts', type: 'LIABILITY' },
-    { code: '2100', name: 'Unapplied Disbursements', type: 'LIABILITY' },
+    // Liabilities
+    {
+      code: '2000',
+      name: 'Customer Deposits',
+      nameFa: 'سپرده های مشتری',
+      type: 'LIABILITY',
+    },
+    {
+      code: '2050',
+      name: 'Unapplied Receipts',
+      nameFa: 'دریافت های تخصیص نیافته',
+      type: 'LIABILITY',
+    },
+    {
+      code: '2100',
+      name: 'Unapplied Disbursements',
+      nameFa: 'پرداخت های تخصیص نیافته',
+      type: 'LIABILITY',
+    },
 
-    { code: '4100', name: 'Fee/Commission Income', type: 'INCOME' },
+    // Income
+    {
+      code: '4100',
+      name: 'Fee/Commission Income',
+      nameFa: 'درآمد کارمزد',
+      type: 'INCOME',
+    },
+    {
+      code: '4200',
+      name: 'Subscription Fee Income',
+      nameFa: 'اشتراک ماهیانه',
+      type: 'INCOME',
+    },
+
+    // Expenses
+    {
+      code: '5100',
+      name: 'Loan Repayment Expense',
+      nameFa: 'پرداخت قسط وام',
+      type: 'EXPENSE',
+    },
+    {
+      code: '5200',
+      name: 'Commission Expense',
+      nameFa: 'هزینه کمیسیون',
+      type: 'EXPENSE',
+    },
+    {
+      code: '5300',
+      name: 'Subscription Fee Expense',
+      nameFa: 'هزینه حق عضویت',
+      type: 'EXPENSE',
+    },
   ];
 
   let createdCount = 0;
@@ -111,6 +172,51 @@ async function seedTestUser(): Promise<void> {
   }
 
   console.log(`Test user credentials: phone=${testPhone}`);
+}
+
+async function seedAccountTypes(): Promise<void> {
+  const accountType = {
+    name: 'معمولی',
+    maxAccounts: 9999,
+  };
+
+  const existing = await prisma.accountType.findUnique({
+    where: { name: accountType.name },
+  });
+
+  if (existing) {
+    console.log('✓ AccountType "معمولی" already exists; skipping');
+  } else {
+    await prisma.accountType.create({
+      data: accountType,
+    });
+    console.log('✓ Created AccountType "معمولی"');
+  }
+}
+
+async function seedLoanTypes(): Promise<void> {
+  const loanType = {
+    name: 'معمولی',
+    commissionPercentage: 1,
+    defaultInstallments: 10,
+    maxInstallments: 24,
+    minInstallments: 1,
+    creditRequirementPct: 20,
+    description: 'وام معمولی',
+  };
+
+  const existing = await prisma.loanType.findUnique({
+    where: { name: loanType.name },
+  });
+
+  if (existing) {
+    console.log('✓ LoanType "معمولی" already exists; skipping');
+  } else {
+    await prisma.loanType.create({
+      data: loanType,
+    });
+    console.log('✓ Created LoanType "معمولی"');
+  }
 }
 
 main()

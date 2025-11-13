@@ -3,11 +3,16 @@ import {
   PrismaUserRepository,
   TransactionInfraModule,
 } from '@app/infra';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
+import { LedgerApplicationModule } from '../ledger/ledger-application.module';
 import { TransactionsService } from './services/transactions.service';
 
 @Module({
-  imports: [TransactionInfraModule, LedgerInfraModule],
+  imports: [
+    TransactionInfraModule,
+    LedgerInfraModule,
+    forwardRef(() => LedgerApplicationModule),
+  ],
   providers: [TransactionsService, PrismaUserRepository],
   exports: [TransactionsService],
 })

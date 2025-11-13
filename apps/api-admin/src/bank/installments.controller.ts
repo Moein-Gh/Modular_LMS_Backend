@@ -2,7 +2,6 @@ import {
   AccessTokenGuard,
   InstallmentsService,
   PaginatedResponseDto,
-  PaginationQueryDto,
 } from '@app/application';
 import {
   Body,
@@ -19,6 +18,7 @@ import {
 } from '@nestjs/common';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { CreateInstallmentDto } from './dtos/installments/create-installment.dto';
+import { GetInstallmentsQueryDto } from './dtos/installments/list-installment.dto';
 import { UpdateInstallmentDto } from './dtos/installments/update-installment.dto';
 
 @Controller('installments')
@@ -28,7 +28,7 @@ export class InstallmentsController {
 
   @Get()
   async findAll(
-    @Query() query: PaginationQueryDto,
+    @Query() query: GetInstallmentsQueryDto,
   ): Promise<PaginatedResponseDto<any>> {
     const { items, totalItems, page, pageSize } =
       await this.installments.findAll(query);

@@ -29,6 +29,11 @@ function getCookie(req: Request, name: string): string | undefined {
   return undefined;
 }
 
+function isSecureRequest(req: Request): boolean {
+  // True when server is behind HTTPS or reverse proxy sets x-forwarded-proto
+  return req.secure || req.headers['x-forwarded-proto'] === 'https';
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -46,20 +51,21 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async verifySms(
     @Body() body: VerifySmsCodeDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.auth.verifySmsCode(body);
     // Set tokens as httpOnly, secure cookies
     res.cookie('accessToken', result.accessToken, {
       httpOnly: true,
-      secure: true,
+      secure: isSecureRequest(req),
       sameSite: 'lax',
       maxAge: result.accessTokenExpiresIn * 1000,
       path: '/',
     });
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
-      secure: true,
+      secure: isSecureRequest(req),
       sameSite: 'lax',
       maxAge: result.refreshTokenExpiresIn * 1000,
       path: '/',
@@ -85,14 +91,14 @@ export class AuthController {
     const result = await this.auth.refresh(refreshToken);
     res.cookie('accessToken', result.accessToken, {
       httpOnly: true,
-      secure: true,
+      secure: isSecureRequest(req),
       sameSite: 'lax',
       maxAge: result.accessTokenExpiresIn * 1000,
       path: '/',
     });
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
-      secure: true,
+      secure: isSecureRequest(req),
       sameSite: 'lax',
       maxAge: result.refreshTokenExpiresIn * 1000,
       path: '/',
@@ -109,20 +115,21 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async logout(
     @Body() body: LogoutDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.auth.logout(body);
     // Clear auth cookies
     res.cookie('accessToken', '', {
       httpOnly: true,
-      secure: true,
+      secure: isSecureRequest(req),
       sameSite: 'lax',
       maxAge: 0,
       path: '/',
     });
     res.cookie('refreshToken', '', {
       httpOnly: true,
-      secure: true,
+      secure: isSecureRequest(req),
       sameSite: 'lax',
       maxAge: 0,
       path: '/',

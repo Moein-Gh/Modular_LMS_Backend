@@ -7,7 +7,7 @@ import {
 export interface IdentityRepository {
   findAll(options?: unknown, tx?: unknown): Promise<Identity[]>;
   findById(id: string, tx?: unknown): Promise<Identity | null>;
-  count(where?: unknown, tx?: unknown): Promise<number>;
+  count(where: unknown, tx?: unknown): Promise<number>;
   create(account: CreateIdentityInput, tx?: unknown): Promise<Identity>;
   update(
     id: string,

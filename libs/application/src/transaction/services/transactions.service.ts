@@ -1,4 +1,8 @@
-import { NotFoundError, PaginationQueryDto } from '@app/application';
+import {
+  JournalsService,
+  NotFoundError,
+  PaginationQueryDto,
+} from '@app/application';
 import { paginatePrisma } from '@app/application/common/pagination.util';
 import {
   CreateJournalWithEntriesUseCase,
@@ -25,7 +29,12 @@ import {
 import { PrismaJournalEntryRepository } from '@app/infra/ledger/repositories/prisma-journal-entry.repository';
 import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
 import { Prisma } from '@generated/prisma';
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  forwardRef,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 
 @Injectable()
 export class TransactionsService {
@@ -38,6 +47,8 @@ export class TransactionsService {
     private readonly journalRepo: PrismaJournalRepository,
     private readonly journalEntryRepo: PrismaJournalEntryRepository,
     private readonly prismaTransactionalRepo: PrismaTransactionalRepository,
+    @Inject(forwardRef(() => JournalsService))
+    private readonly journalService: JournalsService,
   ) {
     // Initialize the use case with required dependencies
     this.createJournalUseCase = new CreateJournalWithEntriesUseCase(
@@ -59,6 +70,15 @@ export class TransactionsService {
       searchFields: ['externalRef', 'note'],
       defaultOrderBy: 'createdAt',
       defaultOrderDir: 'desc',
+      include: {
+        user: {
+          include: {
+            identity: {
+              select: { id: true, name: true },
+            },
+          },
+        },
+      },
       tx,
     });
   }
@@ -471,18 +491,61 @@ export class TransactionsService {
   }
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
-    const exists = await this.transactionsRepo.findById(id, tx);
-    if (!exists) {
-      throw new NotFoundError('Transaction', 'id', id);
-    }
-    try {
-      await this.transactionsRepo.delete(id, tx);
-    } catch (e) {
-      if (this.isPrismaNotFoundError(e)) {
+    const run = async (DBtx: Prisma.TransactionClient) => {
+      const exists = await this.transactionsRepo.findById(id, DBtx);
+      if (!exists) {
         throw new NotFoundError('Transaction', 'id', id);
       }
-      throw e;
-    }
+      try {
+        await this.transactionsRepo.delete(id, DBtx);
+        await this.journalRepo.delete(id, DBtx);
+      } catch (e) {
+        if (this.isPrismaNotFoundError(e)) {
+          throw new NotFoundError('Transaction', 'id', id);
+        }
+        throw e;
+      }
+    };
+    return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
+  }
+
+  async reject(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Transaction> {
+    const run = async (DBtx: Prisma.TransactionClient) => {
+      // Fetch and validate transaction exists
+      const transaction = await this.transactionsRepo.findById(id, DBtx);
+      if (!transaction) {
+        throw new NotFoundError('Transaction', 'id', id);
+      }
+
+      // Fetch the journal associated with this transaction
+      const journal = await this.getSingleJournalForTransaction(
+        transaction.id,
+        transaction.code,
+        DBtx,
+      );
+
+      // Ensure journal is in PENDING status
+      if (journal.status !== JournalStatus.PENDING) {
+        throw new ConflictException(`تغییر وضعیت ژورنال امکان‌پذیر نیست`);
+      }
+
+      // Update transaction status to REJECTED
+      const updatedTransaction = await this.transactionsRepo.update(
+        id,
+        { status: 'REJECTED' },
+        DBtx,
+      );
+
+      // Void the journal associated with this transaction
+      await this.journalService.void(journal.id, DBtx);
+
+      return updatedTransaction;
+    };
+
+    return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
   }
 
   private isPrismaNotFoundError(e: unknown): boolean {

@@ -14,6 +14,8 @@ export * from './auth';
 
 // BANK
 export * from './bank';
+export * from './ledger/dto/add-journal-entries.dto';
+export * from './ledger/dto/add-single-journal-entry.dto';
 export * from './ledger/dto/create-journal.dto';
 export * from './ledger/dto/create-ledger-account.dto';
 export * from './ledger/dto/update-ledger-account.dto';

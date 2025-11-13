@@ -15,4 +15,5 @@ export interface InstallmentRepository {
     tx?: unknown,
   ): Promise<Installment>;
   delete(id: string, tx?: unknown): Promise<void>;
+  deleteMany(where: unknown, tx?: unknown): Promise<void>;
 }

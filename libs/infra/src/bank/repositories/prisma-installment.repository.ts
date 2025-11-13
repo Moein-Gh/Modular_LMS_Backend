@@ -113,4 +113,12 @@ export class PrismaInstallmentRepository implements InstallmentRepository {
     const prisma = tx ?? this.prisma;
     await prisma.installment.delete({ where: { id } });
   }
+
+  async deleteMany(
+    where: Prisma.InstallmentWhereInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const prisma = tx ?? this.prisma;
+    await prisma.installment.deleteMany({ where });
+  }
 }

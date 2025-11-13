@@ -2,6 +2,11 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
+export enum OrderDirection {
+  ASC = 'asc',
+  DESC = 'desc',
+}
+
 export class PaginationQueryDto {
   @ApiPropertyOptional({ minimum: 1, default: 1 })
   @Transform(({ value }) => (value !== undefined ? Number(value) : 1))
@@ -32,7 +37,7 @@ export class PaginationQueryDto {
   orderBy?: string;
 
   @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'desc' })
-  @IsEnum(['asc', 'desc'])
+  @IsEnum(OrderDirection)
   @IsOptional()
-  orderDir?: 'asc' | 'desc' = 'desc';
+  orderDir?: OrderDirection = OrderDirection.DESC;
 }

@@ -83,7 +83,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "${USER_API_PORT:-3001}:3000"
+      - "0.0.0.0:${USER_API_PORT:-3001}:3000"
     networks:
       - backend
       - frontend
@@ -146,7 +146,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "${ADMIN_API_PORT:-3000}:3000"
+      - "0.0.0.0:${ADMIN_API_PORT:-3000}:3000"
     networks:
       - backend
       - frontend

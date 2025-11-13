@@ -1,4 +1,4 @@
-import { NotFoundError, PaginationQueryDto } from '@app/application';
+import { NotFoundError } from '@app/application';
 import { paginatePrisma } from '@app/application/common/pagination.util';
 import { TransactionsService } from '@app/application/transaction/services/transactions.service';
 import {
@@ -8,6 +8,7 @@ import {
   InstallmentStatus,
   JournalEntryTarget,
   LEDGER_ACCOUNT_CODES,
+  ListLoanQueryInput,
   LoanStatus,
   LoanType,
   Transaction,
@@ -20,6 +21,8 @@ import {
 import {
   PrismaAccountRepository,
   PrismaInstallmentRepository,
+  PrismaJournalEntryRepository,
+  PrismaJournalRepository,
   PrismaLoanRepository,
   PrismaLoanTypeRepository,
   PrismaService,
@@ -41,26 +44,68 @@ export class LoansService {
     private readonly accountRepo: PrismaAccountRepository,
     private readonly prismaTransactionalRepo: PrismaTransactionalRepository,
     private readonly installmentRepo: PrismaInstallmentRepository,
+    private readonly journalEntriesRepo: PrismaJournalEntryRepository,
     private readonly prismaService: PrismaService,
     private readonly bankFinancialsService: BankFinancialsService,
     private readonly transactionsService: TransactionsService,
+    private readonly journalsRepo: PrismaJournalRepository,
   ) {}
 
-  async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
+  async findAll(query?: ListLoanQueryInput, tx?: Prisma.TransactionClient) {
     return paginatePrisma<Loan, Prisma.LoanFindManyArgs, Prisma.LoanWhereInput>(
       {
         repo: this.loansRepo,
-        query: query ?? new PaginationQueryDto(),
+        query: query ?? {},
+        where: {
+          ...(query?.accountId && { accountId: query.accountId }),
+          ...(query?.loanTypeId && { loanTypeId: query.loanTypeId }),
+          ...(query?.status && { status: query.status }),
+        },
         searchFields: ['name'],
         defaultOrderBy: 'createdAt',
         defaultOrderDir: 'desc',
+        include: {
+          loanType: { select: { id: true, name: true } },
+          account: {
+            select: {
+              id: true,
+              name: true,
+              user: {
+                select: {
+                  id: true,
+                  identity: { select: { id: true, name: true } },
+                },
+              },
+            },
+          },
+        },
         tx,
       },
     );
   }
 
   async findById(id: string, tx?: Prisma.TransactionClient): Promise<Loan> {
-    const loan = await this.loansRepo.findById(id, tx);
+    const loan = await this.loansRepo.findOne(
+      {
+        where: { id },
+        include: {
+          loanType: { select: { id: true, name: true } },
+          account: {
+            select: {
+              id: true,
+              name: true,
+              user: {
+                select: {
+                  id: true,
+                  identity: { select: { id: true, name: true } },
+                },
+              },
+            },
+          },
+        },
+      },
+      tx,
+    );
     if (!loan) {
       throw new NotFoundError('Loan', 'id', id);
     }
@@ -71,7 +116,15 @@ export class LoansService {
     input: CreateLoanInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Loan> {
+    console.log('[LoansService.create] Starting loan creation', {
+      accountId: input.accountId,
+      amount: input.amount,
+      paymentMonths: input.paymentMonths,
+    });
+
     const run = async (DBtx: Prisma.TransactionClient) => {
+      console.log('[LoansService.create] Inside transaction callback');
+
       // 1. Validate and fetch dependencies
       const loanType = await this.validateLoanTypeId(input.loanTypeId, DBtx);
       const account = await this.validateAccountId(input.accountId, DBtx);
@@ -84,6 +137,7 @@ export class LoansService {
 
       // 3. Create the loan record
       const loan = await this.loansRepo.create(input, DBtx);
+      console.log('[LoansService.create] Loan created with id:', loan.id);
 
       // 4. Calculate financial amounts
       const { commissionAmount, netDisbursement } =
@@ -103,12 +157,18 @@ export class LoansService {
       );
 
       // 6. Generate installment schedule
+      console.log('[LoansService.create] About to create installments');
       await this.createInstallmentsForLoan(loan, DBtx);
+      console.log('[LoansService.create] Installments created');
 
       return loan;
     };
 
-    return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
+    const result = tx
+      ? run(tx)
+      : this.prismaTransactionalRepo.withTransaction(run);
+    console.log('[LoansService.create] Transaction completed');
+    return result;
   }
 
   async update(
@@ -116,7 +176,7 @@ export class LoansService {
     loan: UpdateLoanInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Loan> {
-    const exists = await this.loansRepo.findById(id, tx);
+    const exists = await this.loansRepo.findOne({ where: { id } }, tx);
     if (!exists) {
       throw new NotFoundError('Loan', 'id', id);
     }
@@ -153,7 +213,7 @@ export class LoansService {
         );
       }
 
-      // 3. Approve the transaction (this also posts the journal atomically)
+      // 3. Approve the transaction (this also posts the journal automatically)
       await this.transactionsService.approve(transaction.id, DBtx);
 
       // 4. Update loan status to ACTIVE
@@ -173,18 +233,93 @@ export class LoansService {
   }
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
-    const exists = await this.loansRepo.findById(id, tx);
-    if (!exists) {
-      throw new NotFoundError('Loan', 'id', id);
-    }
-    try {
-      await this.loansRepo.delete(id, tx);
-    } catch (e) {
-      if (this.isPrismaNotFoundError(e)) {
+    console.log(
+      `[LoansService.delete] Attempting to delete loan with id: ${id}`,
+    );
+    const run = async (DBtx: Prisma.TransactionClient) => {
+      console.log(
+        `[LoansService.delete] Inside transaction callback for loan id: ${id}`,
+      );
+      const loan = await this.loansRepo.findOne({ where: { id } }, DBtx);
+      if (!loan) {
+        console.log(`[LoansService.delete] Loan not found: ${id}`);
         throw new NotFoundError('Loan', 'id', id);
       }
-      throw e;
+      if (loan.status !== LoanStatus.PENDING) {
+        console.log(
+          `[LoansService.delete] Loan status is not PENDING: ${loan.status}`,
+        );
+        throw new ConflictException(
+          `تنها وام های در وضعیت "در انتظار" قابل حذف می‌باشند.`,
+        );
+      }
+
+      // Delete all installments for this loan
+      console.log(
+        `[LoansService.delete] Deleting installments for loan id: ${id}`,
+      );
+      await this.installmentRepo.deleteMany({ loanId: id }, DBtx);
+
+      // Find journal entries for this loan
+      console.log(
+        `[LoansService.delete] Fetching journal entries for loan id: ${id}`,
+      );
+      const journalEntries = await this.journalEntriesRepo.findAll(
+        {
+          where: {
+            targetType: JournalEntryTarget.LOAN,
+            targetId: id,
+          },
+        },
+        DBtx,
+      );
+
+      const journalId = journalEntries[0]?.journalId;
+
+      const journal = await this.journalsRepo.findById(journalId, DBtx);
+
+      console.log(journalEntries);
+
+      const transactionId = journal?.transactionId;
+
+      console.log('🚀 ---------------------------------🚀');
+      console.log('🚀 ~ transactionId:', transactionId);
+      console.log('🚀 ---------------------------------🚀');
+
+      if (transactionId) {
+        console.log(
+          `[LoansService.delete] Rejecting transaction with id: ${transactionId} for loan id: ${id}`,
+        );
+        await this.transactionsService.reject(transactionId, DBtx);
+      }
+
+      // Delete the loan itself
+      try {
+        console.log(
+          `[LoansService.delete] Deleting loan record with id: ${id}`,
+        );
+        await this.loansRepo.delete(id, DBtx);
+        console.log(`[LoansService.delete] Loan deleted successfully: ${id}`);
+      } catch (e) {
+        if (this.isPrismaNotFoundError(e)) {
+          console.log(
+            `[LoansService.delete] Loan not found during delete: ${id}`,
+          );
+          throw new NotFoundError('Loan', 'id', id);
+        }
+        console.log(`[LoansService.delete] Error deleting loan: ${id}`, e);
+        throw e;
+      }
+    };
+
+    if (tx) {
+      await run(tx);
+    } else {
+      await this.prismaTransactionalRepo.withTransaction(run);
     }
+    console.log(
+      `[LoansService.delete] Delete operation completed for loan id: ${id}`,
+    );
   }
 
   // Narrowly detect Prisma's "Record not found" without importing Prisma types
@@ -234,7 +369,7 @@ export class LoansService {
     );
     if (existingLoans.length > 0) {
       throw new ConflictException(
-        `Account with id '${accountId}' already has an active loan.`,
+        `حساب مورد نظر دارای وام فعال دیگری می‌باشد.`,
       );
     }
   }
@@ -244,6 +379,10 @@ export class LoansService {
     tx?: Prisma.TransactionClient,
   ) {
     const installmentCount = loan.paymentMonths;
+    console.log(
+      `[createInstallmentsForLoan] Creating ${installmentCount} installments for loan ${loan.id}`,
+    );
+
     const installmentAmount = (
       BigInt(loan.amount) / BigInt(installmentCount)
     ).toString();
@@ -272,6 +411,10 @@ export class LoansService {
         tx,
       );
     }
+
+    console.log(
+      `[createInstallmentsForLoan] Completed creating ${installmentCount} installments for loan ${loan.id}`,
+    );
   }
 
   private validateLoanLimits(input: CreateLoanInput, loanType: LoanType) {

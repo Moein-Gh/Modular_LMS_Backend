@@ -18,6 +18,7 @@ const selectJournalEntry = {
   amount: true,
   targetType: true,
   targetId: true,
+  removable: true,
   createdAt: true,
 };
 
@@ -35,6 +36,7 @@ function toDomain(model: JournalEntryModel): JournalEntry {
     amount: String(model.amount),
     targetType: model.targetType as JournalEntry['targetType'],
     targetId: model.targetId ?? undefined,
+    removable: model.removable,
     createdAt: model.createdAt,
   };
 }
@@ -49,7 +51,6 @@ export class PrismaJournalEntryRepository implements JournalEntryRepository {
   ): Promise<JournalEntry[]> {
     const prisma = tx ?? this.prisma;
     const rows = await prisma.journalEntry.findMany({
-      select: selectJournalEntry,
       ...(options ?? {}),
     });
     return rows.map((r) => toDomain(r as JournalEntryModel));

@@ -14,6 +14,7 @@ import {
 
 import {
   AccessTokenGuard,
+  CurrentUserId,
   IdentitiesService,
   NotFoundError,
   PaginatedResponseDto,
@@ -79,10 +80,17 @@ export class UsersController {
     return {
       id: user.id,
       isActive: user.isActive,
+      code: user.code,
       identityId: user.identityId,
       identity: {
         id: user.identity!.id!,
         name: user.identity!.name!,
+        email: user.identity!.email!,
+        countryCode: user.identity!.countryCode!,
+        phone: user.identity!.phone!,
+        nationalCode: user.identity!.nationalCode!,
+        createdAt: user.identity!.createdAt!,
+        updatedAt: user.identity!.updatedAt!,
       },
     };
   }
@@ -91,22 +99,45 @@ export class UsersController {
   async update(
     @Param('id', UUID_V4_PIPE) id: string,
     @Body() dto: UpdateUserDto,
+    @CurrentUserId() currentUserId?: string,
   ): Promise<GetUserDto> {
     const user = await this.findUserAndIdentity(id);
     if (!user) throw new NotFoundError('User', 'id', id);
 
-    const updated = await this.usersService.update(id, {
-      isActive: dto.isActive,
-      identityId: dto.identityId,
+    // Only allow isActive to be changed when editing other users
+    const canChangeIsActive = !currentUserId || currentUserId !== id;
+    const userUpdate: { isActive?: boolean } = {};
+    if (canChangeIsActive && dto.isActive !== undefined) {
+      userUpdate.isActive = dto.isActive;
+    }
+
+    // Call usersService.update only if there is something to update at user-level
+    const updated = Object.keys(userUpdate).length
+      ? await this.usersService.update(id, userUpdate)
+      : user;
+
+    await this.identityService.update(user.identityId, {
+      name: dto.name,
+      phone: dto.phone,
+      countryCode: dto.countryCode,
+      nationalCode: dto.nationalCode,
+      email: dto.email,
     });
+
     if (!updated) throw new NotFoundError('User', 'id', id);
     return {
       id: updated.id,
       isActive: updated.isActive,
+      code: updated.code,
       identityId: updated.identityId,
       identity: {
         id: user.identity!.id!,
         name: user.identity!.name!,
+        email: user.identity!.email!,
+        phone: user.identity?.countryCode + user.identity!.phone!,
+        nationalCode: user.identity!.nationalCode!,
+        createdAt: user.identity!.createdAt!,
+        updatedAt: user.identity!.updatedAt!,
       },
     };
   }

@@ -2,7 +2,6 @@ import {
   AccessTokenGuard,
   LoansService,
   PaginatedResponseDto,
-  PaginationQueryDto,
 } from '@app/application';
 import {
   Body,
@@ -19,6 +18,7 @@ import {
 } from '@nestjs/common';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { CreateLoanDto } from './dtos/loans/create-loan.dto';
+import { GetLoansQueryDto } from './dtos/loans/list-loan.dto';
 import { UpdateLoanDto } from './dtos/loans/update-loan.dto';
 
 @Controller('loans')
@@ -28,7 +28,7 @@ export class LoansController {
 
   @Get()
   async findAll(
-    @Query() query: PaginationQueryDto,
+    @Query() query: GetLoansQueryDto,
   ): Promise<PaginatedResponseDto<any>> {
     const { items, totalItems, page, pageSize } =
       await this.loans.findAll(query);
@@ -58,8 +58,9 @@ export class LoansController {
   }
 
   @Post('/approve/:id')
-  approve(@Param('id', UUID_V4_PIPE) id: string) {
-    return this.loans.approve(id);
+  @HttpCode(HttpStatus.OK)
+  async approve(@Param('id', UUID_V4_PIPE) id: string) {
+    return await this.loans.approve(id);
   }
 
   @Delete(':id')

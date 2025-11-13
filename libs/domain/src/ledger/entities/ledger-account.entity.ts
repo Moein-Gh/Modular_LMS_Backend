@@ -15,6 +15,7 @@ export interface LedgerAccount {
   id: string;
   code: string;
   name: string;
+  nameFa?: string;
   type: LedgerAccountType;
   status: LedgerAccountStatus;
   createdAt: Date;

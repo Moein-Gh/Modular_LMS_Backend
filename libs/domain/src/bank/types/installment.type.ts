@@ -1,3 +1,4 @@
+import { BaseQueryParams } from '@app/domain/common';
 import { Installment, InstallmentStatus } from '../entities/installment.entity';
 
 export type CreateInstallmentInput = Pick<
@@ -8,3 +9,8 @@ export type CreateInstallmentInput = Pick<
 };
 
 export type UpdateInstallmentInput = Partial<CreateInstallmentInput>;
+
+export type ListInstallmentQueryInput = BaseQueryParams & {
+  loanId?: string;
+  status?: InstallmentStatus;
+};

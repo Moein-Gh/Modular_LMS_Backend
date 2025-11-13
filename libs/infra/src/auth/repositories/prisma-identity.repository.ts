@@ -1,4 +1,9 @@
-import { CreateIdentityInput, Identity, IdentityRepository } from '@app/domain';
+import {
+  CreateIdentityInput,
+  Identity,
+  IdentityRepository,
+  UpdateIdentityInput,
+} from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import type { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
@@ -62,7 +67,7 @@ export class PrismaIdentityRepository implements IdentityRepository {
 
   async update(
     id: string,
-    data: CreateIdentityInput,
+    data: UpdateIdentityInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Identity> {
     const client = (tx ?? this.prisma) as PrismaService;
@@ -123,10 +128,10 @@ export class PrismaIdentityRepository implements IdentityRepository {
   }
 
   async count(
-    where?: Prisma.IdentityWhereInput,
+    where: Prisma.IdentityWhereInput,
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const client = (tx ?? this.prisma) as PrismaService;
-    return client.identity.count({ where: where as Prisma.IdentityWhereInput });
+    return client.identity.count({ where });
   }
 }

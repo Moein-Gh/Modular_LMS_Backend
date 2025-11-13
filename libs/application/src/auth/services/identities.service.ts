@@ -1,6 +1,10 @@
 import { NotFoundError } from '@app/application/errors/not-found.error';
-import { Identity, IDENTITY_REPOSITORY, IdentityRepository } from '@app/domain';
-import { CreateIdentityInput } from '@app/domain/auth/types/identity.type';
+import { Identity, IDENTITY_REPOSITORY } from '@app/domain';
+import {
+  CreateIdentityInput,
+  UpdateIdentityInput,
+} from '@app/domain/auth/types/identity.type';
+import { PrismaIdentityRepository } from '@app/infra';
 import { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -8,7 +12,7 @@ import { Inject, Injectable } from '@nestjs/common';
 export class IdentitiesService {
   constructor(
     @Inject(IDENTITY_REPOSITORY)
-    private readonly identityRepository: IdentityRepository,
+    private readonly identityRepository: PrismaIdentityRepository,
   ) {}
 
   public async createIdentity(
@@ -29,10 +33,7 @@ export class IdentitiesService {
     where?: Prisma.IdentityWhereInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Identity | null> {
-    const results = await this.identityRepository.findAll(
-      { where } as unknown,
-      tx,
-    );
+    const results = await this.identityRepository.findAll({ where }, tx);
     return results.length ? results[0] : null;
   }
 
@@ -48,7 +49,7 @@ export class IdentitiesService {
   }
 
   public async count(
-    where?: unknown,
+    where: Prisma.IdentityWhereInput,
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     return this.identityRepository.count(where, tx);
@@ -74,7 +75,7 @@ export class IdentitiesService {
 
   public async update(
     id: string,
-    data: Identity,
+    data: UpdateIdentityInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Identity> {
     const existing = await this.identityRepository.findById(id, tx);

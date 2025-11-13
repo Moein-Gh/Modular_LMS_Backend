@@ -8,6 +8,7 @@ import {
 import { UserApplicationModule } from '@app/application/user/user-application.module';
 import { ConfigModule } from '@app/config';
 import {
+  PrismaJournalEntryRepository,
   PrismaJournalRepository,
   PrismaLedgerAccountRepository,
 } from '@app/infra';
@@ -64,11 +65,16 @@ import { UsersController } from './users/users.controller';
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     LedgerAccountsService,
     JournalsService,
+    PrismaLedgerAccountRepository,
     {
       provide: 'LedgerAccountRepository',
       useClass: PrismaLedgerAccountRepository,
     },
     { provide: 'JournalRepository', useClass: PrismaJournalRepository },
+    {
+      provide: 'JournalEntryRepository',
+      useClass: PrismaJournalEntryRepository,
+    },
   ],
 })
 export class ApiAdminModule {}

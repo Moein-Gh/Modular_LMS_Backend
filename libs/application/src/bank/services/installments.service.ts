@@ -1,9 +1,11 @@
-import { NotFoundError, PaginationQueryDto } from '@app/application';
+import { NotFoundError } from '@app/application';
 import { paginatePrisma } from '@app/application/common/pagination.util';
-import type {
-  CreateInstallmentInput,
-  Installment,
-  UpdateInstallmentInput,
+import {
+  OrderDirection,
+  type CreateInstallmentInput,
+  type Installment,
+  type ListInstallmentQueryInput,
+  type UpdateInstallmentInput,
 } from '@app/domain';
 import { PrismaInstallmentRepository, PrismaLoanRepository } from '@app/infra';
 import { Prisma } from '@generated/prisma';
@@ -16,17 +18,28 @@ export class InstallmentsService {
     private readonly loansRepo: PrismaLoanRepository,
   ) {}
 
-  async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
+  async findAll(
+    query?: ListInstallmentQueryInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const where: Prisma.InstallmentWhereInput = {};
+    if (query?.loanId) {
+      where.loanId = query.loanId;
+      where.status = query.status;
+    }
+
+    console.log(query);
     return paginatePrisma<
       Installment,
       Prisma.InstallmentFindManyArgs,
       Prisma.InstallmentWhereInput
     >({
       repo: this.installmentsRepo,
-      query: query ?? new PaginationQueryDto(),
+      query: query || {},
+      where,
       searchFields: ['loanId'],
-      defaultOrderBy: 'dueDate',
-      defaultOrderDir: 'asc',
+      defaultOrderBy: query?.orderBy || 'dueDate',
+      defaultOrderDir: query?.orderDir || OrderDirection.ASC,
       tx,
     });
   }
@@ -63,7 +76,7 @@ export class InstallmentsService {
     loanId: string,
     tx?: Prisma.TransactionClient,
   ) {
-    const loan = await this.loansRepo.findById(loanId, tx);
+    const loan = await this.loansRepo.findOne({ where: { id: loanId } }, tx);
     if (!loan) throw new NotFoundError('Loan', 'id', loanId);
     return loan;
   }
