@@ -14,6 +14,7 @@ import {
   LEDGER_ACCOUNT_CODES,
   type Transaction,
   TransactionKindHelper,
+  TransactionStatus,
 } from '@app/domain';
 import type {
   CreateTransactionInput,
@@ -181,7 +182,7 @@ export class TransactionsService {
       if (!transaction) {
         throw new NotFoundError('Transaction', 'id', transactionId);
       }
-      if (transaction.status !== 'PENDING') {
+      if (transaction.status !== TransactionStatus.PENDING) {
         throw new ConflictException(
           `Cannot add entries to transaction-${transaction.code} because it is ${transaction.status}. Only PENDING transactions can be modified.`,
         );
@@ -283,7 +284,7 @@ export class TransactionsService {
       // 3. Atomically update transaction and post journal
       const updatedTransaction = await this.transactionsRepo.update(
         id,
-        { status: 'APPROVED' },
+        { status: TransactionStatus.APPROVED },
         trx,
       );
 
@@ -493,12 +494,12 @@ export class TransactionsService {
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
     const run = async (DBtx: Prisma.TransactionClient) => {
       const exists = await this.transactionsRepo.findById(id, DBtx);
+
       if (!exists) {
         throw new NotFoundError('Transaction', 'id', id);
       }
       try {
         await this.transactionsRepo.delete(id, DBtx);
-        await this.journalRepo.delete(id, DBtx);
       } catch (e) {
         if (this.isPrismaNotFoundError(e)) {
           throw new NotFoundError('Transaction', 'id', id);
@@ -535,7 +536,7 @@ export class TransactionsService {
       // Update transaction status to REJECTED
       const updatedTransaction = await this.transactionsRepo.update(
         id,
-        { status: 'REJECTED' },
+        { status: TransactionStatus.REJECTED },
         DBtx,
       );
 

@@ -1,9 +1,11 @@
+import { JournalEntry } from '@app/domain/ledger';
 import { Loan } from './loan.entity';
 
 export enum InstallmentStatus {
   PENDING = 'PENDING',
   ACTIVE = 'ACTIVE',
   PAID = 'PAID',
+  ALLOCATED = 'ALLOCATED',
 }
 
 export interface Installment {
@@ -15,9 +17,11 @@ export interface Installment {
   amount: string;
   status: InstallmentStatus;
   paymentDate?: Date;
+  journalEntryId?: string;
 
   // relation
   loan?: Loan;
+  journalEntry?: JournalEntry;
 
   // timestamps
   createdAt: Date;

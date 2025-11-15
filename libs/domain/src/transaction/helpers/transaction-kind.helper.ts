@@ -2,7 +2,12 @@ import { TransactionKind } from '@app/domain';
 
 export class TransactionKindHelper {
   private static readonly CASH_IN_KINDS: ReadonlySet<TransactionKind> = new Set(
-    ['DEPOSIT', 'SUBSCRIPTION_PAYMENT', 'LOAN_REPAYMENT', 'FEE'],
+    [
+      TransactionKind.DEPOSIT,
+      TransactionKind.SUBSCRIPTION_PAYMENT,
+      TransactionKind.LOAN_REPAYMENT,
+      TransactionKind.FEE,
+    ],
   );
 
   static isCashIn(kind: TransactionKind): boolean {

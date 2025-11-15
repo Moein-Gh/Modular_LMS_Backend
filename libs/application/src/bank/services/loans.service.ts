@@ -12,6 +12,8 @@ import {
   LoanStatus,
   LoanType,
   Transaction,
+  TransactionKind,
+  TransactionStatus,
   User,
   type CreateLoanInput,
   type Loan,
@@ -461,10 +463,10 @@ export class LoansService {
   ): Promise<Transaction> {
     const transactionInput: CreateTransactionWithJournalEntriesInput = {
       userId,
-      kind: 'LOAN_DISBURSEMENT',
+      kind: TransactionKind.LOAN_DISBURSEMENT,
       amount: loanAmount,
       note: 'تراکنش مربوط به وام',
-      status: 'PENDING',
+      status: TransactionStatus.PENDING,
       journalEntries: [
         {
           ledgerAccountCode: LEDGER_ACCOUNT_CODES.LOANS_RECEIVABLE,

@@ -1,3 +1,4 @@
+import { BaseQueryParams } from '@app/domain/common';
 import { AccountStatus } from '../entities/account.entity';
 
 export type CreateAccountInput = {
@@ -14,5 +15,11 @@ export type UpdateAccountInput = {
   userId?: string;
   cardNumber?: string;
   bankName?: string;
+  status?: AccountStatus;
+};
+
+export type ListAccountQueryInput = BaseQueryParams & {
+  userId?: string;
+  accountTypeId?: string;
   status?: AccountStatus;
 };

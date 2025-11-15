@@ -189,7 +189,23 @@ export class PrismaTransactionRepository implements TransactionRepository {
   }
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
-    const prisma = tx ?? this.prisma;
-    await prisma.transaction.delete({ where: { id } });
+    if (tx) {
+      console.log(id);
+      // Detach related journals first to satisfy FK, then delete the transaction
+      await tx.journal.updateMany({
+        where: { transactionId: id },
+        data: { transactionId: null },
+      });
+      await tx.transaction.delete({ where: { id } });
+      return;
+    }
+
+    await this.prisma.$transaction(async (trx) => {
+      await trx.journal.updateMany({
+        where: { transactionId: id },
+        data: { transactionId: null },
+      });
+      await trx.transaction.delete({ where: { id } });
+    });
   }
 }

@@ -3,6 +3,7 @@ import { paginatePrisma } from '@app/application/common/pagination.util';
 import type { Account } from '@app/domain';
 import type {
   CreateAccountInput,
+  ListAccountQueryInput,
   UpdateAccountInput,
 } from '@app/domain/bank/types/account.type';
 import {
@@ -19,13 +20,28 @@ export class AccountsService {
     private readonly accountTypesRepo: PrismaAccountTypeRepository,
   ) {}
 
-  async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
+  async findAll(query?: ListAccountQueryInput, tx?: Prisma.TransactionClient) {
+    const where: Prisma.AccountWhereInput = {};
+
+    if (query?.userId) {
+      where.userId = query.userId;
+    }
+
+    if (query?.accountTypeId) {
+      where.accountTypeId = query.accountTypeId;
+    }
+
+    if (query?.status) {
+      where.status = query.status;
+    }
+
     return paginatePrisma<
       Account,
       Prisma.AccountFindManyArgs,
       Prisma.AccountWhereInput
     >({
       repo: this.accountsRepo,
+      where,
       query: query ?? new PaginationQueryDto(),
       searchFields: ['name', 'cardNumber', 'bankName'],
       defaultOrderBy: 'createdAt',

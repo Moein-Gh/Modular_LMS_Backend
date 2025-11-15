@@ -4,7 +4,7 @@ import {
   PaginationQueryDto,
   TransactionsService,
 } from '@app/application';
-import { CreateTransactionInput, TransactionKind } from '@app/domain';
+import { CreateTransactionInput, TransactionStatus } from '@app/domain';
 import {
   Body,
   Controller,
@@ -62,11 +62,11 @@ export class TransactionsController {
   async create(@Body() dto: CreateTransactionDto) {
     const input: CreateTransactionInput = {
       userId: dto.userId,
-      kind: dto.kind as TransactionKind,
+      kind: dto.kind,
       amount: dto.amount,
       externalRef: dto.externalRef || null,
       note: dto.note || null,
-      status: 'PENDING',
+      status: TransactionStatus.PENDING,
     };
     return await this.transactionsService.create(input);
   }

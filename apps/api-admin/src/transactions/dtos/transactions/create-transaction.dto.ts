@@ -1,3 +1,4 @@
+import { TransactionKind } from '@app/domain';
 import {
   IsDecimal,
   IsEnum,
@@ -6,15 +7,6 @@ import {
   IsUUID,
   MaxLength,
 } from 'class-validator';
-
-export enum TransactionKindDto {
-  DEPOSIT = 'DEPOSIT',
-  WITHDRAWAL = 'WITHDRAWAL',
-  LOAN_DISBURSEMENT = 'LOAN_DISBURSEMENT',
-  LOAN_REPAYMENT = 'LOAN_REPAYMENT',
-  SUBSCRIPTION_PAYMENT = 'SUBSCRIPTION_PAYMENT',
-  FEE = 'FEE',
-}
 
 export enum TransactionStatusDto {
   PENDING = 'PENDING',
@@ -26,10 +18,10 @@ export class CreateTransactionDto {
   @IsUUID('4', { message: 'userId must be a valid ID' })
   userId: string;
 
-  @IsEnum(TransactionKindDto, {
+  @IsEnum(TransactionKind, {
     message: 'kind must be a valid transaction kind',
   })
-  kind: TransactionKindDto;
+  kind: TransactionKind;
 
   @IsDecimal(
     { decimal_digits: '0,4' },

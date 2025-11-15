@@ -59,6 +59,12 @@ async function seedLedgerAccounts(): Promise<void> {
       type: 'LIABILITY',
     },
     {
+      code: '2010',
+      name: 'Subscription Fee Deposits',
+      nameFa: 'سپرده های ماهیانه',
+      type: 'LIABILITY',
+    },
+    {
       code: '2050',
       name: 'Unapplied Receipts',
       nameFa: 'دریافت های تخصیص نیافته',
@@ -76,12 +82,6 @@ async function seedLedgerAccounts(): Promise<void> {
       code: '4100',
       name: 'Fee/Commission Income',
       nameFa: 'درآمد کارمزد',
-      type: 'INCOME',
-    },
-    {
-      code: '4200',
-      name: 'Subscription Fee Income',
-      nameFa: 'اشتراک ماهیانه',
       type: 'INCOME',
     },
 

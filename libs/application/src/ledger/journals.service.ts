@@ -1,4 +1,12 @@
-import { Journal } from '@app/domain';
+import {
+  AllocationType,
+  InstallmentStatus,
+  Journal,
+  LedgerAccount,
+  SubscriptionFeeStatus,
+  TransactionStatus,
+  type JournalEntry,
+} from '@app/domain';
 import { DebitCredit } from '@app/domain/ledger/entities/journal-entry.entity';
 import { JournalStatus } from '@app/domain/ledger/entities/journal.entity';
 import {
@@ -161,28 +169,33 @@ export class JournalsService {
       // 2. get ledgerAccountId with code
 
       const ledgerAccounts = await this.ledgerAccountRepository.findAll(
-        { where: { code: dto.ledgerAccountCode.toString() } },
+        {},
         DBtx,
       );
 
-      console.log('🚀 -----------------------------------🚀');
-      console.log('🚀 ~ ledgerAccounts:', ledgerAccounts);
-      console.log('🚀 -----------------------------------🚀');
-
       if (!ledgerAccounts || ledgerAccounts.length === 0) {
-        throw new NotFoundException(
-          `Ledger account with code ${dto.ledgerAccountCode} not found`,
-        );
+        throw new NotFoundException(`No Ledger Accounts found`);
       }
 
-      const ledgerAccountId = ledgerAccounts[0].id;
+      const { creditLedgerAccount, debitLedgerAccount } =
+        this.specifyLedgerAccounts(dto.allocationType, ledgerAccounts);
 
-      // 3. Create the primary journal entry
+      // 3. Create the debit journal entry
       await this.journalEntryRepository.create(
         {
           journalId,
-          ledgerAccountId,
-          dc: dto.dc,
+          ledgerAccountId: debitLedgerAccount.id,
+          dc: DebitCredit.DEBIT,
+          amount: dto.amount.toString(),
+        },
+        DBtx,
+      );
+      // 4. Create the credit journal entry
+      const creditJournalEntry = await this.journalEntryRepository.create(
+        {
+          journalId,
+          ledgerAccountId: creditLedgerAccount.id,
+          dc: DebitCredit.CREDIT,
           amount: dto.amount.toString(),
           targetType: dto.targetType,
           targetId: dto.targetId,
@@ -190,45 +203,40 @@ export class JournalsService {
         DBtx,
       );
 
-      // 4. If targetLedgerAccountCode is provided, create balancing entry
-      if (dto.targetLedgerAccountCode) {
-        const targetLedgerAccounts = await this.ledgerAccountRepository.findAll(
-          { where: { code: dto.targetLedgerAccountCode.toString() } },
-          DBtx,
-        );
+      // 5. (Optional) link journal entry to target entity
 
-        if (!targetLedgerAccounts || targetLedgerAccounts.length === 0) {
-          throw new NotFoundException(
-            `Target ledger account with code ${dto.targetLedgerAccountCode} not found`,
-          );
-        }
-
-        const targetLedgerAccountId = targetLedgerAccounts[0].id;
-
-        // Create opposite entry (DEBIT <-> CREDIT)
-        const oppositeDc =
-          dto.dc === DebitCredit.DEBIT ? DebitCredit.CREDIT : DebitCredit.DEBIT;
-
-        await this.journalEntryRepository.create(
-          {
-            journalId,
-            ledgerAccountId: targetLedgerAccountId,
-            dc: oppositeDc,
-            amount: dto.amount.toString(),
-            targetType: dto.targetType,
-            targetId: dto.targetId,
+      if (dto.allocationType === AllocationType.LOAN_REPAYMENT) {
+        await DBtx.installment.update({
+          where: { id: dto.targetId },
+          data: {
+            journalEntryId: creditJournalEntry.id,
+            status: InstallmentStatus.ALLOCATED,
           },
-          DBtx,
-        );
+        });
+      } else if (dto.allocationType === AllocationType.SUBSCRIPTION_FEE) {
+        await DBtx.subscriptionFee.update({
+          where: { id: dto.targetId },
+          data: {
+            journalEntryId: creditJournalEntry.id,
+            status: SubscriptionFeeStatus.ALLOCATED,
+          },
+        });
       }
 
-      // 5. Update journal note if provided
-      if (dto.note) {
-        await this.journalRepository.update(
-          journalId,
-          { note: dto.note },
-          DBtx,
-        );
+      // Ensure account 2050 is balanced after new entries
+      const isBalanced = await this.verifyAccountBalanced(
+        journalId,
+        '2050',
+        DBtx,
+      );
+
+      if (isBalanced) {
+        if (journal.transactionId) {
+          await DBtx.transaction.update({
+            where: { id: journal.transactionId },
+            data: { status: TransactionStatus.ALLOCATED },
+          });
+        }
       }
 
       // 6. Return updated journal with entries
@@ -236,5 +244,96 @@ export class JournalsService {
     };
 
     return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
+  }
+
+  private async verifyAccountBalanced(
+    journalId: string,
+    accountCode: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<boolean> {
+    const entries = await this.journalRepository.findByIdWithEntries(
+      journalId,
+      tx,
+    );
+
+    if (!entries) {
+      return false;
+    }
+
+    const lines: JournalEntry[] = entries.entries ?? [];
+
+    const totalDebitMinor = lines
+      .filter(
+        (je: JournalEntry) =>
+          je.ledgerAccount?.code === accountCode && je.dc === DebitCredit.DEBIT,
+      )
+      .reduce<bigint>(
+        (sum: bigint, je: JournalEntry) => sum + this.toMinorUnits(je.amount),
+        0n,
+      );
+
+    const totalCreditMinor = lines
+      .filter(
+        (je: JournalEntry) =>
+          je.ledgerAccount?.code === accountCode &&
+          je.dc === DebitCredit.CREDIT,
+      )
+      .reduce<bigint>(
+        (sum: bigint, je: JournalEntry) => sum + this.toMinorUnits(je.amount),
+        0n,
+      );
+
+    return totalDebitMinor === totalCreditMinor;
+  }
+
+  // Convert a decimal amount string to integer minor units (scale=4)
+  private toMinorUnits(amount: string, scale = 4): bigint {
+    const neg = amount.startsWith('-');
+    const s = neg ? amount.slice(1) : amount;
+    const [intPart, fracPart = ''] = s.split('.');
+    const fracPadded = (fracPart + '0'.repeat(scale)).slice(0, scale);
+    const bi = BigInt((intPart || '0') + fracPadded);
+    return neg ? -bi : bi;
+  }
+
+  // Convert integer minor units back to a trimmed decimal string (scale=4)
+  private fromMinorUnits(value: bigint, scale = 4): string {
+    const neg = value < 0n;
+    const abs = neg ? -value : value;
+    const s = abs.toString().padStart(scale + 1, '0');
+    const intPart = s.slice(0, -scale);
+    const fracRaw = s.slice(-scale);
+    const fracTrimmed = fracRaw.replace(/0+$/, '');
+    const res = fracTrimmed ? `${intPart}.${fracTrimmed}` : intPart;
+    return neg ? `-${res}` : res;
+  }
+
+  specifyLedgerAccounts(
+    allocationType: AllocationType,
+    ledgerAccounts: LedgerAccount[],
+  ): {
+    creditLedgerAccount: LedgerAccount;
+    debitLedgerAccount: LedgerAccount;
+  } {
+    let creditCode = '';
+    const debitCode = '2050';
+    switch (allocationType) {
+      case AllocationType.ACCOUNT_BALANCE:
+        creditCode = '2000';
+        break;
+      case AllocationType.LOAN_REPAYMENT:
+        creditCode = '1100';
+        break;
+      case AllocationType.SUBSCRIPTION_FEE:
+        creditCode = '2000';
+        break;
+      default:
+        creditCode = '2000';
+    }
+
+    return {
+      creditLedgerAccount: ledgerAccounts.find((la) => la.code === creditCode)!,
+      debitLedgerAccount: ledgerAccounts.find((la) => la.code === debitCode)!,
+    };
   }
 }

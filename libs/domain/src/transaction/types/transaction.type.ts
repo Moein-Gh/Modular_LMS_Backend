@@ -1,8 +1,15 @@
+import { BaseQueryParams } from '@app/domain/common';
 import { JournalEntrySpec } from '@app/domain/ledger';
 import {
   TransactionKind,
   TransactionStatus,
 } from '../entities/transaction.entity';
+
+export type ListTransactionParams = BaseQueryParams & {
+  userId?: string;
+  kind?: TransactionKind;
+  status?: TransactionStatus;
+};
 
 export type CreateTransactionInput = {
   userId: string;
