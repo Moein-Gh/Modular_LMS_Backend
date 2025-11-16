@@ -6,6 +6,7 @@ import { PrismaBankRepository } from './repositories/prisma-bank.repository';
 import { PrismaInstallmentRepository } from './repositories/prisma-installment.repository';
 import { PrismaLoanTypeRepository } from './repositories/prisma-loan-type.repository';
 import { PrismaLoanRepository } from './repositories/prisma-loan.repository';
+import { PrismaSubscriptionFeeRepository } from './repositories/prisma-subscription-fee.repository';
 
 @Module({
   imports: [PrismaModule],
@@ -16,6 +17,7 @@ import { PrismaLoanRepository } from './repositories/prisma-loan.repository';
     PrismaLoanTypeRepository,
     PrismaLoanRepository,
     PrismaInstallmentRepository,
+    PrismaSubscriptionFeeRepository,
   ],
   exports: [
     PrismaAccountRepository,
@@ -24,6 +26,7 @@ import { PrismaLoanRepository } from './repositories/prisma-loan.repository';
     PrismaLoanTypeRepository,
     PrismaLoanRepository,
     PrismaInstallmentRepository,
+    PrismaSubscriptionFeeRepository,
   ],
 })
 export class BankInfraModule {}

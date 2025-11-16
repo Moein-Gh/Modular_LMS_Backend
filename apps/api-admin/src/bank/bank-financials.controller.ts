@@ -1,6 +1,6 @@
 import { AccessTokenGuard, BankFinancialsService } from '@app/application';
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { BalanceResponseDto } from './dtos/balance-response.dto';
 import { BankFinancialSummaryDto } from './dtos/bank-financial-summary.dto';
 
@@ -16,13 +16,28 @@ export class BankFinancialsController {
     description:
       'Returns comprehensive financial metrics including cash, deposits, loans, and equity',
   })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    description: 'ISO start date for range (optional)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    description: 'ISO end date for range (optional)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Financial summary retrieved successfully',
     type: BankFinancialSummaryDto,
   })
-  async getSummary(): Promise<BankFinancialSummaryDto> {
-    return this.financialsService.getFinancialSummary();
+  async getSummary(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ): Promise<BankFinancialSummaryDto> {
+    const s = startDate ? new Date(startDate) : undefined;
+    const e = endDate ? new Date(endDate) : undefined;
+    return this.financialsService.getFinancialSummary(s, e);
   }
 
   @Get('cash')

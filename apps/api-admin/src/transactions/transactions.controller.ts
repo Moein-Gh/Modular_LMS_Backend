@@ -1,7 +1,6 @@
 import {
   AccessTokenGuard,
   PaginatedResponseDto,
-  PaginationQueryDto,
   TransactionsService,
 } from '@app/application';
 import { CreateTransactionInput, TransactionStatus } from '@app/domain';
@@ -21,6 +20,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { CreateTransactionDto } from './dtos/transactions/create-transaction.dto';
+import { GetTransactionsQueryDto } from './dtos/transactions/get-transaction.dto';
 import { UpdateTransactionDto } from './dtos/transactions/update-transaction.dto';
 
 @ApiTags('Transactions')
@@ -33,7 +33,7 @@ export class TransactionsController {
   @ApiOperation({ summary: 'Get all transactions with pagination' })
   @ApiResponse({ status: 200, description: 'Returns paginated transactions' })
   async findAll(
-    @Query() query: PaginationQueryDto,
+    @Query() query: GetTransactionsQueryDto,
   ): Promise<PaginatedResponseDto<any>> {
     const { items, totalItems, page, pageSize } =
       await this.transactionsService.findAll(query);

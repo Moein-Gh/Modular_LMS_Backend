@@ -10,6 +10,9 @@ import {
 } from 'class-validator';
 
 export class AddSingleJournalEntryDto {
+  @IsUUID()
+  journalId!: string;
+
   @Type(() => Number)
   @IsNumber()
   @IsPositive()
@@ -26,8 +29,4 @@ export class AddSingleJournalEntryDto {
   @IsString()
   @IsEnum(AllocationType)
   allocationType!: AllocationType;
-
-  @IsOptional()
-  @IsString()
-  note?: string;
 }

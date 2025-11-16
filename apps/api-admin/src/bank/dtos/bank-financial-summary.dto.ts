@@ -1,56 +1,43 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+class MetricDto {
+  @ApiProperty({ example: '12345.0000' })
+  lastMonth: string;
+
+  @ApiProperty({ example: '12345.0000' })
+  monthlyAverage: string;
+
+  @ApiProperty({ example: '12345.0000' })
+  today: string;
+}
+
 export class BankFinancialSummaryDto {
   @ApiProperty({
-    description: 'Total cash on hand (Balance of Cash account - 1000)',
-    example: '5000000.0000',
+    description: 'Total cash on hand (derived: deposits - loans)',
+    type: MetricDto,
   })
-  cashOnHand: string;
+  cashOnHand: MetricDto;
 
   @ApiProperty({
     description:
       'Total customer deposits (Balance of Customer Deposits account - 2000)',
-    example: '3000000.0000',
+    type: MetricDto,
   })
-  customerDeposits: string;
+  customerDeposits: MetricDto;
 
   @ApiProperty({
     description:
       'Total outstanding loans (Balance of Loans Receivable account - 1100)',
-    example: '2000000.0000',
+    type: MetricDto,
   })
-  loansReceivable: string;
-
-  @ApiProperty({
-    description: 'Cash available for new loans (cashOnHand - customerDeposits)',
-    example: '2000000.0000',
-  })
-  availableForLending: string;
-
-  @ApiProperty({
-    description: 'Total assets (cashOnHand + loansReceivable)',
-    example: '7000000.0000',
-  })
-  totalAssets: string;
-
-  @ApiProperty({
-    description: 'Total liabilities (customerDeposits)',
-    example: '3000000.0000',
-  })
-  totalLiabilities: string;
-
-  @ApiProperty({
-    description: 'Net equity (totalAssets - totalLiabilities)',
-    example: '4000000.0000',
-  })
-  netEquity: string;
+  loansReceivable: MetricDto;
 
   @ApiProperty({
     description:
       'Total income earned (Balance of Fee/Commission Income account - 4100)',
-    example: '150000.0000',
+    type: MetricDto,
   })
-  totalIncomeEarned: string;
+  totalIncomeEarned: MetricDto;
 
   @ApiProperty({
     description: 'Date and time when this summary was calculated',

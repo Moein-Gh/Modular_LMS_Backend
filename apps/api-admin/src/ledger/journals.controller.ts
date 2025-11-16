@@ -14,11 +14,15 @@ import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 export class JournalsController {
   constructor(private readonly service: JournalsService) {}
 
-  // @Post()
-  // @ApiOperation({ summary: 'Create journal with entries' })
-  // create(@Body() dto: CreateJournalDto) {
-  //   return this.service.create(dto);
-  // }
+  @Post('/')
+  @ApiOperation({
+    summary: 'Add a single journal entry to an existing journal',
+    description:
+      'Add one journal entry at a time to a PENDING journal without balance validation. Allows building journal entries incrementally for account balance adjustments, subscription fees, loan repayments, and commission charges.',
+  })
+  async create(@Body() dto: AddSingleJournalEntryDto): Promise<Journal> {
+    return this.service.create(dto);
+  }
 
   @Get()
   @ApiOperation({ summary: 'Get all journals with optional entries' })
@@ -57,23 +61,4 @@ export class JournalsController {
   ) {
     return this.service.findOne(id, query.includeEntries);
   }
-
-  @Post(':id/entries/')
-  @ApiOperation({
-    summary: 'Add a single journal entry to an existing journal',
-    description:
-      'Add one journal entry at a time to a PENDING journal without balance validation. Allows building journal entries incrementally for account balance adjustments, subscription fees, loan repayments, and commission charges.',
-  })
-  async addSingleEntry(
-    @Param('id', UUID_V4_PIPE) journalId: string,
-    @Body() dto: AddSingleJournalEntryDto,
-  ): Promise<Journal> {
-    return this.service.addSingleEntry(journalId, dto);
-  }
-
-  // @Delete(':id')
-  // @ApiOperation({ summary: 'Delete journal' })
-  // remove(@Param('id') id: string) {
-  //   return this.service.remove(id);
-  // }
 }

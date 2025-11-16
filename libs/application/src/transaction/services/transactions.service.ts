@@ -19,6 +19,7 @@ import {
 import type {
   CreateTransactionInput,
   CreateTransactionWithJournalEntriesInput,
+  ListTransactionParams,
   UpdateTransactionInput,
 } from '@app/domain/transaction/types/transaction.type';
 import {
@@ -60,7 +61,14 @@ export class TransactionsService {
     );
   }
 
-  async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
+  async findAll(query?: ListTransactionParams, tx?: Prisma.TransactionClient) {
+    // Build where clause from query params
+    const where: Prisma.TransactionWhereInput = {
+      ...(query?.userId && { userId: query.userId }),
+      ...(query?.kind && { kind: query.kind }),
+      ...(query?.status && { status: query.status }),
+    };
+
     return paginatePrisma<
       Transaction,
       Prisma.TransactionFindManyArgs,
@@ -71,6 +79,7 @@ export class TransactionsService {
       searchFields: ['externalRef', 'note'],
       defaultOrderBy: 'createdAt',
       defaultOrderDir: 'desc',
+      where,
       include: {
         user: {
           include: {
@@ -80,6 +89,7 @@ export class TransactionsService {
           },
         },
       },
+
       tx,
     });
   }

@@ -7,3 +7,4 @@ export * from './services/banks.service';
 export * from './services/installments.service';
 export * from './services/loan-types.service';
 export * from './services/loans.service';
+export * from './services/subscription-fees.service';

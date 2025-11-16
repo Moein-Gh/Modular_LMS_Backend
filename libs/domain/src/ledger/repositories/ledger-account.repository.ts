@@ -19,7 +19,12 @@ export interface LedgerAccountRepository {
 
   getAccountBalance(
     accountCode: string,
-    asOfDate?: Date,
+    options?: { startDate?: Date; endDate?: Date },
     tx?: unknown,
   ): Promise<string>;
+
+  getEarliestPostedDate(
+    accountCode: string,
+    tx?: unknown,
+  ): Promise<Date | null>;
 }

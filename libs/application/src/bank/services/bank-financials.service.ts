@@ -33,37 +33,166 @@ export class BankFinancialsService {
    * @param tx - Optional transaction client for consistency
    */
   async getFinancialSummary(
-    asOfDate?: Date,
+    startDate?: Date,
+    endDate?: Date,
     tx?: Prisma.TransactionClient,
   ): Promise<BankFinancialSummary> {
-    // Fetch all balances in parallel for efficiency
-    const [cashOnHand, customerDeposits, loansReceivable, totalIncomeEarned] =
-      await Promise.all([
-        this.getCashBalance(asOfDate, tx),
-        this.getCustomerDepositsBalance(asOfDate, tx),
-        this.getLoansReceivableBalance(asOfDate, tx),
-        this.getTotalIncomeEarned(asOfDate, tx),
-      ]);
+    const end = endDate ?? new Date();
 
-    // Calculate derived metrics
-    const availableForLending = this.calculateAvailableForLending(
-      cashOnHand,
-      customerDeposits,
-    );
-    const totalAssets = this.calculateTotalAssets(cashOnHand, loansReceivable);
-    const totalLiabilities = customerDeposits;
-    const netEquity = this.calculateNetEquity(totalAssets, totalLiabilities);
+    // Helper to compute metric for a ledger account
+    const computeMetric = async (accountCode: string) => {
+      // Determine earliest available date if startDate not provided
+      let effectiveStart = startDate;
+      if (!effectiveStart) {
+        const earliest = await this.ledgerAccountRepo.getEarliestPostedDate(
+          accountCode,
+          tx,
+        );
+        if (earliest) effectiveStart = earliest;
+      }
+
+      // If still no start (no history), treat single-point series at end
+      if (!effectiveStart) {
+        const todayVal = await this.ledgerAccountRepo.getAccountBalance(
+          accountCode,
+          { endDate: end },
+          tx,
+        );
+        return {
+          lastMonth: todayVal,
+          monthlyAverage: todayVal,
+          today: todayVal,
+        };
+      }
+
+      // Build month-end dates between effectiveStart and end inclusive
+      const monthEnds: Date[] = [];
+      const s = new Date(effectiveStart);
+      s.setUTCDate(1);
+      s.setUTCHours(0, 0, 0, 0);
+      const e = new Date(end);
+      e.setUTCHours(23, 59, 59, 999);
+
+      let iter = new Date(s);
+      // move iter to end of its month
+      iter = new Date(
+        Date.UTC(
+          iter.getUTCFullYear(),
+          iter.getUTCMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+          999,
+        ),
+      );
+      while (iter <= e) {
+        monthEnds.push(new Date(iter));
+        // advance one month
+        iter = new Date(
+          Date.UTC(
+            iter.getUTCFullYear(),
+            iter.getUTCMonth() + 2,
+            0,
+            23,
+            59,
+            59,
+            999,
+          ),
+        );
+      }
+
+      // If no month ends found (start after end), use single point at end
+      if (monthEnds.length === 0) {
+        const val = await this.ledgerAccountRepo.getAccountBalance(
+          accountCode,
+          { endDate: e },
+          tx,
+        );
+        return { lastMonth: val, monthlyAverage: val, today: val };
+      }
+
+      // Fetch balances for each month end in parallel
+      const balances = await Promise.all(
+        monthEnds.map((d) =>
+          this.ledgerAccountRepo.getAccountBalance(
+            accountCode,
+            { endDate: d },
+            tx,
+          ),
+        ),
+      );
+
+      // Compute monthly average
+      const numeric = balances.map((v) => parseFloat(v));
+      const sum = numeric.reduce((a, b) => a + b, 0);
+      const avg = sum / numeric.length;
+
+      // Compute last month's value relative to the provided end date
+      const lastMonthEnd = new Date(
+        Date.UTC(e.getUTCFullYear(), e.getUTCMonth(), 0, 23, 59, 59, 999),
+      );
+      // If lastMonthEnd < first month end, use first month's value
+      let lastMonthVal: string;
+      if (lastMonthEnd < monthEnds[0]) {
+        lastMonthVal = balances[0];
+      } else {
+        // Try to find existing month end match
+        const idx = monthEnds.findIndex(
+          (d) => d.getTime() === lastMonthEnd.getTime(),
+        );
+        if (idx >= 0) lastMonthVal = balances[idx];
+        else {
+          // fetch directly
+          lastMonthVal = await this.ledgerAccountRepo.getAccountBalance(
+            accountCode,
+            { endDate: lastMonthEnd },
+            tx,
+          );
+        }
+      }
+
+      const todayVal = await this.ledgerAccountRepo.getAccountBalance(
+        accountCode,
+        { endDate: end },
+        tx,
+      );
+
+      return {
+        lastMonth: lastMonthVal,
+        monthlyAverage: avg.toFixed(4),
+        today: todayVal,
+      };
+    };
+
+    // Compute metrics for underlying accounts in parallel
+    const [depositsMetric, loansMetric, incomeMetric] = await Promise.all([
+      computeMetric(LEDGER_ACCOUNTS.CUSTOMER_DEPOSITS),
+      computeMetric(LEDGER_ACCOUNTS.LOANS_RECEIVABLE),
+      computeMetric(LEDGER_ACCOUNTS.FEE_INCOME),
+    ]);
+
+    // Derive cashOnHand metrics as deposits - loans per metric element
+    const derive = (a: string, b: string) => {
+      const v = parseFloat(a) - parseFloat(b);
+      return (v >= 0 ? v : 0).toFixed(4);
+    };
+
+    const cashMetric = {
+      lastMonth: derive(depositsMetric.lastMonth, loansMetric.lastMonth),
+      monthlyAverage: derive(
+        depositsMetric.monthlyAverage,
+        loansMetric.monthlyAverage,
+      ),
+      today: derive(depositsMetric.today, loansMetric.today),
+    };
 
     return {
-      cashOnHand,
-      customerDeposits,
-      loansReceivable,
-      availableForLending,
-      totalAssets,
-      totalLiabilities,
-      netEquity,
-      totalIncomeEarned,
-      asOfDate: asOfDate ?? new Date(),
+      cashOnHand: cashMetric,
+      customerDeposits: depositsMetric,
+      loansReceivable: loansMetric,
+      totalIncomeEarned: incomeMetric,
+      asOfDate: end,
     };
   }
 
@@ -75,11 +204,17 @@ export class BankFinancialsService {
     asOfDate?: Date,
     tx?: Prisma.TransactionClient,
   ): Promise<string> {
-    return this.ledgerAccountRepo.getAccountBalance(
-      LEDGER_ACCOUNTS.CASH,
-      asOfDate,
-      tx,
-    );
+    // Cash on hand is defined as: customer deposits - outstanding loans
+    const [deposits, loans] = await Promise.all([
+      this.getCustomerDepositsBalance(asOfDate, tx),
+      this.getLoansReceivableBalance(asOfDate, tx),
+    ]);
+
+    const depositVal = parseFloat(deposits);
+    const loansVal = parseFloat(loans);
+    const cash = depositVal - loansVal;
+
+    return (cash >= 0 ? cash : 0).toFixed(4);
   }
 
   /**
@@ -92,7 +227,7 @@ export class BankFinancialsService {
   ): Promise<string> {
     return this.ledgerAccountRepo.getAccountBalance(
       LEDGER_ACCOUNTS.CUSTOMER_DEPOSITS,
-      asOfDate,
+      asOfDate ? { endDate: asOfDate } : undefined,
       tx,
     );
   }
@@ -107,7 +242,7 @@ export class BankFinancialsService {
   ): Promise<string> {
     return this.ledgerAccountRepo.getAccountBalance(
       LEDGER_ACCOUNTS.LOANS_RECEIVABLE,
-      asOfDate,
+      asOfDate ? { endDate: asOfDate } : undefined,
       tx,
     );
   }
@@ -122,7 +257,7 @@ export class BankFinancialsService {
   ): Promise<string> {
     return this.ledgerAccountRepo.getAccountBalance(
       LEDGER_ACCOUNTS.FEE_INCOME,
-      asOfDate,
+      asOfDate ? { endDate: asOfDate } : undefined,
       tx,
     );
   }
@@ -136,12 +271,8 @@ export class BankFinancialsService {
     asOfDate?: Date,
     tx?: Prisma.TransactionClient,
   ): Promise<string> {
-    const [cash, deposits] = await Promise.all([
-      this.getCashBalance(asOfDate, tx),
-      this.getCustomerDepositsBalance(asOfDate, tx),
-    ]);
-
-    return this.calculateAvailableForLending(cash, deposits);
+    const cash = await this.getCashBalance(asOfDate, tx);
+    return this.calculateAvailableForLending(cash);
   }
 
   /**
@@ -167,16 +298,10 @@ export class BankFinancialsService {
 
   // Private helper methods for calculations
 
-  private calculateAvailableForLending(
-    cashOnHand: string,
-    customerDeposits: string,
-  ): string {
+  private calculateAvailableForLending(cashOnHand: string): string {
     const cash = parseFloat(cashOnHand);
-    const deposits = parseFloat(customerDeposits);
-    const available = cash - deposits;
-
-    // Return 0 if negative (bank is overleveraged)
-    return (available >= 0 ? available : 0).toFixed(4);
+    // available for lending is the cash on hand (already net of loans)
+    return (cash >= 0 ? cash : 0).toFixed(4);
   }
 
   private calculateTotalAssets(

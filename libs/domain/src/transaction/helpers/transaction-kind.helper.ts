@@ -1,4 +1,4 @@
-import { TransactionKind } from '@app/domain';
+import { TransactionKind } from '../entities/transaction.entity';
 
 export class TransactionKindHelper {
   private static readonly CASH_IN_KINDS: ReadonlySet<TransactionKind> = new Set(

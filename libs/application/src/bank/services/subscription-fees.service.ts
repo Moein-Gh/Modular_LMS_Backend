@@ -1,0 +1,95 @@
+import { NotFoundError } from '@app/application';
+import { paginatePrisma } from '@app/application/common/pagination.util';
+import {
+  type CreateSubscriptionFeeInput,
+  type ListSubscriptionFeeQueryInput,
+  type SubscriptionFee,
+  type UpdateSubscriptionFeeInput,
+  OrderDirection,
+} from '@app/domain';
+import {
+  PrismaAccountRepository,
+  PrismaSubscriptionFeeRepository,
+} from '@app/infra';
+import { Prisma } from '@generated/prisma';
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class SubscriptionFeesService {
+  constructor(
+    private readonly subscriptionFeesRepo: PrismaSubscriptionFeeRepository,
+    private readonly accountsRepo: PrismaAccountRepository,
+  ) {}
+
+  async findAll(
+    query?: ListSubscriptionFeeQueryInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const where: Prisma.SubscriptionFeeWhereInput = {};
+
+    if (query?.accountId) where.accountId = query.accountId;
+    if (query?.status) where.status = query.status;
+    if (query?.periodStart)
+      where.periodStart = query.periodStart as unknown as Date;
+
+    return paginatePrisma<
+      SubscriptionFee,
+      Prisma.SubscriptionFeeFindManyArgs,
+      Prisma.SubscriptionFeeWhereInput
+    >({
+      repo: this.subscriptionFeesRepo,
+      query: query ?? {},
+      where,
+      searchFields: ['accountId'],
+      defaultOrderBy: 'periodStart',
+      defaultOrderDir: query?.orderDir || OrderDirection.ASC,
+      tx,
+    });
+  }
+
+  async findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<SubscriptionFee> {
+    const item = await this.subscriptionFeesRepo.findById(id, tx);
+    if (!item) throw new NotFoundError('SubscriptionFee', 'id', id);
+    return item;
+  }
+
+  async create(
+    input: CreateSubscriptionFeeInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<SubscriptionFee> {
+    await this.ensureAccountExists(input.accountId, tx);
+    return this.subscriptionFeesRepo.create(input, tx);
+  }
+
+  async update(
+    id: string,
+    input: UpdateSubscriptionFeeInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<SubscriptionFee> {
+    const exists = await this.subscriptionFeesRepo.findById(id, tx);
+    if (!exists) throw new NotFoundError('SubscriptionFee', 'id', id);
+
+    return this.subscriptionFeesRepo.update(id, input, tx);
+  }
+
+  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const exists = await this.subscriptionFeesRepo.findById(id, tx);
+    if (!exists) throw new NotFoundError('SubscriptionFee', 'id', id);
+    await this.subscriptionFeesRepo.delete(id, tx);
+  }
+
+  private async ensureAccountExists(
+    accountId: string,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const acc = await this.accountsRepo.findUnique(
+      { where: { id: accountId } },
+      tx,
+    );
+    if (!acc) throw new NotFoundError('Account', 'id', accountId);
+    return acc;
+  }
+}

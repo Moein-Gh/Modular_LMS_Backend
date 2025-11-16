@@ -5,3 +5,4 @@ export * from './repositories/prisma-bank.repository';
 export * from './repositories/prisma-installment.repository';
 export * from './repositories/prisma-loan-type.repository';
 export * from './repositories/prisma-loan.repository';
+export * from './repositories/prisma-subscription-fee.repository';

@@ -4,7 +4,6 @@ import { Account } from './account.entity';
 export enum SubscriptionFeeStatus {
   DUE = 'DUE',
   PAID = 'PAID',
-  WAIVED = 'WAIVED',
   ALLOCATED = 'ALLOCATED',
 }
 
@@ -18,8 +17,6 @@ export interface SubscriptionFee {
   status: SubscriptionFeeStatus;
   dueDate?: Date;
   paidAt?: Date;
-  waivedAt?: Date;
-  waiverReason?: string;
   createdAt: Date;
   updatedAt: Date;
 

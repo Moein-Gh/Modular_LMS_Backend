@@ -5,6 +5,7 @@ import {
   LedgerAccountsService,
   TransactionApplicationModule,
 } from '@app/application';
+import { JournalEntriesService } from '@app/application/ledger/journal-entries.service';
 import { UserApplicationModule } from '@app/application/user/user-application.module';
 import { ConfigModule } from '@app/config';
 import {
@@ -28,6 +29,8 @@ import { BankFinancialsController } from './bank/bank-financials.controller';
 import { InstallmentsController } from './bank/installments.controller';
 import { LoanTypesController } from './bank/loan-types.controller';
 import { LoansController } from './bank/loans.controller';
+import { SubscriptionFeesController } from './bank/subscription-fees.controller';
+import { JournalEntriesController } from './ledger/journal-entries.controller';
 import { JournalsController } from './ledger/journals.controller';
 import { LedgerAccountsController } from './ledger/ledger-accounts.controller';
 import { TransactionsController } from './transactions/transactions.controller';
@@ -53,18 +56,21 @@ import { UsersController } from './users/users.controller';
     AccountsController,
     LoansController,
     InstallmentsController,
+    SubscriptionFeesController,
     LoanTypesController,
     AccountTypesController,
     BankFinancialsController,
     TransactionsController,
     LedgerAccountsController,
     JournalsController,
+    JournalEntriesController,
   ],
   providers: [
     ApiAdminService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     LedgerAccountsService,
     JournalsService,
+    JournalEntriesService,
     PrismaLedgerAccountRepository,
     {
       provide: 'LedgerAccountRepository',

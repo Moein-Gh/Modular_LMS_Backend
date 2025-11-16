@@ -272,7 +272,6 @@ model Installment {
 enum SubscriptionFeeStatus {
   DUE
   PAID
-  WAIVED
   ALLOCATED
 }
 
@@ -286,8 +285,6 @@ model SubscriptionFee {
   status         SubscriptionFeeStatus @default(DUE)
   dueDate        DateTime?
   paidAt         DateTime?
-  waivedAt       DateTime?
-  waiverReason   String?               @db.Text
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
 

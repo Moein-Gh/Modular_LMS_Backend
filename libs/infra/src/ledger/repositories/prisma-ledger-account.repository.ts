@@ -110,7 +110,7 @@ export class PrismaLedgerAccountRepository implements LedgerAccountRepository {
 
   async getAccountBalance(
     accountCode: string,
-    asOfDate?: Date,
+    options?: { startDate?: Date; endDate?: Date },
     tx?: Prisma.TransactionClient,
   ): Promise<string> {
     const prisma = tx ?? this.prisma;
@@ -127,16 +127,19 @@ export class PrismaLedgerAccountRepository implements LedgerAccountRepository {
 
     // Build the where clause for journal entries
     // CRITICAL: Only include entries from POSTED journals
+    const dateFilter: Prisma.DateTimeFilter | undefined =
+      options?.startDate || options?.endDate
+        ? {
+            ...(options?.startDate ? { gte: options.startDate } : {}),
+            ...(options?.endDate ? { lte: options.endDate } : {}),
+          }
+        : undefined;
+
     const whereClause: Prisma.JournalEntryWhereInput = {
       ledgerAccountId: account.id,
       journal: {
         status: 'POSTED',
-        // Add date filter if provided (use postedAt for accurate as-of-date reporting)
-        ...(asOfDate && {
-          postedAt: {
-            lte: asOfDate,
-          },
-        }),
+        ...(dateFilter ? { postedAt: dateFilter } : {}),
       },
     };
 
@@ -181,5 +184,27 @@ export class PrismaLedgerAccountRepository implements LedgerAccountRepository {
 
     // Return as string to preserve precision
     return balance.toFixed(4);
+  }
+
+  async getEarliestPostedDate(
+    accountCode: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Date | null> {
+    const prisma = tx ?? this.prisma;
+
+    const account = await prisma.ledgerAccount.findUnique({
+      where: { code: accountCode },
+      select: { id: true },
+    });
+
+    if (!account) return null;
+
+    const row = await prisma.journalEntry.findFirst({
+      where: { ledgerAccountId: account.id, journal: { status: 'POSTED' } },
+      orderBy: { createdAt: 'asc' },
+      select: { createdAt: true },
+    });
+
+    return row ? row.createdAt : null;
   }
 }

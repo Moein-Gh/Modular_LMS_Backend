@@ -1,6 +1,7 @@
 import { NotFoundError, PaginationQueryDto } from '@app/application';
 import { paginatePrisma } from '@app/application/common/pagination.util';
 import type { Account } from '@app/domain';
+import { SubscriptionFeeStatus } from '@app/domain';
 import type {
   CreateAccountInput,
   ListAccountQueryInput,
@@ -9,7 +10,10 @@ import type {
 import {
   PrismaAccountRepository,
   PrismaAccountTypeRepository,
+  PrismaBankRepository,
+  PrismaSubscriptionFeeRepository,
 } from '@app/infra';
+import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
 import { Prisma } from '@generated/prisma';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
@@ -18,6 +22,9 @@ export class AccountsService {
   constructor(
     private readonly accountsRepo: PrismaAccountRepository,
     private readonly accountTypesRepo: PrismaAccountTypeRepository,
+    private readonly bankRepo: PrismaBankRepository,
+    private readonly subscriptionFeesRepo: PrismaSubscriptionFeeRepository,
+    private readonly transactionalRepo: PrismaTransactionalRepository,
   ) {}
 
   async findAll(query?: ListAccountQueryInput, tx?: Prisma.TransactionClient) {
@@ -89,8 +96,31 @@ export class AccountsService {
       ...input,
       name: this.generateName(input),
     };
+    const run = async (DBtx: Prisma.TransactionClient) => {
+      const created = await this.accountsRepo.create(payload, DBtx);
 
-    return this.accountsRepo.create(payload, tx);
+      const bank = await this.bankRepo.findOne(DBtx);
+      if (bank && bank.subscriptionFee) {
+        const baseAmount = bank.subscriptionFee;
+        const now = new Date();
+        for (let i = 1; i <= 6; i++) {
+          const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+          await this.subscriptionFeesRepo.create(
+            {
+              accountId: created.id,
+              periodStart: d,
+              amount: baseAmount,
+              status: SubscriptionFeeStatus.DUE,
+            },
+            DBtx,
+          );
+        }
+      }
+
+      return created;
+    };
+
+    return tx ? run(tx) : this.transactionalRepo.withTransaction(run);
   }
 
   async update(

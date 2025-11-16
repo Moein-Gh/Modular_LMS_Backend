@@ -7,6 +7,7 @@ export type CreateJournalEntryInput = {
   amount: string;
   targetType?: JournalEntryTarget;
   targetId?: string;
+  removable?: boolean;
 };
 
 export type UpdateJournalEntryInput = Partial<CreateJournalEntryInput>;

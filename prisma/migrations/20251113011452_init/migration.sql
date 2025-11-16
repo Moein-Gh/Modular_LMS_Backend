@@ -1,3 +1,0 @@
--- Init migration (no-op)
--- Restored to satisfy Prisma migrate deploy.
--- No schema changes in this migration.

@@ -25,7 +25,6 @@ import {
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { paginatePrisma } from '../common/pagination.util';
 import type { AddSingleJournalEntryDto } from './dto/add-single-journal-entry.dto';
-import type { CreateJournalDto } from './dto/create-journal.dto';
 import type { GetJournalsQueryDto } from './dto/get-journals-query.dto';
 
 @Injectable()
@@ -38,15 +37,6 @@ export class JournalsService {
     private readonly prismaTransactionalRepo: PrismaTransactionalRepository,
     private readonly ledgerAccountRepository: PrismaLedgerAccountRepository,
   ) {}
-
-  async create(dto: CreateJournalDto) {
-    return this.journalRepository.create({
-      transactionId: dto.transactionId,
-      postedAt: dto.postedAt ? new Date(dto.postedAt) : new Date(),
-      note: dto.note,
-      status: dto.status ?? JournalStatus.POSTED,
-    });
-  }
 
   async findOne(id: string, includeEntries = false) {
     const j = includeEntries
@@ -148,16 +138,20 @@ export class JournalsService {
     await this.journalRepository.delete(id);
   }
 
-  async addSingleEntry(
-    journalId: string,
+  async create(
     dto: AddSingleJournalEntryDto,
     tx?: Prisma.TransactionClient,
   ): Promise<Journal> {
     const run = async (DBtx: Prisma.TransactionClient): Promise<Journal> => {
       // 1. Validate journal exists and is in PENDING status
-      const journal = await this.journalRepository.findById(journalId, DBtx);
+      const journal = await this.journalRepository.findById(
+        dto.journalId,
+        DBtx,
+      );
       if (!journal) {
-        throw new NotFoundException(`Journal with id ${journalId} not found`);
+        throw new NotFoundException(
+          `Journal with id ${dto.journalId} not found`,
+        );
       }
 
       if (journal.status !== JournalStatus.PENDING) {
@@ -183,7 +177,7 @@ export class JournalsService {
       // 3. Create the debit journal entry
       await this.journalEntryRepository.create(
         {
-          journalId,
+          journalId: dto.journalId,
           ledgerAccountId: debitLedgerAccount.id,
           dc: DebitCredit.DEBIT,
           amount: dto.amount.toString(),
@@ -193,7 +187,7 @@ export class JournalsService {
       // 4. Create the credit journal entry
       const creditJournalEntry = await this.journalEntryRepository.create(
         {
-          journalId,
+          journalId: dto.journalId,
           ledgerAccountId: creditLedgerAccount.id,
           dc: DebitCredit.CREDIT,
           amount: dto.amount.toString(),
@@ -225,7 +219,7 @@ export class JournalsService {
 
       // Ensure account 2050 is balanced after new entries
       const isBalanced = await this.verifyAccountBalanced(
-        journalId,
+        dto.journalId,
         '2050',
         DBtx,
       );
@@ -240,7 +234,7 @@ export class JournalsService {
       }
 
       // 6. Return updated journal with entries
-      return this.findOne(journalId, true);
+      return this.findOne(dto.journalId, true);
     };
 
     return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);

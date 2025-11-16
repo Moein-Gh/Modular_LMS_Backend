@@ -10,6 +10,7 @@ import { BankService } from './services/banks.service';
 import { InstallmentsService } from './services/installments.service';
 import { LoanTypesService } from './services/loan-types.service';
 import { LoansService } from './services/loans.service';
+import { SubscriptionFeesService } from './services/subscription-fees.service';
 
 @Module({
   imports: [BankInfraModule, LedgerInfraModule, TransactionApplicationModule],
@@ -21,6 +22,7 @@ import { LoansService } from './services/loans.service';
     AccountTypesService,
     AccountsService,
     InstallmentsService,
+    SubscriptionFeesService,
     LoanTypesService,
     BankService,
     BankFinancialsService,
@@ -31,6 +33,7 @@ import { LoansService } from './services/loans.service';
     AccountsService,
     LoansService,
     InstallmentsService,
+    SubscriptionFeesService,
     LoanTypesService,
     BankService,
     BankFinancialsService,
