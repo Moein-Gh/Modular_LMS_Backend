@@ -251,7 +251,7 @@ export class TransactionsService {
         dc: entry.dc,
         targetType: entry.targetType,
         targetId: entry.targetId,
-        accountId: entry.accountId, // Denormalized for balance queries
+        accountId: entry.accountId as string | undefined, // Denormalized for balance queries
       }));
 
       await this.journalEntryRepo.createMany(journalEntryInputs, trx);
