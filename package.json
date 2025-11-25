@@ -23,7 +23,7 @@
     "postinstall": "husky install",
     "prepare": "husky",
     "prisma:seed": "ts-node -r tsconfig-paths/register prisma/seed.ts",
-    "prisma:reset:dev": "dotenv -e .env.local -- prisma migrate reset",
+    "prisma:reset:dev": "dotenv -e .env -- prisma migrate reset",
     "prisma:reset:prod": "dotenv -e .env.production -- prisma migrate reset"
   },
   "dependencies": {
