@@ -50,7 +50,7 @@ services:
       target: ${API_BUILD_TARGET:-dev}
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.local
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       POSTGRES_HOST: db
@@ -104,7 +104,7 @@ services:
       target: ${API_BUILD_TARGET:-dev}
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.local
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       POSTGRES_HOST: db
