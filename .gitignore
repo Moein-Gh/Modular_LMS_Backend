@@ -3,6 +3,7 @@
 /node_modules
 /build
 
+
 # Logs
 logs
 *.log
@@ -44,6 +45,8 @@ lerna-debug.log*
 .env.test.local
 .env.production.local
 .env.local
+.env
+
 
 # temp directory
 .temp
