@@ -24,6 +24,7 @@ export interface JournalEntry {
   targetId?: string;
   removable: boolean;
   createdAt: Date;
+  accountId?: string;
   journal?: Journal;
   ledgerAccount?: Partial<LedgerAccount>;
 }

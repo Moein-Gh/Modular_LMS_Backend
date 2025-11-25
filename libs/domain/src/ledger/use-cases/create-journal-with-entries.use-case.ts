@@ -18,6 +18,8 @@ export interface JournalEntrySpec {
   dc: DebitCredit;
   targetType?: JournalEntryTarget;
   targetId?: string;
+  /** Denormalized account ID for efficient balance queries */
+  accountId?: string;
 }
 
 export class CreateJournalWithEntriesUseCase {
@@ -72,6 +74,7 @@ export class CreateJournalWithEntriesUseCase {
         dc: entry.dc,
         targetType: entry.targetType,
         targetId: entry.targetId,
+        accountId: entry.accountId, // Denormalized for balance queries
       }));
 
       await this.journalEntryRepo.createMany(journalEntries, trx);

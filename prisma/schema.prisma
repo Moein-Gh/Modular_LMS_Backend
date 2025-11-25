@@ -171,6 +171,7 @@ model Account {
   bank            Bank?
   loans           Loan[]
   SubscriptionFee SubscriptionFee[]
+  journalEntries  JournalEntry[]
 }
 
 /// Singleton bank configuration for the platform (exactly one row expected with id = 1)
@@ -369,6 +370,9 @@ model JournalEntry {
   targetId        String?            @db.Uuid
   createdAt       DateTime           @default(now())
 
+  accountId String?  @db.Uuid
+  account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
   journal          Journal           @relation(fields: [journalId], references: [id], onDelete: Cascade)
   ledgerAccount    LedgerAccount     @relation(fields: [ledgerAccountId], references: [id])
   installments     Installment[]
@@ -378,6 +382,7 @@ model JournalEntry {
   @@index([ledgerAccountId])
   @@index([targetType, targetId])
   @@index([ledgerAccountId, createdAt])
+  @@index([accountId, ledgerAccountId, dc])
 }
 
 // ========================= TRANSACTION MODULE =========================

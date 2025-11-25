@@ -25,7 +25,7 @@
 
 ## Conventions & Patterns
 
-- **Environment Variables**: Validated via Zod in `libs/config/src/env.schema.ts`. All services expect `.env` or Compose envs for DB, ports, etc.
+- **Environment Variables**: Validated via Zod in `libs/config/src/env.schema.ts`. All services expect `.env.local` or Compose envs for DB, ports, etc.
 - **Error Handling**: Uses RFC 7807 Problem Details pattern (`libs/problem-details`). All exceptions are filtered and returned in a standard format.
 - **API Docs**: `/swagger` for Swagger UI, `/reference` for Scalar UI (see `setupDocs` in infra docs).
 - **Prisma**: Database access via `PrismaService` in `libs/infra/src/prisma/prisma.module.ts`. Always connect/disconnect using lifecycle hooks.

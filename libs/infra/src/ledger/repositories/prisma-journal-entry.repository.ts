@@ -20,6 +20,7 @@ const selectJournalEntry = {
   targetId: true,
   removable: true,
   createdAt: true,
+  accountId: true,
 };
 
 type JournalEntryModel = Prisma.JournalEntryGetPayload<{
@@ -38,6 +39,7 @@ function toDomain(model: JournalEntryModel): JournalEntry {
     targetId: model.targetId ?? undefined,
     removable: model.removable,
     createdAt: model.createdAt,
+    accountId: model.accountId ?? undefined,
   };
 }
 

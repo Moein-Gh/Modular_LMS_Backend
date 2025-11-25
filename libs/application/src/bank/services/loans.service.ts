@@ -152,6 +152,7 @@ export class LoansService {
       await this.createLoanDisbursementTransaction(
         user.id,
         loan.id,
+        input.accountId,
         input.amount,
         netDisbursement,
         commissionAmount,
@@ -456,6 +457,7 @@ export class LoansService {
   private async createLoanDisbursementTransaction(
     userId: string,
     loanId: string,
+    accountId: string,
     loanAmount: string,
     netDisbursement: number,
     commissionAmount: number,
@@ -474,6 +476,7 @@ export class LoansService {
           dc: DebitCredit.DEBIT,
           targetType: JournalEntryTarget.LOAN,
           targetId: loanId,
+          accountId, // Denormalized for balance queries
         },
         {
           ledgerAccountCode: LEDGER_ACCOUNT_CODES.CASH,

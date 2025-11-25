@@ -11,7 +11,7 @@ import type { EnvVars } from './env.schema';
   imports: [
     NestConfig.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: '.env.local',
       validate: (cfg) => {
         const parsed = envSchema.safeParse(cfg);
         if (!parsed.success) {

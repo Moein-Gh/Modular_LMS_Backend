@@ -22,14 +22,16 @@
     "test:e2e": "jest --config ./apps/api-admin/test/jest-e2e.json",
     "postinstall": "husky install",
     "prepare": "husky",
-    "prisma:seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
+    "prisma:seed": "ts-node -r tsconfig-paths/register prisma/seed.ts",
+    "prisma:reset:dev": "dotenv -e .env.local -- prisma migrate reset",
+    "prisma:reset:prod": "dotenv -e .env.production -- prisma migrate reset"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
-    "@nestjs/platform-express": "^11.0.1",
     "@nestjs/mapped-types": "^2.0.5",
+    "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.0",
     "@nestjs/throttler": "^6.4.0",
     "@prisma/client": "^6.16.2",
@@ -63,6 +65,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.7",
     "@types/supertest": "^6.0.2",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
@@ -74,10 +77,10 @@
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
-    "tsconfig-paths-webpack-plugin": "^4.1.0",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "tsconfig-paths-webpack-plugin": "^4.1.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
   },

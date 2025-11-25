@@ -51,6 +51,54 @@ export class JournalEntriesService {
     return neg ? -bi : bi;
   }
 
+  /**
+   * Resolves the accountId from targetType and targetId.
+   * This denormalizes the accountId for efficient balance queries.
+   */
+  private async resolveAccountId(
+    targetType: JournalEntryTarget | undefined,
+    targetId: string | undefined,
+    tx: Prisma.TransactionClient,
+  ): Promise<string | undefined> {
+    if (!targetType || !targetId) return undefined;
+
+    switch (targetType) {
+      case JournalEntryTarget.ACCOUNT:
+        // targetId IS the accountId
+        return targetId;
+
+      case JournalEntryTarget.SUBSCRIPTION_FEE: {
+        // Get accountId from SubscriptionFee
+        const subscriptionFee = await tx.subscriptionFee.findUnique({
+          where: { id: targetId },
+          select: { accountId: true },
+        });
+        return subscriptionFee?.accountId;
+      }
+
+      case JournalEntryTarget.INSTALLMENT: {
+        // Get accountId from Installment -> Loan -> Account
+        const installment = await tx.installment.findUnique({
+          where: { id: targetId },
+          select: { loan: { select: { accountId: true } } },
+        });
+        return installment?.loan?.accountId;
+      }
+
+      case JournalEntryTarget.LOAN: {
+        // Get accountId from Loan
+        const loan = await tx.loan.findUnique({
+          where: { id: targetId },
+          select: { accountId: true },
+        });
+        return loan?.accountId;
+      }
+
+      default:
+        return undefined;
+    }
+  }
+
   async addSingleEntry(
     dto: AddSingleJournalEntryDto,
     tx?: Prisma.TransactionClient,
@@ -96,7 +144,15 @@ export class JournalEntriesService {
         default:
           creditLedgerAccount = ledgerAccounts.find((la) => la.code === '2000');
       }
-      // 3. Create the debit journal entry
+
+      // 2.5 Resolve accountId for denormalization (efficient balance queries)
+      const accountId = await this.resolveAccountId(
+        dto.targetType,
+        dto.targetId,
+        DBtx,
+      );
+
+      // 3. Create the debit journal entry (no accountId - it's the bank's internal account)
       await this.journalEntryRepository.create(
         {
           journalId: dto.journalId,
@@ -104,6 +160,7 @@ export class JournalEntriesService {
           dc: DebitCredit.DEBIT,
           amount: dto.amount.toString(),
           removable: true,
+          accountId, // Denormalized for balance queries
         },
         DBtx,
       );
@@ -117,6 +174,7 @@ export class JournalEntriesService {
           amount: dto.amount.toString(),
           targetType: dto.targetType,
           targetId: dto.targetId,
+          accountId, // Denormalized for balance queries
         },
         DBtx,
       );

@@ -7,7 +7,10 @@ import {
   TransactionStatus,
   type JournalEntry,
 } from '@app/domain';
-import { DebitCredit } from '@app/domain/ledger/entities/journal-entry.entity';
+import {
+  DebitCredit,
+  JournalEntryTarget,
+} from '@app/domain/ledger/entities/journal-entry.entity';
 import { JournalStatus } from '@app/domain/ledger/entities/journal.entity';
 import {
   PrismaJournalEntryRepository,
@@ -138,6 +141,50 @@ export class JournalsService {
     await this.journalRepository.delete(id);
   }
 
+  /**
+   * Resolves the accountId from targetType and targetId.
+   * This denormalizes the accountId for efficient balance queries.
+   */
+  private async resolveAccountId(
+    targetType: JournalEntryTarget | undefined,
+    targetId: string | undefined,
+    tx: Prisma.TransactionClient,
+  ): Promise<string | undefined> {
+    if (!targetType || !targetId) return undefined;
+
+    switch (targetType) {
+      case JournalEntryTarget.ACCOUNT:
+        return targetId;
+
+      case JournalEntryTarget.SUBSCRIPTION_FEE: {
+        const subscriptionFee = await tx.subscriptionFee.findUnique({
+          where: { id: targetId },
+          select: { accountId: true },
+        });
+        return subscriptionFee?.accountId;
+      }
+
+      case JournalEntryTarget.INSTALLMENT: {
+        const installment = await tx.installment.findUnique({
+          where: { id: targetId },
+          select: { loan: { select: { accountId: true } } },
+        });
+        return installment?.loan?.accountId;
+      }
+
+      case JournalEntryTarget.LOAN: {
+        const loan = await tx.loan.findUnique({
+          where: { id: targetId },
+          select: { accountId: true },
+        });
+        return loan?.accountId;
+      }
+
+      default:
+        return undefined;
+    }
+  }
+
   async create(
     dto: AddSingleJournalEntryDto,
     tx?: Prisma.TransactionClient,
@@ -174,6 +221,13 @@ export class JournalsService {
       const { creditLedgerAccount, debitLedgerAccount } =
         this.specifyLedgerAccounts(dto.allocationType, ledgerAccounts);
 
+      // 2.5 Resolve accountId for denormalization (efficient balance queries)
+      const accountId = await this.resolveAccountId(
+        dto.targetType,
+        dto.targetId,
+        DBtx,
+      );
+
       // 3. Create the debit journal entry
       await this.journalEntryRepository.create(
         {
@@ -181,6 +235,7 @@ export class JournalsService {
           ledgerAccountId: debitLedgerAccount.id,
           dc: DebitCredit.DEBIT,
           amount: dto.amount.toString(),
+          accountId, // Denormalized for balance queries
         },
         DBtx,
       );
@@ -193,6 +248,7 @@ export class JournalsService {
           amount: dto.amount.toString(),
           targetType: dto.targetType,
           targetId: dto.targetId,
+          accountId, // Denormalized for balance queries
         },
         DBtx,
       );
