@@ -53,11 +53,6 @@ export class JournalsService {
   async findAll(query?: GetJournalsQueryDto, tx?: Prisma.TransactionClient) {
     const includeEntries = query?.includeEntries ?? false;
 
-    // If including entries, we need to use a different repository method
-    if (includeEntries) {
-      return this.findAllWithEntries(query, tx);
-    }
-
     const where: Prisma.JournalWhereInput = {};
 
     if (query?.search) {
@@ -65,59 +60,34 @@ export class JournalsService {
     }
 
     if (query?.transactionId) {
-      where.transactionId = query?.transactionId;
+      where.transactionId = query.transactionId;
     }
+
+    const repo = includeEntries
+      ? {
+          findAll: (
+            args: Prisma.JournalFindManyArgs,
+            tx?: Prisma.TransactionClient,
+          ) => this.journalRepository.findAllWithEntries(args, tx),
+          count: (
+            where?: Prisma.JournalWhereInput,
+            tx?: Prisma.TransactionClient,
+          ) => this.journalRepository.count(where, tx),
+        }
+      : this.journalRepository;
 
     return paginatePrisma<
       Journal,
       Prisma.JournalFindManyArgs,
       Prisma.JournalWhereInput
     >({
-      repo: this.journalRepository,
+      repo,
       where,
       query: query ?? new PaginationQueryDto(),
       defaultOrderBy: 'createdAt',
       defaultOrderDir: 'desc',
       tx,
     });
-  }
-
-  private async findAllWithEntries(
-    query?: GetJournalsQueryDto,
-    tx?: Prisma.TransactionClient,
-  ) {
-    const page = query?.page ?? 1;
-    const pageSize = query?.pageSize ?? 10;
-    const skip = (page - 1) * pageSize;
-
-    const whereConditions: Prisma.JournalWhereInput = {};
-
-    if (query?.search) {
-      whereConditions.note = { contains: query.search, mode: 'insensitive' };
-    }
-    if (query?.transactionId) {
-      whereConditions.transactionId = query?.transactionId;
-    }
-
-    const [items, totalItems] = await Promise.all([
-      this.journalRepository.findAllWithEntries(
-        {
-          where: whereConditions,
-          skip,
-          take: pageSize,
-          orderBy: { createdAt: 'desc' },
-        },
-        tx,
-      ),
-      this.journalRepository.count(whereConditions, tx),
-    ]);
-
-    return {
-      items,
-      totalItems,
-      page,
-      pageSize,
-    };
   }
 
   async void(id: string, tx?: Prisma.TransactionClient) {
