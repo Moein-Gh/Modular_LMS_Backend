@@ -1,3 +1,4 @@
+import { AccountBalanceResult } from '@app/application/ledger/dto/journal-balance.dto';
 import { AccountType, User } from '@app/domain';
 
 export enum AccountStatus {
@@ -21,4 +22,6 @@ export interface Account {
 
   accountType?: AccountType;
   user?: User;
+
+  balanceSummary?: AccountBalanceResult;
 }

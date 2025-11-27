@@ -50,6 +50,7 @@ export class UsersController {
       isActive: user.isActive,
       identityId: user.identityId,
       identity,
+      balanceSummary: user.balanceSummary,
     };
   }
 
@@ -82,6 +83,7 @@ export class UsersController {
       isActive: user.isActive,
       code: user.code,
       identityId: user.identityId,
+      balanceSummary: user.balanceSummary,
       identity: {
         id: user.identity!.id!,
         name: user.identity!.name!,

@@ -62,7 +62,6 @@ export class InstallmentsService {
   ) {
     const exists = await this.installmentsRepo.findById(id, tx);
     if (!exists) throw new NotFoundError('Installment', 'id', id);
-    if (input.loanId) await this.ensureLoanExists(input.loanId, tx);
     return this.installmentsRepo.update(id, input, tx);
   }
 

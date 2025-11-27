@@ -2,6 +2,7 @@ import type {
   CreateJournalEntryInput,
   JournalEntry,
   JournalEntryRepository,
+  JournalEntryUpdateManyInput,
   UpdateJournalEntryInput,
 } from '@app/domain';
 
@@ -115,6 +116,18 @@ export class PrismaJournalEntryRepository implements JournalEntryRepository {
       select: selectJournalEntry,
     });
     return toDomain(updated as JournalEntryModel);
+  }
+
+  async updateMany(
+    where: Prisma.JournalEntryWhereInput,
+    input: JournalEntryUpdateManyInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const prisma = tx ?? this.prisma;
+    await prisma.journalEntry.updateMany({
+      where,
+      data: input,
+    });
   }
 
   async delete(id: string, tx?: Prisma.TransactionClient) {

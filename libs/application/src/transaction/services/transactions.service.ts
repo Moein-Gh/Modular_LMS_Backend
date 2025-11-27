@@ -7,11 +7,13 @@ import { paginatePrisma } from '@app/application/common/pagination.util';
 import {
   CreateJournalWithEntriesUseCase,
   DebitCredit,
+  InstallmentStatus,
   Journal,
   JournalEntry,
   JournalEntrySpec,
   JournalStatus,
   LEDGER_ACCOUNT_CODES,
+  SubscriptionFeeStatus,
   type Transaction,
   TransactionKindHelper,
   TransactionStatus,
@@ -23,14 +25,16 @@ import type {
   UpdateTransactionInput,
 } from '@app/domain/transaction/types/transaction.type';
 import {
+  PrismaInstallmentRepository,
   PrismaJournalRepository,
   PrismaLedgerAccountRepository,
+  PrismaSubscriptionFeeRepository,
   PrismaTransactionRepository,
   PrismaUserRepository,
 } from '@app/infra';
 import { PrismaJournalEntryRepository } from '@app/infra/ledger/repositories/prisma-journal-entry.repository';
 import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
-import { Prisma } from '@generated/prisma';
+import { JournalTargetType, Prisma } from '@generated/prisma';
 import {
   ConflictException,
   forwardRef,
@@ -48,6 +52,8 @@ export class TransactionsService {
     private readonly ledgerAccountRepo: PrismaLedgerAccountRepository,
     private readonly journalRepo: PrismaJournalRepository,
     private readonly journalEntryRepo: PrismaJournalEntryRepository,
+    private readonly installmentRepo: PrismaInstallmentRepository,
+    private readonly subscriptionFeesRepo: PrismaSubscriptionFeeRepository,
     private readonly prismaTransactionalRepo: PrismaTransactionalRepository,
     @Inject(forwardRef(() => JournalsService))
     private readonly journalService: JournalsService,
@@ -251,7 +257,7 @@ export class TransactionsService {
         dc: entry.dc,
         targetType: entry.targetType,
         targetId: entry.targetId,
-        accountId: entry.accountId as string | undefined, // Denormalized for balance queries
+        accountId: entry.accountId, // Denormalized for balance queries
       }));
 
       await this.journalEntryRepo.createMany(journalEntryInputs, trx);
@@ -304,6 +310,47 @@ export class TransactionsService {
         { status: JournalStatus.POSTED, postedAt: new Date() },
         trx,
       );
+
+      await this.journalEntryRepo.updateMany(
+        { journalId: journal.id },
+        { removable: false },
+        trx,
+      );
+
+      // Mark related installments and subscription fees as paid when their
+      // corresponding journal entries are posted.
+      const entries = journal.entries ?? [];
+      for (const entry of entries) {
+        if (
+          String(entry.targetType) === JournalTargetType.INSTALLMENT &&
+          entry.targetId
+        ) {
+          await this.installmentRepo.update(
+            entry.targetId,
+            {
+              status: InstallmentStatus.PAID,
+              paymentDate: new Date(),
+              journalEntryId: entry.id,
+            },
+            trx,
+          );
+        }
+
+        if (
+          String(entry.targetType) === JournalTargetType.SUBSCRIPTION_FEE &&
+          entry.targetId
+        ) {
+          await this.subscriptionFeesRepo.update(
+            entry.targetId,
+            {
+              status: SubscriptionFeeStatus.PAID,
+              paidAt: new Date(),
+              journalEntryId: entry.id,
+            },
+            trx,
+          );
+        }
+      }
 
       return updatedTransaction;
     };

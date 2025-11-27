@@ -20,6 +20,7 @@ export type UpdateSubscriptionFeeInput = {
 
 export type ListSubscriptionFeeQueryInput = BaseQueryParams & {
   accountId?: string;
+  userId?: string;
   status?: SubscriptionFeeStatus;
   periodStart?: Date;
 };

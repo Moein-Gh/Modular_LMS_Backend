@@ -8,7 +8,11 @@ export type CreateInstallmentInput = Pick<
   status?: InstallmentStatus;
 };
 
-export type UpdateInstallmentInput = Partial<CreateInstallmentInput>;
+export type UpdateInstallmentInput = Partial<
+  Pick<Installment, 'status' | 'journalEntryId'>
+> & {
+  paymentDate?: Date | string;
+};
 
 export type ListInstallmentQueryInput = BaseQueryParams & {
   loanId?: string;

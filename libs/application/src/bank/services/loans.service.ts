@@ -3,6 +3,7 @@ import { paginatePrisma } from '@app/application/common/pagination.util';
 import { TransactionsService } from '@app/application/transaction/services/transactions.service';
 import {
   Account,
+  AccountStatus,
   CreateTransactionWithJournalEntriesInput,
   DebitCredit,
   InstallmentStatus,
@@ -20,6 +21,7 @@ import {
   type UpdateLoanInput,
 } from '@app/domain';
 
+import { JournalBalanceUsecase } from '@app/application/ledger/journal-balance.usecase';
 import {
   PrismaAccountRepository,
   PrismaInstallmentRepository,
@@ -51,6 +53,7 @@ export class LoansService {
     private readonly bankFinancialsService: BankFinancialsService,
     private readonly transactionsService: TransactionsService,
     private readonly journalsRepo: PrismaJournalRepository,
+    private readonly journalBalanceUseCase: JournalBalanceUsecase,
   ) {}
 
   async findAll(query?: ListLoanQueryInput, tx?: Prisma.TransactionClient) {
@@ -111,6 +114,14 @@ export class LoansService {
     if (!loan) {
       throw new NotFoundError('Loan', 'id', id);
     }
+
+    const balance = await this.journalBalanceUseCase.getLoanBalance(
+      loan.id,
+      tx,
+    );
+
+    loan.balanceSummary = balance;
+
     return loan;
   }
 
@@ -228,6 +239,15 @@ export class LoansService {
 
       // 5. Activate all installments for this loan
       await this.activateInstallmentsForLoan(loan.id, DBtx);
+
+      // 6. Ensure the associated account is ACTIVE
+      await this.accountRepo.update(
+        loan.accountId,
+        {
+          status: AccountStatus.RESTRICTED,
+        },
+        DBtx,
+      );
 
       return updatedLoan;
     };

@@ -1,4 +1,16 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateInstallmentDto } from './create-installment.dto';
+import { InstallmentStatus } from '@app/domain';
+import { IsDateString, IsEnum, IsOptional, IsUUID } from 'class-validator';
 
-export class UpdateInstallmentDto extends PartialType(CreateInstallmentDto) {}
+export class UpdateInstallmentDto {
+  @IsOptional()
+  @IsEnum(InstallmentStatus)
+  status?: InstallmentStatus;
+
+  @IsOptional()
+  @IsDateString()
+  paymentDate?: string;
+
+  @IsOptional()
+  @IsUUID()
+  journalEntryId?: string;
+}

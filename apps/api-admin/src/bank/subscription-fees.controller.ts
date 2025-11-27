@@ -3,6 +3,7 @@ import {
   PaginatedResponseDto,
   SubscriptionFeesService,
 } from '@app/application';
+import { SubscriptionFee } from '@app/domain';
 import {
   Body,
   Controller,
@@ -29,7 +30,7 @@ export class SubscriptionFeesController {
   @Get()
   async findAll(
     @Query() query: GetSubscriptionFeesQueryDto,
-  ): Promise<PaginatedResponseDto<any>> {
+  ): Promise<PaginatedResponseDto<SubscriptionFee>> {
     const { items, totalItems, page, pageSize } =
       await this.subscriptionFees.findAll(query);
     return PaginatedResponseDto.from({

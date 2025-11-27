@@ -8,6 +8,10 @@ export class GetSubscriptionFeesQueryDto extends PaginationQueryDto {
   accountId?: string;
 
   @IsOptional()
+  @IsUUID()
+  userId?: string;
+
+  @IsOptional()
   @IsEnum(SubscriptionFeeStatus)
   status?: SubscriptionFeeStatus | undefined;
 

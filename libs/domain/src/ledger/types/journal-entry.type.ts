@@ -12,3 +12,7 @@ export type CreateJournalEntryInput = {
 };
 
 export type UpdateJournalEntryInput = Partial<CreateJournalEntryInput>;
+
+export type JournalEntryUpdateManyInput = {
+  removable: boolean;
+};

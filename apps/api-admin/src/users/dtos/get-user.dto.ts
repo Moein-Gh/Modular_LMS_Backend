@@ -1,4 +1,4 @@
-import { Identity } from '@app/domain';
+import { Identity, UserBalanceSummary } from '@app/domain';
 
 export class GetUserDto {
   id: string;
@@ -6,4 +6,5 @@ export class GetUserDto {
   isActive: boolean;
   identityId: string;
   identity: Partial<Identity>;
+  balanceSummary?: UserBalanceSummary;
 }

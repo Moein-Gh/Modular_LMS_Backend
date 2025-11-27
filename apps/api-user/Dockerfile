@@ -1,11 +1,11 @@
 # ============================================
 # Base Stage - Common dependencies
 # ============================================
-FROM node:20-alpine3.20 AS base
+FROM node:20-alpine3.22 AS base
 WORKDIR /app
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Update Alpine packages and install dumb-init for proper signal handling
+RUN apk update && apk upgrade && apk add --no-cache dumb-init
 
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@10.17.0 --activate

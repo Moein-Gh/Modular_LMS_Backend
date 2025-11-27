@@ -27,10 +27,19 @@ export class SubscriptionFeesService {
   ) {
     const where: Prisma.SubscriptionFeeWhereInput = {};
 
-    if (query?.accountId) where.accountId = query.accountId;
-    if (query?.status) where.status = query.status;
+    const conditions: Prisma.SubscriptionFeeWhereInput[] = [];
+
+    if (query?.accountId) conditions.push({ accountId: query.accountId });
+    if (query?.status) conditions.push({ status: query.status });
     if (query?.periodStart)
-      where.periodStart = query.periodStart as unknown as Date;
+      conditions.push({ periodStart: query.periodStart as unknown as Date });
+    if (query?.userId) conditions.push({ account: { userId: query.userId } });
+
+    if (conditions.length === 1) {
+      Object.assign(where, conditions[0]);
+    } else if (conditions.length > 1) {
+      where.AND = conditions;
+    }
 
     return paginatePrisma<
       SubscriptionFee,

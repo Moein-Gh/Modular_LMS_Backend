@@ -1,3 +1,4 @@
+import { LoanBalanceResult } from '@app/application/ledger/dto/journal-balance.dto';
 import { Account } from '@app/domain';
 import type { LoanType } from './loan-type.entity';
 
@@ -26,4 +27,6 @@ export interface Loan {
 
   createdAt: Date;
   updatedAt: Date;
+
+  balanceSummary?: LoanBalanceResult;
 }

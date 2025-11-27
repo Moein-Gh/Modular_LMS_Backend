@@ -1,4 +1,5 @@
 import {
+  BankInfraModule,
   LedgerInfraModule,
   PrismaUserRepository,
   TransactionInfraModule,
@@ -11,6 +12,7 @@ import { TransactionsService } from './services/transactions.service';
   imports: [
     TransactionInfraModule,
     LedgerInfraModule,
+    BankInfraModule,
     forwardRef(() => LedgerApplicationModule),
   ],
   providers: [TransactionsService, PrismaUserRepository],

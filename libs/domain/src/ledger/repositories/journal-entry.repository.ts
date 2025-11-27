@@ -1,6 +1,7 @@
 import type { JournalEntry } from '../entities/journal-entry.entity';
 import {
   CreateJournalEntryInput,
+  JournalEntryUpdateManyInput,
   UpdateJournalEntryInput,
 } from '../types/journal-entry.type';
 
@@ -18,5 +19,11 @@ export interface JournalEntryRepository {
     account: UpdateJournalEntryInput,
     tx?: unknown,
   ): Promise<JournalEntry>;
+
+  updateMany(
+    where: unknown,
+    account: JournalEntryUpdateManyInput,
+    tx?: unknown,
+  ): Promise<void>;
   delete(id: string, tx?: unknown): Promise<void>;
 }

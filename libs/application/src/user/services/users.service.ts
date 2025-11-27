@@ -1,6 +1,7 @@
 import { PaginationQueryDto } from '@app/application/common/dto/pagination-query.dto';
 import { paginatePrisma } from '@app/application/common/pagination.util';
 import { NotFoundError } from '@app/application/errors/not-found.error';
+import { JournalBalanceUsecase } from '@app/application/ledger/journal-balance.usecase';
 import { User, USER_REPOSITORY, type IUserRepository } from '@app/domain';
 import { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
@@ -11,6 +12,7 @@ import { UpdateUserInput } from '../types/update-user.type';
 export class UsersService {
   constructor(
     @Inject(USER_REPOSITORY) private readonly users: IUserRepository,
+    private readonly journalBalanceUseCase: JournalBalanceUsecase,
   ) {}
 
   async create(
@@ -26,7 +28,24 @@ export class UsersService {
     if (!user) {
       throw new NotFoundError('User', 'id', id);
     }
-    return user;
+    const accountsBalance =
+      await this.journalBalanceUseCase.getUserAccountsBalance(id, tx);
+
+    const loansBalance = await this.journalBalanceUseCase.getUserLoansBalance(
+      id,
+      tx,
+    );
+
+    // Merge balances into a plain object so serialization includes it
+    const result = {
+      ...user,
+      balanceSummary: {
+        accounts: accountsBalance,
+        loans: loansBalance,
+      },
+    } as unknown as User;
+
+    return result;
   }
 
   async findByIdentityId(

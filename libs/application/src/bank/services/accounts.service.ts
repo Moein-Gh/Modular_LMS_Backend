@@ -16,6 +16,7 @@ import {
 import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
 import { Prisma } from '@generated/prisma';
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { JournalBalanceUsecase } from './../../ledger/journal-balance.usecase';
 
 @Injectable()
 export class AccountsService {
@@ -25,6 +26,7 @@ export class AccountsService {
     private readonly bankRepo: PrismaBankRepository,
     private readonly subscriptionFeesRepo: PrismaSubscriptionFeeRepository,
     private readonly transactionalRepo: PrismaTransactionalRepository,
+    private readonly journalBalanceUsecase: JournalBalanceUsecase,
   ) {}
 
   async findAll(query?: ListAccountQueryInput, tx?: Prisma.TransactionClient) {
@@ -72,6 +74,8 @@ export class AccountsService {
     if (!account) {
       throw new NotFoundError('Account', 'id', id);
     }
+    const balance = await this.journalBalanceUsecase.getAccountBalance(id);
+    account.balanceSummary = balance;
     return account;
   }
 
