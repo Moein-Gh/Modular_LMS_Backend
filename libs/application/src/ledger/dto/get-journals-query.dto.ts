@@ -15,4 +15,8 @@ export class GetJournalsQueryDto extends PaginationQueryDto {
   @IsUUID()
   @IsOptional()
   transactionId?: string;
+
+  @IsUUID()
+  @IsOptional()
+  targetId?: string;
 }

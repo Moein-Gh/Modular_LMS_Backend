@@ -63,6 +63,14 @@ export class JournalsService {
       where.transactionId = query.transactionId;
     }
 
+    if (query?.targetId) {
+      where.entries = {
+        some: {
+          targetId: query.targetId,
+        },
+      };
+    }
+
     const repo = includeEntries
       ? {
           findAll: (

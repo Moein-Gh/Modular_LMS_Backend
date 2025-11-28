@@ -1,3 +1,7 @@
+import { Account } from '../../bank/entities/account.entity';
+import { Installment } from '../../bank/entities/installment.entity';
+import { Loan } from '../../bank/entities/loan.entity';
+import { SubscriptionFee } from '../../bank/entities/subscription-fee.entity';
 import { Journal } from './journal.entity';
 import { LedgerAccount } from './ledger-account.entity';
 
@@ -22,6 +26,7 @@ export interface JournalEntry {
   amount: string;
   targetType?: JournalEntryTarget;
   targetId?: string;
+  target?: Account | Loan | Installment | SubscriptionFee;
   removable: boolean;
   createdAt: Date;
   accountId?: string;

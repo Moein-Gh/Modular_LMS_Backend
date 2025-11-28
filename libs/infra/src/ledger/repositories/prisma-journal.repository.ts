@@ -1,5 +1,13 @@
-import type { Journal, JournalEntry } from '@app/domain';
+import type {
+  Account,
+  Installment,
+  Journal,
+  JournalEntry,
+  Loan,
+  SubscriptionFee,
+} from '@app/domain';
 import { DebitCredit, JournalRepository } from '@app/domain';
+import { JournalEntryTarget } from '@app/domain/ledger/entities/journal-entry.entity';
 import type { CreateJournalInput } from '@app/domain/ledger/types/journal.type';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import { type Prisma, type PrismaClient } from '@generated/prisma';
@@ -42,6 +50,10 @@ const journalSelectWithEntries = {
           type: true,
         },
       },
+      // Relations for population
+      account: true,
+      installments: true,
+      subscriptionFees: true,
     },
   },
 } as const;
@@ -52,7 +64,34 @@ type JournalModelWithEntries = Prisma.JournalGetPayload<{
 }>;
 type EntryModel = JournalModelWithEntries['entries'][number];
 
-function toJournalEntry(entry: EntryModel): JournalEntry {
+function toJournalEntry(
+  entry: EntryModel,
+  loanMap?: Map<string, any>,
+): JournalEntry {
+  let target: Account | SubscriptionFee | Loan | Installment | undefined =
+    undefined;
+
+  if (entry.targetType && entry.targetId) {
+    switch (entry.targetType) {
+      case JournalEntryTarget.ACCOUNT:
+        target = entry.account as Account;
+        break;
+      case JournalEntryTarget.INSTALLMENT:
+        target = entry.installments.find((i) => i.id === entry.targetId) as
+          | Installment
+          | undefined;
+        break;
+      case JournalEntryTarget.SUBSCRIPTION_FEE:
+        target = entry.subscriptionFees.find((s) => s.id === entry.targetId) as
+          | SubscriptionFee
+          | undefined;
+        break;
+      case JournalEntryTarget.LOAN:
+        target = loanMap?.get(entry.targetId) as Loan;
+        break;
+    }
+  }
+
   return {
     id: entry.id,
     code: entry.code,
@@ -62,6 +101,7 @@ function toJournalEntry(entry: EntryModel): JournalEntry {
     amount: entry.amount.toString(),
     targetType: entry.targetType as JournalEntry['targetType'],
     targetId: entry.targetId ?? undefined,
+    target,
     removable: entry.removable,
     createdAt: entry.createdAt,
     ledgerAccount: entry.ledgerAccount
@@ -74,7 +114,10 @@ function toJournalEntry(entry: EntryModel): JournalEntry {
   };
 }
 
-function toJournal(model: JournalModel | JournalModelWithEntries): Journal {
+function toJournal(
+  model: JournalModel | JournalModelWithEntries,
+  loanMap?: Map<string, any>,
+): Journal {
   const journal: Journal = {
     id: model.id,
     code: model.code,
@@ -87,7 +130,7 @@ function toJournal(model: JournalModel | JournalModelWithEntries): Journal {
   };
 
   if ('entries' in model && model.entries) {
-    journal.entries = model.entries.map(toJournalEntry);
+    journal.entries = model.entries.map((e) => toJournalEntry(e, loanMap));
   }
 
   return journal;
@@ -122,7 +165,8 @@ export class PrismaJournalRepository implements JournalRepository {
     });
     if (!journal) return null;
 
-    return toJournal(journal as JournalModelWithEntries);
+    const loanMap = await this.fetchLoansForJournals([journal], prisma);
+    return toJournal(journal as JournalModelWithEntries, loanMap);
   }
 
   async update(
@@ -179,7 +223,35 @@ export class PrismaJournalRepository implements JournalRepository {
       select: journalSelectWithEntries,
       ...(options ?? {}),
     });
-    return rows.map((r) => toJournal(r as JournalModelWithEntries));
+
+    const loanMap = await this.fetchLoansForJournals(
+      rows as unknown as JournalModelWithEntries[],
+      prisma,
+    );
+
+    return rows.map((r) => toJournal(r as JournalModelWithEntries, loanMap));
+  }
+
+  private async fetchLoansForJournals(
+    journals: JournalModelWithEntries[],
+    prisma: PrismaClient | Prisma.TransactionClient,
+  ): Promise<Map<string, any>> {
+    const loanIds = new Set<string>();
+    for (const j of journals) {
+      for (const e of j.entries) {
+        if (e.targetType === JournalEntryTarget.LOAN && e.targetId) {
+          loanIds.add(e.targetId);
+        }
+      }
+    }
+
+    if (loanIds.size === 0) return new Map();
+
+    const loans = await prisma.loan.findMany({
+      where: { id: { in: Array.from(loanIds) } },
+    });
+
+    return new Map(loans.map((l) => [l.id, l]));
   }
 
   async count(

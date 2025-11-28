@@ -3,6 +3,7 @@ import {
   BankApplicationModule,
   JournalsService,
   LedgerAccountsService,
+  ReportApplicationModule,
   TransactionApplicationModule,
 } from '@app/application';
 import { JournalEntriesService } from '@app/application/ledger/journal-entries.service';
@@ -33,6 +34,7 @@ import { SubscriptionFeesController } from './bank/subscription-fees.controller'
 import { JournalEntriesController } from './ledger/journal-entries.controller';
 import { JournalsController } from './ledger/journals.controller';
 import { LedgerAccountsController } from './ledger/ledger-accounts.controller';
+import { ReportController } from './report/report.controller';
 import { TransactionsController } from './transactions/transactions.controller';
 import { UsersController } from './users/users.controller';
 
@@ -47,6 +49,7 @@ import { UsersController } from './users/users.controller';
     UserApplicationModule,
     BankApplicationModule,
     TransactionApplicationModule,
+    ReportApplicationModule,
     AccessModule,
   ],
   controllers: [
@@ -64,6 +67,7 @@ import { UsersController } from './users/users.controller';
     LedgerAccountsController,
     JournalsController,
     JournalEntriesController,
+    ReportController,
   ],
   providers: [
     ApiAdminService,
