@@ -1,6 +1,7 @@
 import {
   AuthApplicationModule,
   BankApplicationModule,
+  FileApplicationModule,
   JournalsService,
   LedgerAccountsService,
   ReportApplicationModule,
@@ -31,6 +32,7 @@ import { InstallmentsController } from './bank/installments.controller';
 import { LoanTypesController } from './bank/loan-types.controller';
 import { LoansController } from './bank/loans.controller';
 import { SubscriptionFeesController } from './bank/subscription-fees.controller';
+import { FilesController } from './file/file.controller';
 import { JournalEntriesController } from './ledger/journal-entries.controller';
 import { JournalsController } from './ledger/journals.controller';
 import { LedgerAccountsController } from './ledger/ledger-accounts.controller';
@@ -47,6 +49,8 @@ import { UsersController } from './users/users.controller';
     ConfigModule,
     AuthApplicationModule,
     UserApplicationModule,
+    // File application
+    FileApplicationModule,
     BankApplicationModule,
     TransactionApplicationModule,
     ReportApplicationModule,
@@ -54,6 +58,8 @@ import { UsersController } from './users/users.controller';
   ],
   controllers: [
     ApiAdminController,
+    // File controller
+    FilesController,
     UsersController,
     AuthController,
     AccountsController,

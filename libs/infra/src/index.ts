@@ -15,3 +15,5 @@ export * from './prisma/prisma.module';
 export * from './prisma/prisma.service';
 // Transaction
 export * from './transaction/index';
+// FILE
+export * from './file/index';

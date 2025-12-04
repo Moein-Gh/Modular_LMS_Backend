@@ -65,6 +65,7 @@ export class LoansService {
           ...(query?.accountId && { accountId: query.accountId }),
           ...(query?.loanTypeId && { loanTypeId: query.loanTypeId }),
           ...(query?.status && { status: query.status }),
+          ...(query?.userId && { account: { userId: query.userId } }),
         },
         searchFields: ['name'],
         defaultOrderBy: 'createdAt',

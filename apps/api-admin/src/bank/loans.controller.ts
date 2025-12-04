@@ -3,6 +3,7 @@ import {
   LoansService,
   PaginatedResponseDto,
 } from '@app/application';
+import { Loan } from '@app/domain';
 import {
   Body,
   Controller,
@@ -29,7 +30,7 @@ export class LoansController {
   @Get()
   async findAll(
     @Query() query: GetLoansQueryDto,
-  ): Promise<PaginatedResponseDto<any>> {
+  ): Promise<PaginatedResponseDto<Loan>> {
     const { items, totalItems, page, pageSize } =
       await this.loans.findAll(query);
     return PaginatedResponseDto.from({

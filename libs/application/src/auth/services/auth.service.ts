@@ -39,7 +39,8 @@ export class AuthService {
     }
 
     // Generate a random 6-digit code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    // const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = '123456'; // TODO: Remove hardcoded code for testing only
     console.log('---------------');
     console.log(`Sending SMS code ${code} to ${cmd.phone}`);
     console.log('---------------');

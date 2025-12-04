@@ -9,4 +9,9 @@ export class ReportController {
   getDashboardSummary() {
     return this.reportService.getFinancialSummary();
   }
+
+  @Get('/dashboard/entities')
+  getDashboardEntitiesSummary() {
+    return this.reportService.getEntitesSummary();
+  }
 }

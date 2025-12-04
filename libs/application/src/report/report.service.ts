@@ -1,12 +1,27 @@
-import { BankFinancialSummary, LEDGER_ACCOUNT_CODES } from '@app/domain';
-import { PrismaLedgerAccountRepository } from '@app/infra';
-import { Prisma } from '@generated/prisma';
+import {
+  AccountStatus,
+  BankFinancialSummary,
+  LEDGER_ACCOUNT_CODES,
+  LoanStatus,
+} from '@app/domain';
+import {
+  PrismaAccountRepository,
+  PrismaLedgerAccountRepository,
+  PrismaLoanRepository,
+  PrismaTransactionRepository,
+  PrismaUserRepository,
+} from '@app/infra';
+import { Prisma, TransactionStatus } from '@generated/prisma';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class ReportService {
   constructor(
     private readonly ledgerAccountRepo: PrismaLedgerAccountRepository,
+    private readonly usersRepo: PrismaUserRepository,
+    private readonly accountsRepo: PrismaAccountRepository,
+    private readonly loansRepo: PrismaLoanRepository,
+    private readonly transactionsRepo: PrismaTransactionRepository,
   ) {}
 
   // must return these
@@ -20,6 +35,10 @@ export class ReportService {
     tx?: Prisma.TransactionClient,
   ): Promise<BankFinancialSummary> {
     const end = endDate ?? new Date();
+
+    const format = (val: string | number) => {
+      return parseFloat(Number(val).toFixed(4)).toString();
+    };
 
     // Helper to compute metric for a ledger account
     const computeMetric = async (accountCode: string) => {
@@ -40,10 +59,11 @@ export class ReportService {
           { endDate: end },
           tx,
         );
+        const formatted = format(todayVal);
         return {
-          lastMonth: todayVal,
-          monthlyAverage: todayVal,
-          today: todayVal,
+          lastMonth: formatted,
+          monthlyAverage: formatted,
+          today: formatted,
         };
       }
 
@@ -91,7 +111,12 @@ export class ReportService {
           { endDate: e },
           tx,
         );
-        return { lastMonth: val, monthlyAverage: val, today: val };
+        const formatted = format(val);
+        return {
+          lastMonth: formatted,
+          monthlyAverage: formatted,
+          today: formatted,
+        };
       }
 
       // Fetch balances for each month end in parallel
@@ -141,9 +166,9 @@ export class ReportService {
       );
 
       return {
-        lastMonth: lastMonthVal,
-        monthlyAverage: avg.toFixed(4),
-        today: todayVal,
+        lastMonth: format(lastMonthVal),
+        monthlyAverage: format(avg),
+        today: format(todayVal),
       };
     };
 
@@ -157,7 +182,7 @@ export class ReportService {
     // Derive cashOnHand metrics as deposits - loans per metric element
     const derive = (a: string, b: string) => {
       const v = parseFloat(a) - parseFloat(b);
-      return (v >= 0 ? v : 0).toFixed(4);
+      return format(v >= 0 ? v : 0);
     };
 
     const cashMetric = {
@@ -175,6 +200,65 @@ export class ReportService {
       loansReceivable: loansMetric,
       totalIncomeEarned: incomeMetric,
       asOfDate: end,
+    };
+  }
+
+  // must return these counts
+  // 1. total users
+  // 2. total accounts (active , restricted)
+  // 3. total loans (total , active , pending)
+  // 4. total transactions (total , pending)
+  async getEntitesSummary() {
+    const users = await this.usersRepo.count({ isActive: true });
+
+    const accountsTotal = await this.accountsRepo.count();
+
+    const accountsRestricted = await this.accountsRepo.count({
+      status: AccountStatus.RESTRICTED,
+    });
+
+    const accountActive = await this.accountsRepo.count({
+      status: AccountStatus.ACTIVE,
+    });
+
+    const loansTotal = await this.loansRepo.count();
+
+    const loansActive = await this.loansRepo.count({
+      status: LoanStatus.ACTIVE,
+    });
+
+    const loansPending = await this.loansRepo.count({
+      status: LoanStatus.PENDING,
+    });
+
+    const transactionsTotal = await this.transactionsRepo.count();
+
+    const transactionsPending = await this.transactionsRepo.count({
+      status: TransactionStatus.PENDING,
+    });
+
+    const transactionsAllocated = await this.transactionsRepo.count({
+      status: TransactionStatus.ALLOCATED,
+    });
+
+    return {
+      users,
+      accounts: {
+        total: accountsTotal,
+        active: accountActive,
+        restricted: accountsRestricted,
+      },
+      loans: {
+        total: loansTotal,
+        active: loansActive,
+        pending: loansPending,
+      },
+
+      transactions: {
+        total: transactionsTotal,
+        pending: transactionsPending,
+        allocated: transactionsAllocated,
+      },
     };
   }
 }

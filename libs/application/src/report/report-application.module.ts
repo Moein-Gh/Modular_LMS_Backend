@@ -1,9 +1,19 @@
-import { LedgerInfraModule } from '@app/infra';
+import {
+  BankInfraModule,
+  LedgerInfraModule,
+  TransactionInfraModule,
+  UserInfraModule,
+} from '@app/infra';
 import { Module } from '@nestjs/common';
 import { ReportService } from './report.service';
 
 @Module({
-  imports: [LedgerInfraModule],
+  imports: [
+    LedgerInfraModule,
+    BankInfraModule,
+    UserInfraModule,
+    TransactionInfraModule,
+  ],
   providers: [ReportService],
   exports: [ReportService],
 })

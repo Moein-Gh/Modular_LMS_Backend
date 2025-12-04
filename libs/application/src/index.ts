@@ -22,9 +22,14 @@ export * from './ledger';
 export * from './common/dto/paginated-response.dto';
 export * from './common/dto/pagination-query.dto';
 
+// COMMON VALIDATORS
+export * from './common/validators/is-mutually-exclusive-with.validator';
+
 // TRANSACTION
 export * from './transaction';
 export * from './transaction/transaction-application.module';
 
 // REPORT
 export * from './report';
+// FILE
+export * from './file';

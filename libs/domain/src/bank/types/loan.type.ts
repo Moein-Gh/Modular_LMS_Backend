@@ -12,6 +12,7 @@ export type UpdateLoanInput = Partial<Pick<Loan, 'name' | 'status'>>;
 
 export type ListLoanQueryInput = BaseQueryParams & {
   accountId?: string;
+  userId?: string;
   loanTypeId?: string;
   status?: LoanStatus;
 };

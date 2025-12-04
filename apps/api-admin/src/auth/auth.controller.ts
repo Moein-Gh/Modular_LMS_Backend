@@ -51,26 +51,33 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async verifySms(
     @Body() body: VerifySmsCodeDto,
-    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.auth.verifySmsCode(body);
-    // Set tokens as httpOnly, secure cookies
+
+    // LOGIC:
+    // 1. If NODE_ENV is explicitly 'production' (Cloud), use Secure.
+    // 2. Otherwise (Localhost, Ngrok, Docker, WiFi), use Non-Secure.
+    // This allows the cookie to work on http://192... AND https://ngrok...
+    const isCloudProduction = process.env.NODE_ENV === 'production';
+
+    const cookieOptions = {
+      httpOnly: true,
+      path: '/',
+      secure: isCloudProduction, // False on your machine, True on AWS/Render
+      sameSite: 'lax' as const, // 'Lax' works with secure: false
+    };
+
     res.cookie('accessToken', result.accessToken, {
-      httpOnly: true,
-      secure: isSecureRequest(req),
-      sameSite: 'lax',
+      ...cookieOptions,
       maxAge: result.accessTokenExpiresIn * 1000,
-      path: '/',
     });
+
     res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: isSecureRequest(req),
-      sameSite: 'lax',
+      ...cookieOptions,
       maxAge: result.refreshTokenExpiresIn * 1000,
-      path: '/',
     });
-    // Return userId and sessionId so frontend can use them
+
     return {
       success: true,
       userId: result.userId,
