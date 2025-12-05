@@ -7,6 +7,7 @@ export type CreateAccountInput = {
   userId: string;
   cardNumber: string;
   bankName: string;
+  createdAt: Date;
 };
 
 export type UpdateAccountInput = {

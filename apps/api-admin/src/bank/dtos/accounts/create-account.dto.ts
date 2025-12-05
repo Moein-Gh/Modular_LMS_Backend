@@ -1,4 +1,5 @@
-import { IsString, Matches, MinLength, IsUUID } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsDate, IsString, IsUUID, Matches, MinLength } from 'class-validator';
 
 export class CreateAccountDto {
   @IsUUID('4', { message: 'accountTypeId must be a valid ID' })
@@ -8,10 +9,14 @@ export class CreateAccountDto {
   userId: string;
 
   @IsString()
-  @Matches(/^\d{16}$/, { message: 'cardNumber must be exactly 16 digits' })
+  @Matches(/^\d{8}$/, { message: 'cardNumber must be exactly 8 digits' })
   cardNumber: string;
 
   @IsString()
   @MinLength(3)
   bankName: string;
+
+  @Type(() => Date)
+  @IsDate()
+  createdAt: Date;
 }

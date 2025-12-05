@@ -7,6 +7,7 @@ import {
   type CreatePermissionInput,
   type PermissionRepository,
 } from '@app/domain';
+import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
 import { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -15,70 +16,101 @@ export class PermissionsService {
   constructor(
     @Inject(PERMISSION_REPOSITORY)
     private readonly permissions: PermissionRepository,
+    private readonly transactionalRepo: PrismaTransactionalRepository,
   ) {}
 
-  create(input: CreatePermissionInput): Promise<Permission> {
-    return this.permissions.create(input);
+  create(
+    input: CreatePermissionInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Permission> {
+    const run = async (tx: Prisma.TransactionClient) => {
+      return this.permissions.create(input, tx);
+    };
+
+    return tx ? run(tx) : this.transactionalRepo.withTransaction(run);
   }
 
-  async getById(id: string): Promise<Permission> {
-    const permission = await this.permissions.findById(id);
-    if (!permission) {
-      throw new NotFoundError('Permission', 'id', id);
-    }
-    return permission;
-  }
-
-  async getByKey(key: string): Promise<Permission> {
-    const permissions = await this.permissions.findAll({ key });
-    if (!permissions.length) {
-      throw new NotFoundError('Permission', 'key', key);
-    }
-    return permissions[0];
-  }
-
-  async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
-    return paginatePrisma<
-      Permission,
-      Prisma.PermissionFindManyArgs,
-      Prisma.PermissionWhereInput
-    >({
-      repo: this.permissions,
-      query: query ?? new PaginationQueryDto(),
-      searchFields: ['name', 'key', 'description'],
-      defaultOrderBy: 'createdAt',
-      defaultOrderDir: 'desc',
-      tx,
-    });
-  }
-
-  async update(id: string, data: Permission): Promise<Permission> {
-    const existing = await this.permissions.findById(id);
-    if (!existing) {
-      throw new NotFoundError('Permission', 'id', id);
-    }
-    try {
-      return await this.permissions.update(id, { ...existing, ...data });
-    } catch (e) {
-      if ((e as { code?: unknown })?.code === 'P2025') {
+  getById(id: string, tx?: Prisma.TransactionClient): Promise<Permission> {
+    const run = async (tx: Prisma.TransactionClient) => {
+      const permission = await this.permissions.findById(id, tx);
+      if (!permission) {
         throw new NotFoundError('Permission', 'id', id);
       }
-      throw e;
-    }
+      return permission;
+    };
+
+    return tx ? run(tx) : this.transactionalRepo.withTransaction(run);
   }
 
-  async delete(id: string): Promise<void> {
-    const existing = await this.permissions.findById(id);
-    if (!existing) {
-      throw new NotFoundError('Permission', 'id', id);
-    }
-    try {
-      await this.permissions.delete(id);
-    } catch (e) {
-      if ((e as { code?: unknown })?.code === 'P2025') {
+  getByKey(key: string, tx?: Prisma.TransactionClient): Promise<Permission> {
+    const run = async (tx: Prisma.TransactionClient) => {
+      const permissions = await this.permissions.findAll({ key }, tx);
+      if (!permissions.length) {
+        throw new NotFoundError('Permission', 'key', key);
+      }
+      return permissions[0];
+    };
+
+    return tx ? run(tx) : this.transactionalRepo.withTransaction(run);
+  }
+
+  findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
+    const run = async (tx: Prisma.TransactionClient) =>
+      paginatePrisma<
+        Permission,
+        Prisma.PermissionFindManyArgs,
+        Prisma.PermissionWhereInput
+      >({
+        repo: this.permissions,
+        query: query ?? new PaginationQueryDto(),
+        searchFields: ['name', 'key', 'description'],
+        defaultOrderBy: 'createdAt',
+        defaultOrderDir: 'desc',
+        tx,
+      });
+
+    return tx ? run(tx) : this.transactionalRepo.withTransaction(run);
+  }
+
+  update(
+    id: string,
+    data: Permission,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Permission> {
+    const run = async (tx: Prisma.TransactionClient) => {
+      const existing = await this.permissions.findById(id, tx);
+      if (!existing) {
         throw new NotFoundError('Permission', 'id', id);
       }
-      throw e;
-    }
+      try {
+        return await this.permissions.update(id, { ...existing, ...data }, tx);
+      } catch (e) {
+        if ((e as { code?: unknown })?.code === 'P2025') {
+          throw new NotFoundError('Permission', 'id', id);
+        }
+        throw e;
+      }
+    };
+
+    return tx ? run(tx) : this.transactionalRepo.withTransaction(run);
+  }
+
+  delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const run = async (tx: Prisma.TransactionClient) => {
+      const existing = await this.permissions.findById(id, tx);
+      if (!existing) {
+        throw new NotFoundError('Permission', 'id', id);
+      }
+      try {
+        await this.permissions.delete(id, tx);
+      } catch (e) {
+        if ((e as { code?: unknown })?.code === 'P2025') {
+          throw new NotFoundError('Permission', 'id', id);
+        }
+        throw e;
+      }
+    };
+
+    return tx ? run(tx) : this.transactionalRepo.withTransaction(run);
   }
 }

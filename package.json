@@ -27,6 +27,7 @@
     "prisma:reset:prod": "dotenv -e .env.production -- prisma migrate reset"
   },
   "dependencies": {
+    "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -42,6 +43,7 @@
     "@sentry/profiling-node": "^10.3.0",
     "@types/uuid": "^10.0.0",
     "axios": "^1.5.0",
+    "cache-manager": "^7.2.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "dotenv-expand": "^12.0.3",

@@ -1,12 +1,17 @@
+import {
+  AccessApplicationModule,
+  AccessTokenGuard,
+  AuthApplicationModule,
+  PermissionsGuard,
+} from '@app/application';
+import { ConfigModule } from '@app/config';
 import { Module } from '@nestjs/common';
-import { AccessApplicationModule } from '@app/application';
-import { AuthApplicationModule } from '@app/application';
-import { RolesController } from './roles/roles.controller';
-import { PermissionsController } from './permissions/permissions.controller';
+import { APP_GUARD } from '@nestjs/core';
 import { PermissionGrantsController } from './permissionGrants/permissionGrants.controller';
 import { PermissionGrantsModule } from './permissionGrants/permissionGrants.module';
+import { PermissionsController } from './permissions/permissions.controller';
 import { RoleAssignmentsController } from './roleAssignments/roleAssignments.controller';
-import { ConfigModule } from '@app/config';
+import { RolesController } from './roles/roles.controller';
 
 @Module({
   imports: [
@@ -21,5 +26,10 @@ import { ConfigModule } from '@app/config';
     RoleAssignmentsController,
     PermissionGrantsController,
   ],
+  providers: [
+    { provide: APP_GUARD, useClass: AccessTokenGuard },
+    { provide: APP_GUARD, useClass: PermissionsGuard },
+  ],
+  exports: [AccessApplicationModule],
 })
 export class AccessModule {}

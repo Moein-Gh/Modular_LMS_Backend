@@ -23,6 +23,7 @@ import {
   RegisterUserUseCase,
   UsersService,
 } from '@app/application';
+import { Permissions } from '@app/application/decorators/permissions.decorator';
 import { User } from '@app/domain';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { GetUserDto } from './dtos/get-user.dto';
@@ -54,12 +55,14 @@ export class UsersController {
     };
   }
 
+  @Permissions('user/create')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   registerUser(@Body() body: RegisterUserInput) {
     return this.registerUserUseCase.execute(body);
   }
 
+  @Permissions('user/get')
   @Get()
   async findAll(
     @Query() query: PaginationQueryDto,
@@ -75,6 +78,7 @@ export class UsersController {
     });
   }
 
+  @Permissions('user/get')
   @Get(':id')
   async findOne(@Param('id', UUID_V4_PIPE) id: string): Promise<GetUserDto> {
     const user = await this.findUserAndIdentity(id);
@@ -97,6 +101,7 @@ export class UsersController {
     };
   }
 
+  @Permissions('user/update')
   @Patch(':id')
   async update(
     @Param('id', UUID_V4_PIPE) id: string,

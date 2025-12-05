@@ -18,3 +18,7 @@ export interface User {
 
   balanceSummary?: UserBalanceSummary;
 }
+
+export interface UserWithPermissions extends User {
+  permissions: string[];
+}

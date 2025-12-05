@@ -1,0 +1,60 @@
+[
+  { "code": "1000", "name": "Cash", "nameFa": "وجه نقد", "type": "ASSET" },
+  {
+    "code": "1100",
+    "name": "Loans Receivable",
+    "nameFa": "وام های دریافتنی",
+    "type": "ASSET"
+  },
+
+  {
+    "code": "2000",
+    "name": "Customer Deposits",
+    "nameFa": "سپرده های مشتری",
+    "type": "LIABILITY"
+  },
+  {
+    "code": "2010",
+    "name": "Subscription Fee Deposits",
+    "nameFa": "سپرده های ماهیانه",
+    "type": "LIABILITY"
+  },
+  {
+    "code": "2050",
+    "name": "Unapplied Receipts",
+    "nameFa": "دریافت های تخصیص نیافته",
+    "type": "LIABILITY"
+  },
+  {
+    "code": "2100",
+    "name": "Unapplied Disbursements",
+    "nameFa": "پرداخت های تخصیص نیافته",
+    "type": "LIABILITY"
+  },
+
+  {
+    "code": "4100",
+    "name": "Fee/Commission Income",
+    "nameFa": "درآمد کارمزد",
+    "type": "INCOME"
+  },
+
+  {
+    "code": "5100",
+    "name": "Loan Repayment Expense",
+    "nameFa": "پرداخت قسط وام",
+    "type": "EXPENSE"
+  },
+  {
+    "code": "5200",
+    "name": "Commission Expense",
+    "nameFa": "هزینه کمیسیون",
+    "type": "EXPENSE"
+  },
+  {
+    "code": "5300",
+    "name": "Subscription Fee Expense",
+    "nameFa": "هزینه حق عضویت",
+    "type": "EXPENSE"
+  }
+]

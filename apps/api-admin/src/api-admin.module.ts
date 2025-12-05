@@ -18,7 +18,8 @@ import {
 import { PrismaModule } from '@app/infra/prisma/prisma.module';
 import { LoggerModule } from '@app/logger';
 import { ProblemDetailsModule } from '@app/problem-details';
-import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AccessModule } from './access/access.module';
@@ -32,6 +33,7 @@ import { InstallmentsController } from './bank/installments.controller';
 import { LoanTypesController } from './bank/loan-types.controller';
 import { LoansController } from './bank/loans.controller';
 import { SubscriptionFeesController } from './bank/subscription-fees.controller';
+import { PermissionLoaderMiddleware } from './common/middleware/permission-loader.middleware';
 import { FilesController } from './file/file.controller';
 import { JournalEntriesController } from './ledger/journal-entries.controller';
 import { JournalsController } from './ledger/journals.controller';
@@ -43,6 +45,7 @@ import { UsersController } from './users/users.controller';
 @Module({
   imports: [
     PrismaModule,
+    CacheModule.register({ ttl: 60, isGlobal: true }),
     LoggerModule,
     ProblemDetailsModule,
     ThrottlerModule.forRoot([{ ttl: 60, limit: 100 }]),
@@ -78,6 +81,7 @@ import { UsersController } from './users/users.controller';
   providers: [
     ApiAdminService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+
     LedgerAccountsService,
     JournalsService,
     JournalEntriesService,
@@ -93,4 +97,8 @@ import { UsersController } from './users/users.controller';
     },
   ],
 })
-export class ApiAdminModule {}
+export class ApiAdminModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(PermissionLoaderMiddleware).forRoutes('*');
+  }
+}

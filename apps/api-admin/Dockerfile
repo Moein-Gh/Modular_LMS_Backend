@@ -118,8 +118,8 @@ RUN pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Generate Prisma client
-RUN pnpm exec prisma generate
+# Generate Prisma client (DATABASE_URL not needed for generate, but config requires it)
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm exec prisma generate
 
 # Set development environment
 ENV NODE_ENV=development \

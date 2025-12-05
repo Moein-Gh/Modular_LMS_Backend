@@ -90,7 +90,8 @@ export class PrismaPermissionRepository implements PermissionRepository {
     data: CreatePermissionInput,
     tx: Prisma.TransactionClient,
   ): Promise<Permission> {
-    const created = await tx.permission.create({
+    const prisma = tx ?? this.prisma;
+    const created = await prisma.permission.create({
       data: {
         key: data.key,
         name: data.name,

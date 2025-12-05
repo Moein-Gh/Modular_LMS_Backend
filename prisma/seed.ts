@@ -1,25 +1,37 @@
+import { readFile } from 'fs/promises';
+import * as path from 'path';
 import { LedgerAccountType, PrismaClient } from '../generated/prisma';
 
 const prisma = new PrismaClient();
 
 async function main(): Promise<void> {
-  const existing = await prisma.bank.findFirst();
-  if (!existing) {
-    await prisma.bank.create({
-      data: {
-        name: 'صندوق معین',
-        subscriptionFee: '100000',
-        commissionPercentage: '1',
-        defaultMaxInstallments: 20,
-        installmentOptions: [5, 10, 20],
-        status: 'active',
-        currency: 'Toman',
-        timeZone: 'Asia/Tehran',
-      },
-    });
-    console.log('Seeded initial Bank row');
-  } else {
-    console.log('Bank row already exists; skipping');
+  // Load bank data from JSON and seed idempotently
+  try {
+    const bankDataRaw = await readFile(
+      path.join(__dirname, '..', 'db-seed-data', 'bank.json'),
+      'utf8',
+    );
+    const bankData = JSON.parse(bankDataRaw) as {
+      name: string;
+      subscriptionFee: string | number;
+      commissionPercentage?: string | number;
+      defaultMaxInstallments?: number;
+      installmentOptions?: number[];
+      status?: string;
+      currency?: string;
+      timeZone?: string;
+    };
+
+    const existingBank = await prisma.bank.findFirst();
+    if (!existingBank) {
+      await prisma.bank.create({ data: bankData });
+      console.log('Seeded initial Bank row');
+    } else {
+      console.log('Bank row already exists; skipping');
+    }
+  } catch (err) {
+    console.error('Failed to seed bank from JSON:', err);
+    throw err;
   }
 
   // Seed fixed Ledger Accounts (idempotent)
@@ -31,191 +43,346 @@ async function main(): Promise<void> {
   // Seed LoanTypes (idempotent)
   await seedLoanTypes();
 
+  // Seed Permissions from JSON (idempotent)
+  await seedPermissions();
+
+  // Seed roles
+  await seedRoles();
+
+  // Seed permission grants (e.g., give admin wildcard permission)
+  await seedPermissionGrants();
+
   // Seed test user (idempotent)
   await seedTestUser();
+
+  // Assign admin role to test user
+  await seedAssignAdminToTestUser();
+}
+
+async function seedAssignAdminToTestUser(): Promise<void> {
+  try {
+    const data = await readFile(
+      path.join(__dirname, '..', 'db-seed-data', 'test-user.json'),
+      'utf8',
+    );
+    const u = JSON.parse(data) as { phone: string };
+    const testPhone = u.phone;
+
+    const identity = await prisma.identity.findUnique({
+      where: { phone: testPhone },
+    });
+    if (!identity) {
+      console.warn(
+        `Test identity with phone=${testPhone} not found; cannot assign role`,
+      );
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { identityId: identity.id },
+    });
+    if (!user) {
+      console.warn(
+        `Test user for identity ${identity.id} not found; cannot assign role`,
+      );
+      return;
+    }
+
+    const role = await prisma.role.findUnique({ where: { key: 'admin' } });
+    if (!role) {
+      console.warn('Role "admin" not found; cannot assign to test user');
+      return;
+    }
+
+    const existing = await prisma.roleAssignment.findFirst({
+      where: { userId: user.id, roleId: role.id },
+    });
+    if (existing) {
+      console.log('✓ Test user already has admin role; skipping');
+      return;
+    }
+
+    await prisma.roleAssignment.create({
+      data: { userId: user.id, roleId: role.id, isActive: true },
+    });
+    console.log('✓ Assigned admin role to test user');
+  } catch (err) {
+    console.error('Failed to assign admin role to test user:', err);
+    throw err;
+  }
+}
+
+async function seedRoles(): Promise<void> {
+  try {
+    const data = await readFile(
+      path.join(__dirname, '..', 'db-seed-data', 'roles.json'),
+      'utf8',
+    );
+    const roles = JSON.parse(data) as Array<{
+      key: string;
+      name: string;
+      description?: string;
+    }>;
+
+    for (const r of roles) {
+      const existing = await prisma.role.findUnique({ where: { key: r.key } });
+      if (existing) {
+        console.log(`✓ Role "${r.key}" already exists; skipping`);
+        continue;
+      }
+      await prisma.role.create({ data: r });
+      console.log(`✓ Created Role "${r.key}"`);
+    }
+  } catch (err) {
+    console.error('Failed to seed roles from JSON:', err);
+    throw err;
+  }
+}
+
+async function seedPermissionGrants(): Promise<void> {
+  try {
+    // Find wildcard permission and admin role
+    const permission = await prisma.permission.findUnique({
+      where: { key: '*/*' },
+    });
+    const role = await prisma.role.findUnique({ where: { key: 'admin' } });
+
+    if (!permission) {
+      console.warn('Wildcard permission "*/*" not found; skipping grant');
+      return;
+    }
+    if (!role) {
+      console.warn('Role "admin" not found; skipping grant');
+      return;
+    }
+
+    const existingGrant = await prisma.permissionGrant.findFirst({
+      where: {
+        granteeType: 'role',
+        granteeId: role.id,
+        permissionId: permission.id,
+      },
+    });
+
+    if (existingGrant) {
+      console.log('✓ Admin already has wildcard permission; skipping');
+      return;
+    }
+
+    await prisma.permissionGrant.create({
+      data: {
+        granteeType: 'role',
+        granteeId: role.id,
+        permissionId: permission.id,
+        isGranted: true,
+      },
+    });
+    console.log('✓ Granted wildcard permission to admin role');
+  } catch (err) {
+    console.error('Failed to seed permission grants:', err);
+    throw err;
+  }
+}
+
+async function seedPermissions(): Promise<void> {
+  try {
+    const data = await readFile(
+      path.join(__dirname, '..', 'db-seed-data', 'permissions.json'),
+      'utf8',
+    );
+    const permissions = JSON.parse(data) as Array<{
+      name: string;
+      key: string;
+      description?: string;
+    }>;
+
+    let created = 0;
+    let skipped = 0;
+
+    for (const p of permissions) {
+      const existing = await prisma.permission.findUnique({
+        where: { key: p.key },
+      });
+      if (existing) {
+        skipped++;
+        continue;
+      }
+
+      await prisma.permission.create({
+        data: {
+          name: p.name,
+          key: p.key,
+          description: p.description ?? null,
+        },
+      });
+      created++;
+    }
+
+    console.log(`Permissions: ${created} created, ${skipped} skipped`);
+  } catch (err) {
+    console.error('Failed to seed permissions:', err);
+    throw err;
+  }
 }
 
 async function seedLedgerAccounts(): Promise<void> {
-  const accounts: Array<{
-    code: string;
-    name: string;
-    nameFa?: string;
-    type: LedgerAccountType;
-  }> = [
-    // Assets
-    { code: '1000', name: 'Cash', nameFa: 'وجه نقد', type: 'ASSET' },
-    {
-      code: '1100',
-      name: 'Loans Receivable',
-      nameFa: 'وام های دریافتنی',
-      type: 'ASSET',
-    },
+  try {
+    const data = await readFile(
+      path.join(__dirname, '..', 'db-seed-data', 'ledger-accounts.json'),
+      'utf8',
+    );
+    const accounts = JSON.parse(data) as Array<{
+      code: string;
+      name: string;
+      nameFa?: string;
+      type: LedgerAccountType;
+    }>;
 
-    // Liabilities
-    {
-      code: '2000',
-      name: 'Customer Deposits',
-      nameFa: 'سپرده های مشتری',
-      type: 'LIABILITY',
-    },
-    {
-      code: '2010',
-      name: 'Subscription Fee Deposits',
-      nameFa: 'سپرده های ماهیانه',
-      type: 'LIABILITY',
-    },
-    {
-      code: '2050',
-      name: 'Unapplied Receipts',
-      nameFa: 'دریافت های تخصیص نیافته',
-      type: 'LIABILITY',
-    },
-    {
-      code: '2100',
-      name: 'Unapplied Disbursements',
-      nameFa: 'پرداخت های تخصیص نیافته',
-      type: 'LIABILITY',
-    },
+    let createdCount = 0;
+    let skippedCount = 0;
 
-    // Income
-    {
-      code: '4100',
-      name: 'Fee/Commission Income',
-      nameFa: 'درآمد کارمزد',
-      type: 'INCOME',
-    },
-
-    // Expenses
-    {
-      code: '5100',
-      name: 'Loan Repayment Expense',
-      nameFa: 'پرداخت قسط وام',
-      type: 'EXPENSE',
-    },
-    {
-      code: '5200',
-      name: 'Commission Expense',
-      nameFa: 'هزینه کمیسیون',
-      type: 'EXPENSE',
-    },
-    {
-      code: '5300',
-      name: 'Subscription Fee Expense',
-      nameFa: 'هزینه حق عضویت',
-      type: 'EXPENSE',
-    },
-  ];
-
-  let createdCount = 0;
-  let skippedCount = 0;
-
-  for (const account of accounts) {
-    const existing = await prisma.ledgerAccount.findUnique({
-      where: { code: account.code },
-    });
-
-    if (existing) {
-      console.log(`  ✓ Account ${account.code} already exists; skipping`);
-      skippedCount++;
-    } else {
-      await prisma.ledgerAccount.create({
-        data: account,
+    for (const account of accounts) {
+      const existing = await prisma.ledgerAccount.findUnique({
+        where: { code: account.code },
       });
-      console.log(`  ✓ Created account ${account.code} - ${account.name}`);
-      createdCount++;
-    }
-  }
 
-  console.log(
-    `LedgerAccounts: ${createdCount} created, ${skippedCount} skipped`,
-  );
+      if (existing) {
+        console.log(`  ✓ Account ${account.code} already exists; skipping`);
+        skippedCount++;
+      } else {
+        await prisma.ledgerAccount.create({ data: account });
+        console.log(`  ✓ Created account ${account.code} - ${account.name}`);
+        createdCount++;
+      }
+    }
+
+    console.log(
+      `LedgerAccounts: ${createdCount} created, ${skippedCount} skipped`,
+    );
+  } catch (err) {
+    console.error('Failed to seed ledger accounts:', err);
+    throw err;
+  }
 }
 
 async function seedTestUser(): Promise<void> {
-  const testPhone = '9100971433';
+  try {
+    const data = await readFile(
+      path.join(__dirname, '..', 'db-seed-data', 'test-user.json'),
+      'utf8',
+    );
+    const u = JSON.parse(data) as {
+      phone: string;
+      nationalCode?: string;
+      countryCode?: string;
+      name?: string;
+      email?: string;
+      isActive?: boolean;
+    };
 
-  // Check if identity already exists
-  let identity = await prisma.identity.findUnique({
-    where: { phone: testPhone },
-  });
+    const testPhone = u.phone;
 
-  if (!identity) {
-    identity = await prisma.identity.create({
-      data: {
-        nationalCode: '0022358218',
-        countryCode: '98',
-        phone: testPhone,
-        name: 'معین قربانعلی',
-        email: 'moein@test.com',
-      },
+    // Check if identity already exists
+    let identity = await prisma.identity.findUnique({
+      where: { phone: testPhone },
     });
-    console.log('✓ Created test identity');
-  } else {
-    console.log('✓ Test identity already exists');
-  }
 
-  // Check if user already exists
-  const existingUser = await prisma.user.findUnique({
-    where: { identityId: identity.id },
-  });
+    if (!identity) {
+      identity = await prisma.identity.create({
+        data: {
+          nationalCode: u.nationalCode ?? null,
+          countryCode: u.countryCode ?? null,
+          phone: u.phone,
+          name: u.name ?? null,
+          email: u.email ?? null,
+        },
+      });
+      console.log('✓ Created test identity');
+    } else {
+      console.log('✓ Test identity already exists');
+    }
 
-  if (!existingUser) {
-    await prisma.user.create({
-      data: {
-        identityId: identity.id,
-        isActive: true,
-      },
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { identityId: identity.id },
     });
-    console.log('✓ Created test user');
-  } else {
-    console.log('✓ Test user already exists');
-  }
 
-  console.log(`Test user credentials: phone=${testPhone}`);
+    if (!existingUser) {
+      await prisma.user.create({
+        data: { identityId: identity.id, isActive: u.isActive ?? true },
+      });
+      console.log('✓ Created test user');
+    } else {
+      console.log('✓ Test user already exists');
+    }
+
+    console.log(`Test user credentials: phone=${testPhone}`);
+  } catch (err) {
+    console.error('Failed to seed test user from JSON:', err);
+    throw err;
+  }
 }
 
 async function seedAccountTypes(): Promise<void> {
-  const accountType = {
-    name: 'معمولی',
-    maxAccounts: 9999,
-  };
+  try {
+    const data = await readFile(
+      path.join(__dirname, '..', 'db-seed-data', 'account-types.json'),
+      'utf8',
+    );
+    const accountTypes = JSON.parse(data) as Array<{
+      name: string;
+      maxAccounts?: number;
+    }>;
 
-  const existing = await prisma.accountType.findUnique({
-    where: { name: accountType.name },
-  });
-
-  if (existing) {
-    console.log('✓ AccountType "معمولی" already exists; skipping');
-  } else {
-    await prisma.accountType.create({
-      data: accountType,
-    });
-    console.log('✓ Created AccountType "معمولی"');
+    for (const accountType of accountTypes) {
+      const existing = await prisma.accountType.findUnique({
+        where: { name: accountType.name },
+      });
+      if (existing) {
+        console.log(
+          `✓ AccountType "${accountType.name}" already exists; skipping`,
+        );
+        continue;
+      }
+      await prisma.accountType.create({ data: accountType });
+      console.log(`✓ Created AccountType "${accountType.name}"`);
+    }
+  } catch (err) {
+    console.error('Failed to seed account types from JSON:', err);
+    throw err;
   }
 }
 
 async function seedLoanTypes(): Promise<void> {
-  const loanType = {
-    name: 'معمولی',
-    commissionPercentage: 1,
-    defaultInstallments: 10,
-    maxInstallments: 24,
-    minInstallments: 1,
-    creditRequirementPct: 20,
-    description: 'وام معمولی',
-  };
+  try {
+    const data = await readFile(
+      path.join(__dirname, '..', 'db-seed-data', 'loan-types.json'),
+      'utf8',
+    );
+    const loanTypes = JSON.parse(data) as Array<{
+      name: string;
+      commissionPercentage?: number;
+      defaultInstallments?: number;
+      maxInstallments?: number;
+      minInstallments?: number;
+      creditRequirementPct?: number;
+      description?: string;
+    }>;
 
-  const existing = await prisma.loanType.findUnique({
-    where: { name: loanType.name },
-  });
-
-  if (existing) {
-    console.log('✓ LoanType "معمولی" already exists; skipping');
-  } else {
-    await prisma.loanType.create({
-      data: loanType,
-    });
-    console.log('✓ Created LoanType "معمولی"');
+    for (const loanType of loanTypes) {
+      const existing = await prisma.loanType.findUnique({
+        where: { name: loanType.name },
+      });
+      if (existing) {
+        console.log(`✓ LoanType "${loanType.name}" already exists; skipping`);
+        continue;
+      }
+      await prisma.loanType.create({ data: loanType });
+      console.log(`✓ Created LoanType "${loanType.name}"`);
+    }
+  } catch (err) {
+    console.error('Failed to seed loan types from JSON:', err);
+    throw err;
   }
 }
 

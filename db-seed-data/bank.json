@@ -1,0 +1,10 @@
+{
+  "name": "صندوق معین",
+  "subscriptionFee": "100000",
+  "commissionPercentage": "1",
+  "defaultMaxInstallments": 20,
+  "installmentOptions": [5, 10, 20],
+  "status": "active",
+  "currency": "Toman",
+  "timeZone": "Asia/Tehran"
+}

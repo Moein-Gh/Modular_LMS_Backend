@@ -1,0 +1,487 @@
+[
+  {
+    "name": "دسترسی کلی",
+    "key": "*/*",
+    "description": "دسترسی کامل به تمامی عملیات‌ها"
+  },
+  {
+    "name": "ایجاد بانک",
+    "key": "bank/create",
+    "description": "مجوز ایجاد بانک جدید"
+  },
+  {
+    "name": "مشاهده جزئیات بانک",
+    "key": "bank/get",
+    "description": "مجوز مشاهده جزئیات یک بانک"
+  },
+  {
+    "name": "لیست بانک‌ها",
+    "key": "bank/list",
+    "description": "مجوز مشاهده لیست همه بانک‌ها"
+  },
+  {
+    "name": "ویرایش بانک",
+    "key": "bank/update",
+    "description": "مجوز ویرایش اطلاعات بانک"
+  },
+  {
+    "name": "حذف بانک",
+    "key": "bank/delete",
+    "description": "مجوز حذف بانک"
+  },
+  {
+    "name": "مدیریت کامل بانک",
+    "key": "bank/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به بانک"
+  },
+  {
+    "name": "ایجاد فایل",
+    "key": "file/create",
+    "description": "مجوز آپلود فایل جدید"
+  },
+  {
+    "name": "مشاهده فایل",
+    "key": "file/get",
+    "description": "مجوز مشاهده یا دانلود یک فایل"
+  },
+  {
+    "name": "لیست فایل‌ها",
+    "key": "file/list",
+    "description": "مجوز مشاهده لیست فایل‌ها"
+  },
+  {
+    "name": "ویرایش فایل",
+    "key": "file/update",
+    "description": "مجوز ویرایش مشخصات فایل"
+  },
+  {
+    "name": "حذف فایل",
+    "key": "file/delete",
+    "description": "مجوز حذف فایل"
+  },
+  {
+    "name": "مدیریت کامل فایل",
+    "key": "file/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به فایل"
+  },
+  {
+    "name": "ایجاد وام",
+    "key": "loan/create",
+    "description": "مجوز ایجاد وام جدید"
+  },
+  {
+    "name": "مشاهده جزئیات وام",
+    "key": "loan/get",
+    "description": "مجوز مشاهده جزئیات یک وام"
+  },
+  {
+    "name": "لیست وام‌ها",
+    "key": "loan/list",
+    "description": "مجوز مشاهده لیست همه وام‌ها"
+  },
+  {
+    "name": "ویرایش وام",
+    "key": "loan/update",
+    "description": "مجوز ویرایش اطلاعات وام"
+  },
+  {
+    "name": "حذف وام",
+    "key": "loan/delete",
+    "description": "مجوز حذف وام"
+  },
+  {
+    "name": "مدیریت کامل وام",
+    "key": "loan/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به وام"
+  },
+  {
+    "name": "ایجاد نقش",
+    "key": "role/create",
+    "description": "مجوز ایجاد نقش کاربری جدید"
+  },
+  {
+    "name": "مشاهده جزئیات نقش",
+    "key": "role/get",
+    "description": "مجوز مشاهده جزئیات یک نقش"
+  },
+  {
+    "name": "لیست نقش‌ها",
+    "key": "role/list",
+    "description": "مجوز مشاهده لیست نقش‌های کاربری"
+  },
+  {
+    "name": "ویرایش نقش",
+    "key": "role/update",
+    "description": "مجوز ویرایش اطلاعات نقش"
+  },
+  {
+    "name": "حذف نقش",
+    "key": "role/delete",
+    "description": "مجوز حذف نقش"
+  },
+  {
+    "name": "مدیریت کامل نقش",
+    "key": "role/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به نقش‌ها"
+  },
+  {
+    "name": "ایجاد گزارش",
+    "key": "report/create",
+    "description": "مجوز ایجاد گزارش جدید"
+  },
+  {
+    "name": "مشاهده گزارش",
+    "key": "report/get",
+    "description": "مجوز مشاهده جزئیات یک گزارش"
+  },
+  {
+    "name": "لیست گزارش‌ها",
+    "key": "report/list",
+    "description": "مجوز مشاهده لیست گزارش‌ها"
+  },
+  {
+    "name": "ویرایش گزارش",
+    "key": "report/update",
+    "description": "مجوز ویرایش گزارش"
+  },
+  {
+    "name": "حذف گزارش",
+    "key": "report/delete",
+    "description": "مجوز حذف گزارش"
+  },
+  {
+    "name": "مدیریت کامل گزارش",
+    "key": "report/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به گزارش‌ها"
+  },
+  {
+    "name": "ایجاد حساب",
+    "key": "account/create",
+    "description": "مجوز ایجاد حساب جدید"
+  },
+  {
+    "name": "مشاهده جزئیات حساب",
+    "key": "account/get",
+    "description": "مجوز مشاهده جزئیات یک حساب"
+  },
+  {
+    "name": "لیست حساب‌ها",
+    "key": "account/list",
+    "description": "مجوز مشاهده لیست حساب‌ها"
+  },
+  {
+    "name": "ویرایش حساب",
+    "key": "account/update",
+    "description": "مجوز ویرایش اطلاعات حساب"
+  },
+  {
+    "name": "حذف حساب",
+    "key": "account/delete",
+    "description": "مجوز حذف حساب"
+  },
+  {
+    "name": "مدیریت کامل حساب",
+    "key": "account/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به حساب‌ها"
+  },
+  {
+    "name": "ایجاد دفتر روزنامه",
+    "key": "journal/create",
+    "description": "مجوز ایجاد دفتر روزنامه جدید"
+  },
+  {
+    "name": "مشاهده دفتر روزنامه",
+    "key": "journal/get",
+    "description": "مجوز مشاهده جزئیات دفتر روزنامه"
+  },
+  {
+    "name": "لیست دفاتر روزنامه",
+    "key": "journal/list",
+    "description": "مجوز مشاهده لیست دفاتر روزنامه"
+  },
+  {
+    "name": "ویرایش دفتر روزنامه",
+    "key": "journal/update",
+    "description": "مجوز ویرایش دفتر روزنامه"
+  },
+  {
+    "name": "حذف دفتر روزنامه",
+    "key": "journal/delete",
+    "description": "مجوز حذف دفتر روزنامه"
+  },
+  {
+    "name": "مدیریت کامل دفتر روزنامه",
+    "key": "journal/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به دفاتر روزنامه"
+  },
+  {
+    "name": "ایجاد نوع وام",
+    "key": "loan-type/create",
+    "description": "مجوز ایجاد نوع وام جدید"
+  },
+  {
+    "name": "مشاهده نوع وام",
+    "key": "loan-type/get",
+    "description": "مجوز مشاهده جزئیات یک نوع وام"
+  },
+  {
+    "name": "لیست انواع وام",
+    "key": "loan-type/list",
+    "description": "مجوز مشاهده لیست انواع وام"
+  },
+  {
+    "name": "ویرایش نوع وام",
+    "key": "loan-type/update",
+    "description": "مجوز ویرایش نوع وام"
+  },
+  {
+    "name": "حذف نوع وام",
+    "key": "loan-type/delete",
+    "description": "مجوز حذف نوع وام"
+  },
+  {
+    "name": "مدیریت کامل انواع وام",
+    "key": "loan-type/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به انواع وام"
+  },
+  {
+    "name": "ایجاد دسترسی",
+    "key": "permission/create",
+    "description": "مجوز تعریف دسترسی جدید"
+  },
+  {
+    "name": "مشاهده دسترسی",
+    "key": "permission/get",
+    "description": "مجوز مشاهده جزئیات یک دسترسی"
+  },
+  {
+    "name": "لیست دسترسی‌ها",
+    "key": "permission/list",
+    "description": "مجوز مشاهده لیست دسترسی‌ها"
+  },
+  {
+    "name": "ویرایش دسترسی",
+    "key": "permission/update",
+    "description": "مجوز ویرایش دسترسی"
+  },
+  {
+    "name": "حذف دسترسی",
+    "key": "permission/delete",
+    "description": "مجوز حذف دسترسی"
+  },
+  {
+    "name": "مدیریت کامل دسترسی‌ها",
+    "key": "permission/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به دسترسی‌ها"
+  },
+  {
+    "name": "ایجاد تراکنش",
+    "key": "transaction/create",
+    "description": "مجوز ایجاد تراکنش جدید"
+  },
+  {
+    "name": "مشاهده تراکنش",
+    "key": "transaction/get",
+    "description": "مجوز مشاهده جزئیات یک تراکنش"
+  },
+  {
+    "name": "لیست تراکنش‌ها",
+    "key": "transaction/list",
+    "description": "مجوز مشاهده لیست تراکنش‌ها"
+  },
+  {
+    "name": "ویرایش تراکنش",
+    "key": "transaction/update",
+    "description": "مجوز ویرایش تراکنش"
+  },
+  {
+    "name": "حذف تراکنش",
+    "key": "transaction/delete",
+    "description": "مجوز حذف تراکنش"
+  },
+  {
+    "name": "مدیریت کامل تراکنش‌ها",
+    "key": "transaction/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به تراکنش‌ها"
+  },
+  {
+    "name": "ایجاد نوع حساب",
+    "key": "account-type/create",
+    "description": "مجوز ایجاد نوع حساب جدید"
+  },
+  {
+    "name": "مشاهده نوع حساب",
+    "key": "account-type/get",
+    "description": "مجوز مشاهده جزئیات یک نوع حساب"
+  },
+  {
+    "name": "لیست انواع حساب",
+    "key": "account-type/list",
+    "description": "مجوز مشاهده لیست انواع حساب"
+  },
+  {
+    "name": "ویرایش نوع حساب",
+    "key": "account-type/update",
+    "description": "مجوز ویرایش نوع حساب"
+  },
+  {
+    "name": "حذف نوع حساب",
+    "key": "account-type/delete",
+    "description": "مجوز حذف نوع حساب"
+  },
+  {
+    "name": "مدیریت کامل انواع حساب",
+    "key": "account-type/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به انواع حساب"
+  },
+  {
+    "name": "ایجاد اطلاعات مالی",
+    "key": "bank-financial/create",
+    "description": "مجوز ایجاد اطلاعات مالی بانک"
+  },
+  {
+    "name": "مشاهده اطلاعات مالی",
+    "key": "bank-financial/get",
+    "description": "مجوز مشاهده جزئیات اطلاعات مالی بانک"
+  },
+  {
+    "name": "لیست اطلاعات مالی",
+    "key": "bank-financial/list",
+    "description": "مجوز مشاهده لیست اطلاعات مالی بانک‌ها"
+  },
+  {
+    "name": "ویرایش اطلاعات مالی",
+    "key": "bank-financial/update",
+    "description": "مجوز ویرایش اطلاعات مالی بانک"
+  },
+  {
+    "name": "حذف اطلاعات مالی",
+    "key": "bank-financial/delete",
+    "description": "مجوز حذف اطلاعات مالی بانک"
+  },
+  {
+    "name": "مدیریت کامل اطلاعات مالی",
+    "key": "bank-financial/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به اطلاعات مالی بانک"
+  },
+  {
+    "name": "ایجاد سند حسابداری",
+    "key": "journal-entry/create",
+    "description": "مجوز ایجاد سند حسابداری جدید"
+  },
+  {
+    "name": "مشاهده سند حسابداری",
+    "key": "journal-entry/get",
+    "description": "مجوز مشاهده جزئیات سند حسابداری"
+  },
+  {
+    "name": "لیست اسناد حسابداری",
+    "key": "journal-entry/list",
+    "description": "مجوز مشاهده لیست اسناد حسابداری"
+  },
+  {
+    "name": "ویرایش سند حسابداری",
+    "key": "journal-entry/update",
+    "description": "مجوز ویرایش سند حسابداری"
+  },
+  {
+    "name": "حذف سند حسابداری",
+    "key": "journal-entry/delete",
+    "description": "مجوز حذف سند حسابداری"
+  },
+  {
+    "name": "مدیریت کامل اسناد حسابداری",
+    "key": "journal-entry/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به اسناد حسابداری"
+  },
+  {
+    "name": "ایجاد حساب معین",
+    "key": "ledger-account/create",
+    "description": "مجوز ایجاد حساب دفتر کل/معین جدید"
+  },
+  {
+    "name": "مشاهده حساب معین",
+    "key": "ledger-account/get",
+    "description": "مجوز مشاهده جزئیات حساب دفتر کل/معین"
+  },
+  {
+    "name": "لیست حساب‌های معین",
+    "key": "ledger-account/list",
+    "description": "مجوز مشاهده لیست حساب‌های دفتر کل/معین"
+  },
+  {
+    "name": "ویرایش حساب معین",
+    "key": "ledger-account/update",
+    "description": "مجوز ویرایش حساب دفتر کل/معین"
+  },
+  {
+    "name": "حذف حساب معین",
+    "key": "ledger-account/delete",
+    "description": "مجوز حذف حساب دفتر کل/معین"
+  },
+  {
+    "name": "مدیریت کامل حساب‌های معین",
+    "key": "ledger-account/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به حساب‌های دفتر کل"
+  },
+  {
+    "name": "ایجاد اعطای دسترسی",
+    "key": "permission-grant/create",
+    "description": "مجوز اعطای دسترسی جدید به کاربر"
+  },
+  {
+    "name": "مشاهده اعطای دسترسی",
+    "key": "permission-grant/get",
+    "description": "مجوز مشاهده جزئیات یک اعطای دسترسی"
+  },
+  {
+    "name": "لیست اعطای دسترسی‌ها",
+    "key": "permission-grant/list",
+    "description": "مجوز مشاهده لیست دسترسی‌های اعطا شده"
+  },
+  {
+    "name": "ویرایش اعطای دسترسی",
+    "key": "permission-grant/update",
+    "description": "مجوز ویرایش دسترسی اعطا شده"
+  },
+  {
+    "name": "حذف اعطای دسترسی",
+    "key": "permission-grant/delete",
+    "description": "مجوز حذف یا بازپس‌گیری دسترسی"
+  },
+  {
+    "name": "مدیریت کامل اعطای دسترسی",
+    "key": "permission-grant/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به اعطای دسترسی‌ها"
+  },
+  {
+    "name": "ایجاد هزینه اشتراک",
+    "key": "subscription-fee/create",
+    "description": "مجوز تعریف هزینه اشتراک جدید"
+  },
+  {
+    "name": "مشاهده هزینه اشتراک",
+    "key": "subscription-fee/get",
+    "description": "مجوز مشاهده جزئیات هزینه اشتراک"
+  },
+  {
+    "name": "لیست هزینه‌های اشتراک",
+    "key": "subscription-fee/list",
+    "description": "مجوز مشاهده لیست هزینه‌های اشتراک"
+  },
+  {
+    "name": "ویرایش هزینه اشتراک",
+    "key": "subscription-fee/update",
+    "description": "مجوز ویرایش هزینه اشتراک"
+  },
+  {
+    "name": "حذف هزینه اشتراک",
+    "key": "subscription-fee/delete",
+    "description": "مجوز حذف هزینه اشتراک"
+  },
+  {
+    "name": "مدیریت کامل هزینه اشتراک",
+    "key": "subscription-fee/*",
+    "description": "دسترسی کامل به تمامی عملیات‌های مربوط به هزینه‌های اشتراک"
+  }
+]

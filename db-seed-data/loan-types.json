@@ -1,0 +1,11 @@
+[
+  {
+    "name": "معمولی",
+    "commissionPercentage": 1,
+    "defaultInstallments": 10,
+    "maxInstallments": 24,
+    "minInstallments": 1,
+    "creditRequirementPct": 20,
+    "description": "وام معمولی"
+  }
+]
