@@ -1,7 +1,7 @@
 import {
-  AccessTokenGuard,
   AuthService,
   LogoutDto,
+  Public,
   RegisterUserUseCase,
   RequestSmsCodeDto,
   VerifySmsCodeDto,
@@ -15,7 +15,6 @@ import {
   Post,
   Req,
   Res,
-  UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 
@@ -41,12 +40,14 @@ export class AuthController {
     private readonly registerUserUseCase: RegisterUserUseCase,
   ) {}
 
+  @Public()
   @Post('request-sms')
   @HttpCode(HttpStatus.OK)
   requestSms(@Body() body: RequestSmsCodeDto) {
     return this.auth.requestSmsCode(body);
   }
 
+  @Public()
   @Post('verify-sms')
   @HttpCode(HttpStatus.OK)
   async verifySms(
@@ -85,6 +86,7 @@ export class AuthController {
     };
   }
 
+  @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(
@@ -117,7 +119,6 @@ export class AuthController {
     };
   }
 
-  @UseGuards(AccessTokenGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(

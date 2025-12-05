@@ -1,5 +1,4 @@
 import {
-  AccessTokenGuard,
   PaginatedResponseDto,
   PaginationQueryDto,
   PermissionGrantsService,
@@ -14,7 +13,6 @@ import {
   Post,
   Put,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { UUID_V4_PIPE } from '../../common/pipes/UUID.pipe';
 import {
@@ -22,7 +20,6 @@ import {
   UpdatePermissionGrantDto,
 } from './dtos/create-permission-grant.dto';
 
-@UseGuards(AccessTokenGuard)
 @Controller('permission-grants')
 export class PermissionGrantsController {
   constructor(

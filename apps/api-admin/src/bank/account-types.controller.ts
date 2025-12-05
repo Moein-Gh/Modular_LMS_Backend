@@ -1,5 +1,4 @@
 import {
-  AccessTokenGuard,
   AccountTypesService,
   PaginatedResponseDto,
   PaginationQueryDto,
@@ -15,14 +14,12 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { CreateAccountTypeDto } from './dtos/account-types/create-account-type.dto';
 import { UpdateAccountTypeDto } from './dtos/account-types/update-account-type.dto';
 
 @Controller('account-types')
-@UseGuards(AccessTokenGuard)
 export class AccountTypesController {
   constructor(private readonly accountTypes: AccountTypesService) {}
 

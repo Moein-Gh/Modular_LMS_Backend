@@ -1,6 +1,8 @@
 import {
-  AccessTokenGuard,
+  FilesService,
+  ImageUpload,
   PaginatedResponseDto,
+  TransactionImagesService,
   TransactionsService,
 } from '@app/application';
 import { CreateTransactionInput, TransactionStatus } from '@app/domain';
@@ -15,7 +17,7 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
+  UploadedFile,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
@@ -25,9 +27,12 @@ import { UpdateTransactionDto } from './dtos/transactions/update-transaction.dto
 
 @ApiTags('Transactions')
 @Controller('transactions')
-@UseGuards(AccessTokenGuard)
 export class TransactionsController {
-  constructor(private readonly transactionsService: TransactionsService) {}
+  constructor(
+    private readonly transactionsService: TransactionsService,
+    private readonly filesService: FilesService,
+    private readonly transactionImagesService: TransactionImagesService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all transactions with pagination' })
@@ -56,19 +61,44 @@ export class TransactionsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new transaction' })
-  @ApiResponse({ status: 201, description: 'Transaction created successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid input data' })
-  async create(@Body() dto: CreateTransactionDto) {
+  @ImageUpload()
+  async create(
+    @UploadedFile() image: Express.Multer.File | undefined,
+    @Body() dto: CreateTransactionDto,
+  ) {
+    // If image is present, upload via FilesService (which forwards to UploadThing)
+    let fileRecord: import('@app/domain').File | null = null;
+    if (image) {
+      const payload = {
+        buffer: image.buffer as unknown as Buffer,
+        originalname: image.originalname,
+        mimetype: image.mimetype,
+        size: image.size,
+      };
+      const uploaded = await this.filesService.upload(payload);
+      fileRecord = uploaded;
+    }
+
     const input: CreateTransactionInput = {
       userId: dto.userId,
       kind: dto.kind,
-      amount: dto.amount,
+      amount: typeof dto.amount === 'string' ? Number(dto.amount) : dto.amount,
       externalRef: dto.externalRef || null,
       note: dto.note || null,
       status: TransactionStatus.PENDING,
-    };
-    return await this.transactionsService.create(input);
+    } as unknown as CreateTransactionInput;
+
+    const tx = await this.transactionsService.create(input);
+
+    if (fileRecord) {
+      await this.transactionImagesService.create(
+        tx.id,
+        fileRecord.id,
+        dto.note ?? null,
+      );
+    }
+
+    return tx;
   }
 
   @Post('/approve/:id')

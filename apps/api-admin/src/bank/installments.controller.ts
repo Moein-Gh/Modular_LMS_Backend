@@ -1,8 +1,4 @@
-import {
-  AccessTokenGuard,
-  InstallmentsService,
-  PaginatedResponseDto,
-} from '@app/application';
+import { InstallmentsService, PaginatedResponseDto } from '@app/application';
 import {
   Body,
   Controller,
@@ -14,7 +10,6 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { CreateInstallmentDto } from './dtos/installments/create-installment.dto';
@@ -22,7 +17,6 @@ import { GetInstallmentsQueryDto } from './dtos/installments/list-installment.dt
 import { UpdateInstallmentDto } from './dtos/installments/update-installment.dto';
 
 @Controller('installments')
-@UseGuards(AccessTokenGuard)
 export class InstallmentsController {
   constructor(private readonly installments: InstallmentsService) {}
 

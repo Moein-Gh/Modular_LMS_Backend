@@ -1,12 +1,11 @@
-import { AccessTokenGuard, BankFinancialsService } from '@app/application';
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { BankFinancialsService } from '@app/application';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { BalanceResponseDto } from './dtos/balance-response.dto';
 import { BankFinancialSummaryDto } from './dtos/bank-financial-summary.dto';
 
 @ApiTags('Bank Financials')
 @Controller('bank/financials')
-@UseGuards(AccessTokenGuard)
 export class BankFinancialsController {
   constructor(private readonly financialsService: BankFinancialsService) {}
 

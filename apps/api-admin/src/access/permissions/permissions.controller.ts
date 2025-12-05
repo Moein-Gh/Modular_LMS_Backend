@@ -1,5 +1,4 @@
 import {
-  AccessTokenGuard,
   PaginatedResponseDto,
   PaginationQueryDto,
   PermissionsService,
@@ -13,12 +12,10 @@ import {
   Param,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { UUID_V4_PIPE } from '../../common/pipes/UUID.pipe';
 import { CreatePermissionDto } from './dtos/create-permission.dto';
 
-@UseGuards(AccessTokenGuard)
 @Controller('permissions')
 export class PermissionsController {
   constructor(private readonly permissionService: PermissionsService) {}

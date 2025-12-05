@@ -1,13 +1,15 @@
+import { UsersService } from '@app/application/user/services/users.service';
+import { ConfigService } from '@app/config';
 import {
   CanActivate,
   ExecutionContext,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { Request } from 'express';
-import { ConfigService } from '@app/config';
+import { Reflector } from '@nestjs/core';
 import { createHmac } from 'crypto';
-import { UsersService } from '@app/application/user/services/users.service';
+import type { Request } from 'express';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 function parseCookie(req: Request, name: string): string | undefined {
   const header = req.headers?.cookie ?? '';
@@ -31,9 +33,17 @@ export class AccessTokenGuard implements CanActivate {
   constructor(
     private readonly config: ConfigService,
     private readonly usersService: UsersService,
+    private readonly reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    // Check if route is marked as public
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
+
     const req = context.switchToHttp().getRequest<Request>();
     const token = parseCookie(req, 'accessToken');
     if (!token) throw new UnauthorizedException('Missing access token');

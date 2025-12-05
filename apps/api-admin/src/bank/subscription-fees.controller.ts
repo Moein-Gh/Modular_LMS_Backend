@@ -1,5 +1,4 @@
 import {
-  AccessTokenGuard,
   PaginatedResponseDto,
   SubscriptionFeesService,
 } from '@app/application';
@@ -15,7 +14,6 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { CreateSubscriptionFeeDto } from './dtos/subscription-fees/create-subscription-fee.dto';
@@ -23,7 +21,6 @@ import { GetSubscriptionFeesQueryDto } from './dtos/subscription-fees/list-subsc
 import { UpdateSubscriptionFeeDto } from './dtos/subscription-fees/update-subscription-fee.dto';
 
 @Controller('subscription-fees')
-@UseGuards(AccessTokenGuard)
 export class SubscriptionFeesController {
   constructor(private readonly subscriptionFees: SubscriptionFeesService) {}
 

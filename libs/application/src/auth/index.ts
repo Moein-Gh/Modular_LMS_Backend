@@ -1,5 +1,6 @@
 export * from './auth-application.module';
 export * from './decorators/current-user.decorator';
+export * from './decorators/public.decorator';
 export * from './dtos/auth.responses';
 export * from './dtos/logout.dto';
 export * from './dtos/register-user.usecase.dto';

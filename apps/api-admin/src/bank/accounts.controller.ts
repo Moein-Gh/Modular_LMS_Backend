@@ -1,8 +1,4 @@
-import {
-  AccessTokenGuard,
-  AccountsService,
-  PaginatedResponseDto,
-} from '@app/application';
+import { AccountsService, PaginatedResponseDto } from '@app/application';
 import { Account } from '@app/domain';
 import {
   Body,
@@ -15,7 +11,6 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { CreateAccountDto } from './dtos/accounts/create-account.dto';
@@ -23,7 +18,6 @@ import { GetAccountsQueryDto } from './dtos/accounts/get-accounts-query.dto';
 import { UpdateAccountDto } from './dtos/accounts/update-account.dto';
 
 @Controller('accounts')
-@UseGuards(AccessTokenGuard)
 export class AccountsController {
   constructor(private readonly accounts: AccountsService) {}
 

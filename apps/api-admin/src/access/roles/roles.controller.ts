@@ -1,5 +1,4 @@
 import {
-  AccessTokenGuard,
   PaginatedResponseDto,
   PaginationQueryDto,
   RolesService,
@@ -13,12 +12,10 @@ import {
   Param,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { UUID_V4_PIPE } from '../../common/pipes/UUID.pipe';
 import { CreateRoleDto } from './dtos/create-role.dto';
 
-@UseGuards(AccessTokenGuard)
 @Controller('roles')
 export class RolesController {
   constructor(private readonly roleService: RolesService) {}

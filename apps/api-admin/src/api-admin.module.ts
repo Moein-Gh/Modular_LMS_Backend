@@ -1,4 +1,5 @@
 import {
+  AccessTokenGuard,
   AuthApplicationModule,
   BankApplicationModule,
   FileApplicationModule,
@@ -80,6 +81,7 @@ import { UsersController } from './users/users.controller';
   ],
   providers: [
     ApiAdminService,
+    { provide: APP_GUARD, useClass: AccessTokenGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
 
     LedgerAccountsService,

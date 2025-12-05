@@ -9,11 +9,9 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 
 import {
-  AccessTokenGuard,
   CurrentUserId,
   IdentitiesService,
   NotFoundError,
@@ -28,7 +26,7 @@ import { User } from '@app/domain';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { GetUserDto } from './dtos/get-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
-@UseGuards(AccessTokenGuard)
+
 @Controller('users')
 export class UsersController {
   constructor(

@@ -1,5 +1,4 @@
 import {
-  AccessTokenGuard,
   LoanTypesService,
   PaginatedResponseDto,
   PaginationQueryDto,
@@ -15,14 +14,12 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { CreateLoanTypeDto } from './dtos/loan-types/create-loanType.dto';
 import { UpdateLoanTypeDto } from './dtos/loan-types/update-loanType.dto';
 
 @Controller('loan-types')
-@UseGuards(AccessTokenGuard)
 export class LoanTypesController {
   constructor(private readonly loanTypes: LoanTypesService) {}
 

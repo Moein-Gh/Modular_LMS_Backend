@@ -1,6 +1,5 @@
 import {
   AccessApplicationModule,
-  AccessTokenGuard,
   AuthApplicationModule,
   PermissionsGuard,
 } from '@app/application';
@@ -26,10 +25,7 @@ import { RolesController } from './roles/roles.controller';
     RoleAssignmentsController,
     PermissionGrantsController,
   ],
-  providers: [
-    { provide: APP_GUARD, useClass: AccessTokenGuard },
-    { provide: APP_GUARD, useClass: PermissionsGuard },
-  ],
+  providers: [{ provide: APP_GUARD, useClass: PermissionsGuard }],
   exports: [AccessApplicationModule],
 })
 export class AccessModule {}

@@ -1,15 +1,13 @@
 import {
-  AccessTokenGuard,
   LedgerAccountsService,
   PaginatedResponseDto,
   PaginationQueryDto,
 } from '@app/application';
 import { LedgerAccount } from '@app/domain';
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('LedgerAccounts')
-@UseGuards(AccessTokenGuard)
 @Controller('ledger-accounts')
 export class LedgerAccountsController {
   constructor(private readonly service: LedgerAccountsService) {}

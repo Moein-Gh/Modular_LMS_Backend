@@ -1,7 +1,7 @@
 import { FILE_REPOSITORY, type IFileRepository } from '@app/domain';
 import { Inject, Injectable } from '@nestjs/common';
 
-type UploadedFile = {
+export type UploadedFile = {
   buffer: Buffer;
   originalname: string;
   mimetype: string;
