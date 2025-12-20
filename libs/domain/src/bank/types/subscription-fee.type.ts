@@ -4,9 +4,6 @@ import { SubscriptionFeeStatus } from '../entities/subscription-fee.entity';
 export type CreateSubscriptionFeeInput = {
   accountId: string;
   periodStart: Date;
-  amount: string;
-  dueDate?: Date;
-  status?: SubscriptionFeeStatus;
 };
 
 export type UpdateSubscriptionFeeInput = {
@@ -23,4 +20,11 @@ export type ListSubscriptionFeeQueryInput = BaseQueryParams & {
   userId?: string;
   status?: SubscriptionFeeStatus;
   periodStart?: Date;
+};
+
+export type CreateNextSubscriptionFeeInput = Omit<
+  CreateSubscriptionFeeInput,
+  'periodStart'
+> & {
+  numberOfMonths: number;
 };

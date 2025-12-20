@@ -99,7 +99,12 @@ export class PrismaTransactionImageRepository
   }
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+    console.log('🚀 -----------🚀');
+    console.log('🚀 ~ id:', id);
+    console.log('🚀 -----------🚀');
+
     const prisma = tx ?? this.prisma;
+
     await prisma.transactionImage.delete({ where: { id } });
   }
 }

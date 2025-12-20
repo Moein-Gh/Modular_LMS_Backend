@@ -47,6 +47,13 @@ export class AccountsController {
     return this.accounts.create(dto);
   }
 
+  @Post(':id/buy-out')
+  @HttpCode(HttpStatus.OK)
+  async buyOut(@Param('id', UUID_V4_PIPE) id: string): Promise<Account> {
+    await this.accounts.buyOut(id);
+    return this.accounts.findById(id);
+  }
+
   @Patch(':id')
   update(@Param('id', UUID_V4_PIPE) id: string, @Body() dto: UpdateAccountDto) {
     return this.accounts.update(id, dto);

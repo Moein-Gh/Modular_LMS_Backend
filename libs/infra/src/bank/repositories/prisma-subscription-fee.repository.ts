@@ -1,12 +1,10 @@
 import type { SubscriptionFee } from '@app/domain';
 import { SubscriptionFeeRepository } from '@app/domain';
-import type {
-  CreateSubscriptionFeeInput,
-  UpdateSubscriptionFeeInput,
-} from '@app/domain/bank/types/subscription-fee.type';
+import type { UpdateSubscriptionFeeInput } from '@app/domain/bank/types/subscription-fee.type';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import type { Prisma, PrismaClient } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
+import { PrismaSubscriptionFeeCreateInput } from '../dtos/prisma-subscription-fee.dto.repository';
 
 const subscriptionFeeSelect: Prisma.SubscriptionFeeSelect = {
   id: true,
@@ -87,7 +85,7 @@ export class PrismaSubscriptionFeeRepository
   }
 
   async create(
-    input: CreateSubscriptionFeeInput,
+    input: PrismaSubscriptionFeeCreateInput,
     tx?: Prisma.TransactionClient,
   ): Promise<SubscriptionFee> {
     const prisma = tx ?? this.prisma;

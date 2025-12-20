@@ -6,4 +6,6 @@ export interface Role {
   description?: string;
   createdAt: Date;
   updatedAt: Date;
+
+  userCount?: number;
 }

@@ -9,8 +9,8 @@ export type CreateRoleAssignmentInput = Omit<
 export type UpdateRoleAssignmentInput = Partial<CreateRoleAssignmentInput>;
 
 export interface ListRoleAssignmentsParams extends BaseQueryParams {
-  orderBy?: 'createdAt' | 'assignedBy' | 'expiresAt';
   userId?: string;
+  roleId?: string;
   includeUser?: boolean;
   includeRole?: boolean;
 }

@@ -27,8 +27,8 @@ model User {
   refreshTokens RefreshToken[]
   accounts      Account[]
 
-  RoleAssignments RoleAssignment[]
-  Transaction     Transaction[]
+  roleAssignments RoleAssignment[]
+  transactions    Transaction[]
 }
 
 model Role {
@@ -42,7 +42,7 @@ model Role {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Back-relation: users assigned to this role via RoleAssignment
-  RoleAssignments RoleAssignment[]
+  roleAssignments RoleAssignment[]
 
   @@map("role")
 }

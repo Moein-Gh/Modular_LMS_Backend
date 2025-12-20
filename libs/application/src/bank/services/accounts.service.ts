@@ -1,7 +1,17 @@
 import { NotFoundError, PaginationQueryDto } from '@app/application';
 import { paginatePrisma } from '@app/application/common/pagination.util';
+import { TransactionsService } from '@app/application/transaction/services/transactions.service';
 import type { Account } from '@app/domain';
-import { SubscriptionFeeStatus } from '@app/domain';
+import {
+  AccountStatus,
+  DebitCredit,
+  JournalEntryTarget,
+  LEDGER_ACCOUNT_CODES,
+  LoanStatus,
+  SubscriptionFeeStatus,
+  TransactionKind,
+  TransactionStatus,
+} from '@app/domain';
 import type {
   CreateAccountInput,
   ListAccountQueryInput,
@@ -11,12 +21,14 @@ import {
   PrismaAccountRepository,
   PrismaAccountTypeRepository,
   PrismaBankRepository,
+  PrismaLoanRepository,
   PrismaSubscriptionFeeRepository,
 } from '@app/infra';
 import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
 import { Prisma } from '@generated/prisma';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { JournalBalanceUsecase } from './../../ledger/journal-balance.usecase';
+import { BankFinancialsService } from './bank-financials.service';
 
 @Injectable()
 export class AccountsService {
@@ -27,6 +39,9 @@ export class AccountsService {
     private readonly subscriptionFeesRepo: PrismaSubscriptionFeeRepository,
     private readonly transactionalRepo: PrismaTransactionalRepository,
     private readonly journalBalanceUsecase: JournalBalanceUsecase,
+    private readonly loansRepo: PrismaLoanRepository,
+    private readonly bankFinancialsService: BankFinancialsService,
+    private readonly transactionsService: TransactionsService,
   ) {}
 
   async findAll(query?: ListAccountQueryInput, tx?: Prisma.TransactionClient) {
@@ -44,7 +59,7 @@ export class AccountsService {
       where.status = query.status;
     }
 
-    return paginatePrisma<
+    const page = await paginatePrisma<
       Account,
       Prisma.AccountFindManyArgs,
       Prisma.AccountWhereInput
@@ -61,6 +76,26 @@ export class AccountsService {
         user: { include: { identity: { select: { name: true } } } },
       },
     });
+
+    // Attach balanceSummary to each account (parallelized)
+    const itemsWithBalances = await Promise.all(
+      page.items.map(async (acct) => {
+        try {
+          const balance = await this.journalBalanceUsecase.getAccountBalance(
+            acct.id,
+            tx,
+          );
+          // Attach the balance summary (keeps original object shape)
+          acct.balanceSummary = balance;
+        } catch {
+          // If fetching balance fails for an account, attach undefined and continue
+          acct.balanceSummary = undefined;
+        }
+        return acct;
+      }),
+    );
+
+    return { ...page, items: itemsWithBalances };
   }
 
   async findById(id: string, tx?: Prisma.TransactionClient): Promise<Account> {
@@ -106,9 +141,15 @@ export class AccountsService {
       const bank = await this.bankRepo.findOne(DBtx);
       if (bank && bank.subscriptionFee) {
         const baseAmount = bank.subscriptionFee;
-        const now = new Date();
+        const startDate = created.createdAt
+          ? new Date(created.createdAt)
+          : new Date();
         for (let i = 1; i <= 6; i++) {
-          const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+          const d = new Date(
+            startDate.getFullYear(),
+            startDate.getMonth() + i,
+            1,
+          );
           await this.subscriptionFeesRepo.create(
             {
               accountId: created.id,
@@ -161,10 +202,147 @@ export class AccountsService {
     }
   }
 
+  async buyOut(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const run = async (DBtx: Prisma.TransactionClient) => {
+      // 1. Ensure account exists
+      const account = await this.accountsRepo.findUnique(
+        { where: { id } },
+        DBtx,
+      );
+      if (!account) throw new NotFoundError('Account', 'id', id);
+
+      // 2. Ensure account does not have pending/active/approved loans
+      await this.ensureNoBlockingLoans(account.id, DBtx);
+
+      // 3. Compute account balance and buyout amount (do NOT subtract unpaid fees)
+      const accountBalance = await this.journalBalanceUsecase.getAccountBalance(
+        account.id,
+        DBtx,
+      );
+      const totalDeposits = parseFloat(String(accountBalance.totalDeposits));
+      const buyoutAmount = totalDeposits;
+
+      // If there's nothing to pay out, skip creating a transaction but still cleanup and deactivate
+      if (buyoutAmount <= 0) {
+        // Delete all non-paid subscription fees (due + future), keep only PAID
+        await this.subscriptionFeesRepo.deleteMany(
+          {
+            accountId: account.id,
+            status: { not: SubscriptionFeeStatus.PAID },
+          },
+          DBtx,
+        );
+
+        // Update account status to INACTIVE
+        await this.accountsRepo.update(
+          account.id,
+          { status: AccountStatus.INACTIVE },
+          DBtx,
+        );
+
+        return;
+      }
+      // 4. Ensure bank has funds
+      const bankCash = await this.bankFinancialsService.getCashBalance(
+        undefined,
+        DBtx,
+      );
+      if (parseFloat(bankCash) < buyoutAmount) {
+        throw new BadRequestException(
+          'Bank does not have enough cash to buy out',
+        );
+      }
+
+      // 5. Create transaction + journal entries (debit customer deposits, credit cash)
+      const txInput = {
+        userId: account.userId,
+        kind: TransactionKind.WITHDRAWAL,
+        amount: buyoutAmount.toFixed(4),
+        status: TransactionStatus.ALLOCATED,
+        note: 'تسویه حساب و پرداخت مانده به کاربر پس از کسر ماهیانه های پرداخت نشده',
+        journalEntries: [
+          {
+            ledgerAccountCode: LEDGER_ACCOUNT_CODES.CUSTOMER_DEPOSITS,
+            amount: buyoutAmount.toFixed(4),
+            dc: DebitCredit.DEBIT,
+            targetType: JournalEntryTarget.ACCOUNT,
+            targetId: account.id,
+            accountId: account.id,
+          },
+          {
+            ledgerAccountCode: LEDGER_ACCOUNT_CODES.CASH,
+            amount: buyoutAmount.toFixed(4),
+            dc: DebitCredit.CREDIT,
+          },
+        ],
+      };
+
+      // 7. Create the transaction
+      await this.transactionsService.createSpecificTransaction(txInput, DBtx);
+
+      // 8. Delete all non-paid subscription fees (due + future), keep only PAID
+      await this.subscriptionFeesRepo.deleteMany(
+        { accountId: account.id, status: { not: SubscriptionFeeStatus.PAID } },
+        DBtx,
+      );
+
+      // 10. Update account status to INACTIVE
+      await this.accountsRepo.update(
+        account.id,
+        { status: AccountStatus.INACTIVE },
+        DBtx,
+      );
+    };
+
+    return tx ? run(tx) : this.transactionalRepo.withTransaction(run);
+  }
+
   // Narrowly detect Prisma's "Record not found" without importing Prisma types
   private isPrismaNotFoundError(e: unknown): boolean {
     const code = (e as { code?: unknown })?.code;
     return code === 'P2025';
+  }
+
+  private async ensureNoBlockingLoans(
+    accountId: string,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const loans = await this.loansRepo.findAll(
+      {
+        where: {
+          accountId,
+          status: {
+            in: [LoanStatus.PENDING, LoanStatus.ACTIVE],
+          },
+        },
+      },
+      tx,
+    );
+    if (loans.length > 0) {
+      throw new BadRequestException('Account has pending or active loans');
+    }
+  }
+
+  private async getUnpaidFeesUpToToday(
+    accountId: string,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const today = new Date();
+    const fees = await this.subscriptionFeesRepo.findAll(
+      {
+        where: {
+          accountId,
+          periodStart: { lte: today },
+          status: { not: SubscriptionFeeStatus.PAID },
+        },
+      },
+      tx,
+    );
+    const total = fees.reduce(
+      (s, f) => s + parseFloat(f.amount as unknown as string),
+      0,
+    );
+    return { unpaidFees: fees, unpaidTotal: total };
   }
 
   // Checks to see if the card number is unique

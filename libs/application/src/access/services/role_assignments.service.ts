@@ -1,7 +1,7 @@
 import { PaginationQueryDto } from '@app/application/common/dto/pagination-query.dto';
 import { paginatePrisma } from '@app/application/common/pagination.util';
 import { NotFoundError } from '@app/application/errors/not-found.error';
-import type { RoleAssignment } from '@app/domain';
+import type { ListRoleAssignmentsParams, RoleAssignment } from '@app/domain';
 import {
   type RoleAssignmentRepository,
   ROLE_ASSIGNMENT_REPOSITORY,
@@ -9,6 +9,11 @@ import {
 import { CreateRoleAssignmentInput } from '@app/domain/access/types/role-assignment.type';
 import { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
+
+export interface RoleAssignmentParams extends PaginationQueryDto {
+  userId?: string;
+  roleId?: string;
+}
 
 @Injectable()
 export class RoleAssignmentsService {
@@ -35,17 +40,28 @@ export class RoleAssignmentsService {
     return roleAssignment;
   }
 
-  async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
+  async findAll(
+    query?: ListRoleAssignmentsParams,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const where: Prisma.RoleAssignmentWhereInput = {};
+    if (query?.userId) {
+      where.userId = query.userId;
+    }
+    if (query?.roleId) {
+      where.roleId = query.roleId;
+    }
     return paginatePrisma<
       RoleAssignment,
       Prisma.RoleAssignmentFindManyArgs,
       Prisma.RoleAssignmentWhereInput
     >({
       repo: this.roleAssignment,
-      query: query ?? new PaginationQueryDto(),
+      query: query ?? {},
       defaultOrderBy: 'createdAt',
       defaultOrderDir: 'desc',
       tx,
+      where,
       include: {
         role: true,
         user: { include: { identity: { select: { name: true } } } },

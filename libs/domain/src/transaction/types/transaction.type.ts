@@ -1,5 +1,5 @@
 import { BaseQueryParams } from '@app/domain/common';
-import { JournalEntrySpec } from '@app/domain/ledger';
+import { JournalEntrySpec, JournalEntryTarget } from '@app/domain/ledger';
 import {
   TransactionKind,
   TransactionStatus,
@@ -9,6 +9,9 @@ export type ListTransactionParams = BaseQueryParams & {
   userId?: string;
   kind?: TransactionKind;
   status?: TransactionStatus;
+  accountId?: string;
+  targetType?: JournalEntryTarget;
+  targetId?: string;
 };
 
 export type CreateTransactionInput = {

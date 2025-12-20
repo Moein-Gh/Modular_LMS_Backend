@@ -5,7 +5,9 @@ import {
   type ListSubscriptionFeeQueryInput,
   type SubscriptionFee,
   type UpdateSubscriptionFeeInput,
+  CreateNextSubscriptionFeeInput,
   OrderDirection,
+  SubscriptionFeeStatus,
 } from '@app/domain';
 import {
   PrismaAccountRepository,
@@ -13,12 +15,14 @@ import {
 } from '@app/infra';
 import { Prisma } from '@generated/prisma';
 import { Injectable } from '@nestjs/common';
+import { BankService } from './banks.service';
 
 @Injectable()
 export class SubscriptionFeesService {
   constructor(
     private readonly subscriptionFeesRepo: PrismaSubscriptionFeeRepository,
     private readonly accountsRepo: PrismaAccountRepository,
+    private readonly bankService: BankService,
   ) {}
 
   async findAll(
@@ -70,7 +74,16 @@ export class SubscriptionFeesService {
     tx?: Prisma.TransactionClient,
   ): Promise<SubscriptionFee> {
     await this.ensureAccountExists(input.accountId, tx);
-    return this.subscriptionFeesRepo.create(input, tx);
+    const bank = await this.bankService.get();
+    const baseAmount = bank.subscriptionFee || 0;
+    return this.subscriptionFeesRepo.create(
+      {
+        ...input,
+        amount: baseAmount.toString(),
+        status: SubscriptionFeeStatus.DUE,
+      },
+      tx,
+    );
   }
 
   async update(
@@ -100,5 +113,48 @@ export class SubscriptionFeesService {
     );
     if (!acc) throw new NotFoundError('Account', 'id', accountId);
     return acc;
+  }
+
+  async createNext(
+    input: CreateNextSubscriptionFeeInput,
+    tx: Prisma.TransactionClient,
+  ): Promise<void> {
+    const lastFee = await this.findAll(
+      {
+        accountId: input.accountId,
+        orderBy: 'periodStart',
+        orderDir: OrderDirection.DESC,
+        take: 1,
+      },
+      tx,
+    );
+
+    let nextPeriodStart: Date;
+    if (lastFee.items.length === 0) {
+      nextPeriodStart = new Date();
+    } else {
+      const lastPeriodStart = lastFee.items[0].periodStart;
+      nextPeriodStart = new Date(
+        lastPeriodStart.getFullYear(),
+        lastPeriodStart.getMonth() + 1,
+        1,
+      );
+    }
+
+    for (let i = 0; i < input.numberOfMonths; i++) {
+      const periodStart = new Date(
+        nextPeriodStart.getFullYear(),
+        nextPeriodStart.getMonth() + i,
+        1,
+      );
+
+      await this.create(
+        {
+          accountId: input.accountId,
+          periodStart,
+        },
+        tx,
+      );
+    }
   }
 }

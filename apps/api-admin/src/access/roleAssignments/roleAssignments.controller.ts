@@ -1,8 +1,5 @@
-import {
-  PaginatedResponseDto,
-  PaginationQueryDto,
-  RoleAssignmentsService,
-} from '@app/application';
+import { PaginatedResponseDto, RoleAssignmentsService } from '@app/application';
+import { GetRoleAssignmentQueryDto } from '@app/application/access/dtos/get-role-assignment.dto';
 import { RoleAssignment } from '@app/domain';
 import {
   Body,
@@ -28,8 +25,8 @@ export class RoleAssignmentsController {
 
   @Get()
   async findAll(
-    @Query() query: PaginationQueryDto,
-  ): Promise<PaginatedResponseDto<any>> {
+    @Query() query: GetRoleAssignmentQueryDto,
+  ): Promise<PaginatedResponseDto<RoleAssignment>> {
     const { items, totalItems, page, pageSize } =
       await this.roleAssignmentService.findAll(query);
     return PaginatedResponseDto.from({

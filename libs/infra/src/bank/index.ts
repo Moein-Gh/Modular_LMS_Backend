@@ -1,4 +1,5 @@
 export * from './bank.infra.module';
+export * from './dtos/prisma-subscription-fee.dto.repository';
 export * from './repositories/prisma-account-type.repository';
 export * from './repositories/prisma-account.repository';
 export * from './repositories/prisma-bank.repository';

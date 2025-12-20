@@ -1,10 +1,12 @@
 import {
+  FilesService,
   JournalsService,
   NotFoundError,
   PaginationQueryDto,
 } from '@app/application';
 import { paginatePrisma } from '@app/application/common/pagination.util';
 import {
+  AccountStatus,
   CreateJournalWithEntriesUseCase,
   DebitCredit,
   InstallmentStatus,
@@ -13,6 +15,7 @@ import {
   JournalEntrySpec,
   JournalStatus,
   LEDGER_ACCOUNT_CODES,
+  LoanStatus,
   SubscriptionFeeStatus,
   type Transaction,
   TransactionKindHelper,
@@ -25,9 +28,11 @@ import type {
   UpdateTransactionInput,
 } from '@app/domain/transaction/types/transaction.type';
 import {
+  PrismaAccountRepository,
   PrismaInstallmentRepository,
   PrismaJournalRepository,
   PrismaLedgerAccountRepository,
+  PrismaLoanRepository,
   PrismaSubscriptionFeeRepository,
   PrismaTransactionRepository,
   PrismaUserRepository,
@@ -41,6 +46,8 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
+import { SubscriptionFeesService } from '../../bank/services/subscription-fees.service';
+import { TransactionImagesService } from './transaction-images.service';
 
 @Injectable()
 export class TransactionsService {
@@ -55,8 +62,15 @@ export class TransactionsService {
     private readonly installmentRepo: PrismaInstallmentRepository,
     private readonly subscriptionFeesRepo: PrismaSubscriptionFeeRepository,
     private readonly prismaTransactionalRepo: PrismaTransactionalRepository,
+    private readonly loanRepo: PrismaLoanRepository,
+    private readonly accountRepo: PrismaAccountRepository,
     @Inject(forwardRef(() => JournalsService))
     private readonly journalService: JournalsService,
+    private readonly transactionImagesService: TransactionImagesService,
+    @Inject(forwardRef(() => FilesService))
+    private readonly filesService: FilesService,
+    @Inject(forwardRef(() => SubscriptionFeesService))
+    private readonly subscriptionFeeService: SubscriptionFeesService,
   ) {
     // Initialize the use case with required dependencies
     this.createJournalUseCase = new CreateJournalWithEntriesUseCase(
@@ -68,12 +82,52 @@ export class TransactionsService {
   }
 
   async findAll(query?: ListTransactionParams, tx?: Prisma.TransactionClient) {
-    // Build where clause from query params
-    const where: Prisma.TransactionWhereInput = {
+    // Build filters below; initial temporary vars removed to avoid duplication
+
+    // Build where conditions succinctly. We collect clauses and AND them.
+    const clauses: Prisma.TransactionWhereInput[] = [];
+
+    // Basic transaction filters
+    const base: Prisma.TransactionWhereInput = {
       ...(query?.userId && { userId: query.userId }),
       ...(query?.kind && { kind: query.kind }),
       ...(query?.status && { status: query.status }),
     };
+    if (Object.keys(base).length) clauses.push(base);
+
+    // Nested journal entry filters (accountId, targetType, targetId)
+    const entryFilter: Record<string, unknown> = {};
+    if (query?.accountId) entryFilter.accountId = query.accountId;
+    if (query?.targetType)
+      entryFilter.targetType = query.targetType as unknown as string;
+    if (query?.targetId) entryFilter.targetId = query.targetId;
+
+    if (Object.keys(entryFilter).length) {
+      clauses.push({
+        journal: { some: { entries: { some: entryFilter } } },
+      } as Prisma.TransactionWhereInput);
+    }
+
+    const finalWhere: Prisma.TransactionWhereInput =
+      clauses.length === 0
+        ? {}
+        : clauses.length === 1
+          ? clauses[0]
+          : ({ AND: clauses } as Prisma.TransactionWhereInput);
+
+    const defaultInclude: Prisma.TransactionInclude = {
+      user: {
+        include: {
+          identity: {
+            select: { id: true, name: true },
+          },
+        },
+      },
+    };
+
+    const include = {
+      ...(defaultInclude as object),
+    } as Prisma.TransactionInclude;
 
     return paginatePrisma<
       Transaction,
@@ -85,17 +139,8 @@ export class TransactionsService {
       searchFields: ['externalRef', 'note'],
       defaultOrderBy: 'createdAt',
       defaultOrderDir: 'desc',
-      where,
-      include: {
-        user: {
-          include: {
-            identity: {
-              select: { id: true, name: true },
-            },
-          },
-        },
-      },
-
+      where: finalWhere,
+      include,
       tx,
     });
   }
@@ -170,20 +215,6 @@ export class TransactionsService {
     return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
   }
 
-  /**
-   * Add additional journal entries to an existing transaction.
-   * This is useful when you need to append entries to a pending transaction.
-   *
-   * IMPORTANT:
-   * - The transaction must be in PENDING status
-   * - The journal must be in PENDING status
-   * - After adding entries, the journal must remain balanced
-   *
-   * @param transactionId - ID of the existing transaction
-   * @param newEntries - Array of new journal entry specifications to add
-   * @param tx - Optional transaction client
-   * @returns The updated journal with all entries
-   */
   async addEntriesToTransaction(
     transactionId: string,
     newEntries: JournalEntrySpec[],
@@ -279,11 +310,6 @@ export class TransactionsService {
     return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
   }
 
-  /**
-   * Approve a transaction and post its journal.
-   * This validates the transaction's journal is balanced and in PENDING status,
-   * then atomically updates both the transaction and journal status.
-   */
   async approve(
     id: string,
     tx?: Prisma.TransactionClient,
@@ -325,7 +351,8 @@ export class TransactionsService {
           String(entry.targetType) === JournalTargetType.INSTALLMENT &&
           entry.targetId
         ) {
-          await this.installmentRepo.update(
+          // Update installment to PAID
+          const updatedInstallment = await this.installmentRepo.update(
             entry.targetId,
             {
               status: InstallmentStatus.PAID,
@@ -334,18 +361,70 @@ export class TransactionsService {
             },
             trx,
           );
+
+          const loan = await this.loanRepo.findOne(
+            {
+              where: {
+                id: updatedInstallment.loanId,
+              },
+            },
+            trx,
+          );
+
+          // get the number of unpaid installments for the loan
+          // Count the number of unpaid (i.e., not PAID) installments for the loan
+          const installments = await this.installmentRepo.count(
+            {
+              loanId: loan?.id,
+              status: { not: InstallmentStatus.PAID },
+            },
+            trx,
+          );
+
+          if (installments === 0 && loan) {
+            // update the loan status to closed
+            await this.loanRepo.update(
+              loan.id,
+              { status: LoanStatus.CLOSED },
+              trx,
+            );
+            await this.accountRepo.update(
+              loan.accountId,
+              { status: AccountStatus.ACTIVE },
+              trx,
+            );
+          }
         }
 
         if (
           String(entry.targetType) === JournalTargetType.SUBSCRIPTION_FEE &&
           entry.targetId
         ) {
+          // Update subscription fee to PAID
           await this.subscriptionFeesRepo.update(
             entry.targetId,
             {
               status: SubscriptionFeeStatus.PAID,
               paidAt: new Date(),
               journalEntryId: entry.id,
+            },
+            trx,
+          );
+          // Create next subscription fee
+          // Ensure we have the accountId: prefer denormalized value on the
+          // journal entry, otherwise fetch the subscription fee record.
+          const accountId =
+            entry.accountId ??
+            (await this.subscriptionFeesRepo.findById(entry.targetId, trx))
+              ?.accountId;
+          if (!accountId) {
+            throw new NotFoundError('SubscriptionFee', 'id', entry.targetId);
+          }
+
+          await this.subscriptionFeeService.createNext(
+            {
+              accountId,
+              numberOfMonths: 1,
             },
             trx,
           );
@@ -358,15 +437,6 @@ export class TransactionsService {
     return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
   }
 
-  /**
-   * Validates that the transaction has exactly one journal that is:
-   * - In PENDING status
-   * - Has at least one entry
-   * - Is balanced (debits = credits)
-   *
-   * @throws ConflictException if validation fails
-   * @returns The validated journal
-   */
   private async validateJournalForApproval(
     transaction: Transaction,
     tx?: Prisma.TransactionClient,
@@ -390,9 +460,6 @@ export class TransactionsService {
     return journal;
   }
 
-  /**
-   * Fetches and validates that exactly one journal exists for the transaction.
-   */
   private async getSingleJournalForTransaction(
     transactionId: string,
     transactionCode: number,
@@ -418,9 +485,6 @@ export class TransactionsService {
     return journals[0];
   }
 
-  /**
-   * Validates that the journal has at least one entry.
-   */
   private validateJournalHasEntries(
     journal: Journal,
     transactionCode: number,
@@ -433,9 +497,6 @@ export class TransactionsService {
     }
   }
 
-  /**
-   * Validates that the journal is in PENDING status.
-   */
   private validateJournalIsPending(
     journal: Journal,
     transactionCode: number,
@@ -447,10 +508,6 @@ export class TransactionsService {
     }
   }
 
-  /**
-   * Validates that the journal entries are balanced (total debits = total credits).
-   * Uses 4 decimal precision to match the database schema.
-   */
   private validateJournalIsBalanced(
     journal: Journal,
     transactionCode: number,
@@ -478,9 +535,6 @@ export class TransactionsService {
     }
   }
 
-  /**
-   * Calculates the total amount for entries of a specific debit/credit type.
-   */
   private calculateTotalByDebitCredit(
     entries: JournalEntry[],
     dc: DebitCredit,
@@ -490,10 +544,6 @@ export class TransactionsService {
       .reduce((sum, e) => sum + parseFloat(e.amount), 0);
   }
 
-  /**
-   * Builds journal entry specifications for a transaction.
-   * Determines debit/credit entries based on whether cash is coming in or out.
-   */
   private createTransactionJournalEntries(
     transaction: Transaction,
   ): JournalEntrySpec[] {
@@ -551,12 +601,24 @@ export class TransactionsService {
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
     const run = async (DBtx: Prisma.TransactionClient) => {
-      const exists = await this.transactionsRepo.findById(id, DBtx);
+      const exists = await this.transactionsRepo.findByIdWithRelations(
+        id,
+        DBtx,
+      );
 
       if (!exists) {
         throw new NotFoundError('Transaction', 'id', id);
       }
       try {
+        // Delete files associated with transaction images (this will cascade-delete TransactionImage rows)
+        if (exists.images.length > 0) {
+          for (const image of exists.images) {
+            // Delete the file record and remote file via FilesService; pass DBtx to keep in same transaction
+            await this.filesService.delete(image.fileId, DBtx);
+          }
+        }
+
+        // Now delete the transaction itself
         await this.transactionsRepo.delete(id, DBtx);
       } catch (e) {
         if (this.isPrismaNotFoundError(e)) {

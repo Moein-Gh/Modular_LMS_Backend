@@ -2,7 +2,7 @@ import {
   AccountBalanceResult,
   LoanBalanceResult,
 } from '@app/application/ledger/dto/journal-balance.dto';
-import { Identity } from '@app/domain';
+import { Identity, RoleAssignment } from '@app/domain';
 
 export type UserBalanceSummary = {
   accounts: AccountBalanceResult[];
@@ -17,6 +17,7 @@ export interface User {
   identity?: Partial<Identity>;
 
   balanceSummary?: UserBalanceSummary;
+  roleAssignments?: RoleAssignment[];
 }
 
 export interface UserWithPermissions extends User {

@@ -19,6 +19,11 @@ const selectTransaction = {
   userId: true,
   createdAt: true,
   updatedAt: true,
+  images: {
+    include: {
+      file: true,
+    },
+  },
 };
 
 const selectTransactionWithRelations = {

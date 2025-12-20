@@ -1,25 +1,25 @@
+import { isAppError } from '@app/application';
+import { SentryProvider } from '@app/logger';
 import {
-  ExceptionFilter,
-  Catch,
   ArgumentsHost,
+  Catch,
+  ExceptionFilter,
   HttpException,
   HttpStatus,
   Logger,
 } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
-import { isAppError } from '@app/application';
 import type { Request, Response } from 'express';
-import { SentryProvider } from '@app/logger';
-import { ProblemDetailsException } from './problem-details.exception';
-import { ProblemDetails } from './problem-details';
 import {
-  PROBLEM_DETAILS_MEDIA_TYPE,
-  DEFAULT_ERROR_TYPE,
-  DEFAULT_ERROR_TITLE,
-  DEFAULT_ERROR_STATUS,
-  HTTP_STATUS_URL_PREFIX,
   DEFAULT_ERROR_MESSAGE,
+  DEFAULT_ERROR_STATUS,
+  DEFAULT_ERROR_TITLE,
+  DEFAULT_ERROR_TYPE,
+  HTTP_STATUS_URL_PREFIX,
+  PROBLEM_DETAILS_MEDIA_TYPE,
 } from './index';
+import { ProblemDetails } from './problem-details';
+import { ProblemDetailsException } from './problem-details.exception';
 
 /**
  * Interface for HTTP exception response objects
@@ -64,6 +64,11 @@ export class ProblemDetailsFilter implements ExceptionFilter {
 
     // Generate the appropriate problem details based on exception type
     const problem = this.createProblemDetails(exception, requestPath);
+
+    // If it's a server error (500), show a generic user-friendly message
+    if (problem.statusCode === 500) {
+      problem.detail = 'مشکلی پیش آمده است';
+    }
 
     // Log the error (but not in tests)
     if (process.env.NODE_ENV !== 'test') {

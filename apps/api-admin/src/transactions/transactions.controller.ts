@@ -5,7 +5,11 @@ import {
   TransactionImagesService,
   TransactionsService,
 } from '@app/application';
-import { CreateTransactionInput, TransactionStatus } from '@app/domain';
+import {
+  CreateTransactionInput,
+  Transaction,
+  TransactionStatus,
+} from '@app/domain';
 import {
   Body,
   Controller,
@@ -39,7 +43,7 @@ export class TransactionsController {
   @ApiResponse({ status: 200, description: 'Returns paginated transactions' })
   async findAll(
     @Query() query: GetTransactionsQueryDto,
-  ): Promise<PaginatedResponseDto<any>> {
+  ): Promise<PaginatedResponseDto<Transaction>> {
     const { items, totalItems, page, pageSize } =
       await this.transactionsService.findAll(query);
     return PaginatedResponseDto.from({

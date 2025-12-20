@@ -101,6 +101,11 @@ export class UsersService {
         tx,
         include: {
           identity: true,
+          roleAssignments: {
+            include: {
+              role: { select: { id: true, name: true } },
+            },
+          },
         },
       },
     );

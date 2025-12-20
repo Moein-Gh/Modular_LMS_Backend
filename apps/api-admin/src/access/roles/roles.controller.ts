@@ -28,7 +28,7 @@ export class RolesController {
   @Get()
   async findAll(
     @Query() query: PaginationQueryDto,
-  ): Promise<PaginatedResponseDto<any>> {
+  ): Promise<PaginatedResponseDto<Role>> {
     const { items, totalItems, page, pageSize } =
       await this.roleService.findAll(query);
     return PaginatedResponseDto.from({
