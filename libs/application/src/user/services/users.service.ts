@@ -3,8 +3,9 @@ import { paginatePrisma } from '@app/application/common/pagination.util';
 import { NotFoundError } from '@app/application/errors/not-found.error';
 import { JournalBalanceUsecase } from '@app/application/ledger/journal-balance.usecase';
 import { User, USER_REPOSITORY, type IUserRepository } from '@app/domain';
+import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
 import { Prisma } from '@generated/prisma';
-import { Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { CreateUserInput } from '../types/create-user.type';
 import { UpdateUserInput } from '../types/update-user.type';
 
@@ -13,6 +14,7 @@ export class UsersService {
   constructor(
     @Inject(USER_REPOSITORY) private readonly users: IUserRepository,
     private readonly journalBalanceUseCase: JournalBalanceUsecase,
+    private readonly prismaTransactionalRepo: PrismaTransactionalRepository,
   ) {}
 
   async create(
@@ -77,18 +79,42 @@ export class UsersService {
   }
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
-    const existing = await this.users.findById(id, tx);
-    if (!existing) {
-      throw new NotFoundError('User', 'id', id);
-    }
-    try {
-      await this.users.delete(id, tx);
-    } catch (e) {
-      if (this.isPrismaNotFoundError(e)) {
+    const run = async (trx: Prisma.TransactionClient) => {
+      const existing = await this.users.findById(id, trx);
+      if (!existing) {
         throw new NotFoundError('User', 'id', id);
       }
-      throw e;
-    }
+      // check if user has any accounts or transactions
+      const accounts = await trx?.account.findMany({
+        where: { userId: id },
+      });
+      if (accounts.length > 0) {
+        throw new ConflictException(
+          'کاربر دارای حساب های مالی است و نمی توان آن را حذف کرد',
+        );
+      }
+      const transactions = await trx?.transaction.findMany({
+        where: { userId: id },
+      });
+      if (transactions.length > 0) {
+        throw new ConflictException(
+          'کاربر دارای تراکنش های مالی است و نمی توان آن را حذف کرد',
+        );
+      }
+
+      try {
+        await this.users.delete(id, trx);
+        // delete identity
+        await trx.identity.delete({ where: { id: existing.identityId } });
+      } catch (e) {
+        if (this.isPrismaNotFoundError(e)) {
+          throw new NotFoundError('User', 'id', id);
+        }
+        throw e;
+      }
+    };
+
+    return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
   }
 
   async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {

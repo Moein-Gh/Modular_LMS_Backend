@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -142,5 +143,15 @@ export class UsersController {
         updatedAt: user.identity!.updatedAt!,
       },
     };
+  }
+
+  // delete user
+  @Permissions('user/delete')
+  @Delete(':id')
+  async deleteUser(@Param('id', UUID_V4_PIPE) id: string): Promise<void> {
+    const user = await this.usersService.findById(id);
+    if (!user) throw new NotFoundException('User not found');
+
+    await this.usersService.delete(id);
   }
 }

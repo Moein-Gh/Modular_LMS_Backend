@@ -70,7 +70,6 @@ export class TransactionsController {
   @HttpCode(HttpStatus.CREATED)
   @ImageUpload()
   async create(
-    @CurrentUserId() userId: string | undefined,
     @UploadedFile() image: Express.Multer.File | undefined,
     @Body() dto: CreateTransactionDto,
   ) {
@@ -88,7 +87,7 @@ export class TransactionsController {
     }
 
     const input: CreateTransactionInput = {
-      userId: userId ?? dto.userId,
+      userId: dto.userId,
       kind: dto.kind,
       amount: typeof dto.amount === 'string' ? Number(dto.amount) : dto.amount,
       externalRef: dto.externalRef || null,
