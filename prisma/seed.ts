@@ -273,7 +273,6 @@ async function seedTestUser(): Promise<void> {
     );
     const u = JSON.parse(data) as {
       phone: string;
-      nationalCode?: string;
       countryCode?: string;
       name?: string;
       email?: string;
@@ -290,7 +289,6 @@ async function seedTestUser(): Promise<void> {
     if (!identity) {
       identity = await prisma.identity.create({
         data: {
-          nationalCode: u.nationalCode ?? null,
           countryCode: u.countryCode ?? null,
           phone: u.phone,
           name: u.name ?? null,

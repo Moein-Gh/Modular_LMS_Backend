@@ -29,3 +29,10 @@ export type CreateTransactionWithJournalEntriesInput =
   };
 
 export type UpdateTransactionInput = Partial<CreateTransactionInput>;
+
+export type CreateTransferTransactionInput = {
+  sourceAccountId: string;
+  destinationAccountId: string;
+  amount: string;
+  description?: string | null;
+};

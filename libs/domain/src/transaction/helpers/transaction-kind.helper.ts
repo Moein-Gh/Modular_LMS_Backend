@@ -2,12 +2,7 @@ import { TransactionKind } from '../entities/transaction.entity';
 
 export class TransactionKindHelper {
   private static readonly CASH_IN_KINDS: ReadonlySet<TransactionKind> = new Set(
-    [
-      TransactionKind.DEPOSIT,
-      TransactionKind.SUBSCRIPTION_PAYMENT,
-      TransactionKind.LOAN_REPAYMENT,
-      TransactionKind.FEE,
-    ],
+    [TransactionKind.DEPOSIT],
   );
 
   static isCashIn(kind: TransactionKind): boolean {

@@ -1,4 +1,5 @@
 import {
+  AccountsService,
   FilesService,
   JournalsService,
   NotFoundError,
@@ -13,17 +14,20 @@ import {
   Journal,
   JournalEntry,
   JournalEntrySpec,
+  JournalEntryTarget,
   JournalStatus,
   LEDGER_ACCOUNT_CODES,
   LoanStatus,
   SubscriptionFeeStatus,
   type Transaction,
+  TransactionKind,
   TransactionKindHelper,
   TransactionStatus,
 } from '@app/domain';
 import type {
   CreateTransactionInput,
   CreateTransactionWithJournalEntriesInput,
+  CreateTransferTransactionInput,
   ListTransactionParams,
   UpdateTransactionInput,
 } from '@app/domain/transaction/types/transaction.type';
@@ -47,7 +51,6 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { SubscriptionFeesService } from '../../bank/services/subscription-fees.service';
-import { TransactionImagesService } from './transaction-images.service';
 
 @Injectable()
 export class TransactionsService {
@@ -64,9 +67,10 @@ export class TransactionsService {
     private readonly prismaTransactionalRepo: PrismaTransactionalRepository,
     private readonly loanRepo: PrismaLoanRepository,
     private readonly accountRepo: PrismaAccountRepository,
+    @Inject(forwardRef(() => AccountsService))
+    private readonly accountService: AccountsService,
     @Inject(forwardRef(() => JournalsService))
     private readonly journalService: JournalsService,
-    private readonly transactionImagesService: TransactionImagesService,
     @Inject(forwardRef(() => FilesService))
     private readonly filesService: FilesService,
     @Inject(forwardRef(() => SubscriptionFeesService))
@@ -185,6 +189,106 @@ export class TransactionsService {
       return transaction;
     };
 
+    return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
+  }
+
+  async createTransferTransaction(
+    input: CreateTransferTransactionInput,
+    userId?: string,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const run = async (trx: Prisma.TransactionClient) => {
+      // If a userId was provided, ensure the user exists and is active
+      if (userId) {
+        await this.usersRepo.findActiveUserOrThrow(userId, trx);
+      }
+      const sourceAccount = await this.accountService.findById(
+        input.sourceAccountId,
+        trx,
+      );
+      const destinationAccount = await this.accountService.findById(
+        input.destinationAccountId,
+        trx,
+      );
+
+      if (!sourceAccount || sourceAccount.status !== AccountStatus.ACTIVE) {
+        throw new NotFoundError('Account', 'id', input.sourceAccountId);
+      }
+
+      if (
+        !destinationAccount ||
+        destinationAccount.status !== AccountStatus.ACTIVE
+      ) {
+        throw new NotFoundError('Account', 'id', input.destinationAccountId);
+      }
+
+      // check if account has enough balance
+      if (
+        Number(input.amount) >
+        Number(sourceAccount.balanceSummary?.totalDeposits)
+      ) {
+        throw new ConflictException('موجودی حساب مبدا کافی نیست.');
+      }
+
+      // Create the transaction record
+      const transaction = await this.transactionsRepo.create(
+        {
+          userId: userId ?? '',
+          kind: TransactionKind.TRANSFER,
+          amount: input.amount,
+          note:
+            input.description ??
+            `انتقال بین حساب از ${sourceAccount.code} به ${destinationAccount.code}`,
+          status: TransactionStatus.APPROVED,
+        },
+        trx,
+      );
+
+      // create journal for transaction
+      const journal = await this.journalRepo.create(
+        {
+          transactionId: transaction.id,
+          status: JournalStatus.POSTED,
+          postedAt: new Date(),
+        },
+        trx,
+      );
+
+      const ledgerAccount = await this.ledgerAccountRepo.findByCode(
+        LEDGER_ACCOUNT_CODES.CUSTOMER_DEPOSITS,
+        trx,
+      );
+
+      // create journal entries for source and destination accounts
+
+      await this.journalEntryRepo.create(
+        {
+          journalId: journal.id,
+          ledgerAccountId: ledgerAccount!.id,
+          amount: input.amount,
+          dc: DebitCredit.DEBIT,
+          accountId: sourceAccount.id,
+          targetType: JournalEntryTarget.ACCOUNT,
+          targetId: sourceAccount.id,
+        },
+        trx,
+      );
+
+      await this.journalEntryRepo.create(
+        {
+          journalId: journal.id,
+          ledgerAccountId: ledgerAccount!.id,
+          amount: input.amount,
+          dc: DebitCredit.CREDIT,
+          accountId: destinationAccount.id,
+          targetType: JournalEntryTarget.ACCOUNT,
+          targetId: destinationAccount.id,
+        },
+        trx,
+      );
+
+      return transaction;
+    };
     return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
   }
 

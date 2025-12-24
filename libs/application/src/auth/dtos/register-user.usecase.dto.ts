@@ -1,10 +1,12 @@
 import { Identity, User } from '@app/domain';
 import {
+  IsArray,
+  IsEmail,
   IsOptional,
   IsString,
-  IsEmail,
   Length,
   Matches,
+  MinLength,
 } from 'class-validator';
 
 export class RegisterUserInput {
@@ -25,9 +27,10 @@ export class RegisterUserInput {
   @Length(1, 5)
   countryCode: string;
 
-  @IsString()
-  @Length(3, 20)
-  nationalCode: string;
+  @IsArray()
+  @IsString({ each: true })
+  @MinLength(1, { each: true })
+  roles: string[];
 }
 
 export type RegisterUserResult = {

@@ -1,4 +1,6 @@
+import { RoleAssignmentsService, RolesService } from '@app/application/access';
 import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
+import { Prisma } from '@generated/prisma';
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../../user/services/users.service';
 import {
@@ -14,13 +16,14 @@ export class RegisterUserUseCase {
     private readonly identityService: IdentitiesService,
     private readonly usersService: UsersService,
     private readonly transactionalRepository: PrismaTransactionalRepository,
+    private readonly rolesService: RolesService,
+    private readonly roleAssignmentsService: RoleAssignmentsService,
   ) {}
 
   async execute(input: RegisterUserInput): Promise<RegisterUserResult> {
     return this.transactionalRepository.withTransaction(async (tx) => {
       const conditions: Array<object> = [
         { phone: input.phone, countryCode: input.countryCode },
-        { nationalCode: input.nationalCode },
       ];
 
       if (input.email) {
@@ -42,7 +45,8 @@ export class RegisterUserUseCase {
       if (!user) {
         user = await this.usersService.create({ identityId: identity.id }, tx);
       }
-
+      // Assign roles
+      await this.CreateRoleAssignments(input.roles, user.id, tx);
       return {
         user: {
           ...user,
@@ -50,5 +54,26 @@ export class RegisterUserUseCase {
         },
       };
     });
+  }
+
+  async CreateRoleAssignments(
+    roles: string[],
+    userId: string,
+    tx: Prisma.TransactionClient,
+  ) {
+    // check if roles exist
+    for (const role of roles) {
+      const roleEntity = await this.rolesService.getById(role, tx);
+      if (!roleEntity) {
+        throw new Error(`نقشی با شناسه ${role} وجود ندارد`);
+      }
+      await this.roleAssignmentsService.create(
+        {
+          roleId: roleEntity.id,
+          userId,
+        },
+        tx,
+      );
+    }
   }
 }

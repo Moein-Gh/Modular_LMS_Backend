@@ -24,16 +24,16 @@ export class RolesService {
     return this.roles.create(input);
   }
 
-  async getById(id: string): Promise<Role> {
-    const role = await this.roles.findById(id);
+  async getById(id: string, tx?: Prisma.TransactionClient): Promise<Role> {
+    const role = await this.roles.findById(id, tx);
     if (!role) {
       throw new NotFoundError('Role', 'id', id);
     }
     return role;
   }
 
-  async getByKey(key: string): Promise<Role> {
-    const roles = await this.roles.findAll({ key });
+  async getByKey(key: string, tx?: Prisma.TransactionClient): Promise<Role> {
+    const roles = await this.roles.findAll({ key }, tx);
     if (!roles.length) {
       throw new NotFoundError('Role', 'key', key);
     }
@@ -78,14 +78,14 @@ export class RolesService {
     return { ...page, items };
   }
 
-  update(id: string, data: Role): Promise<Role> {
+  update(id: string, data: Role, tx?: Prisma.TransactionClient): Promise<Role> {
     return (async () => {
-      const existing = await this.roles.findById(id);
+      const existing = await this.roles.findById(id, tx);
       if (!existing) {
         throw new NotFoundError('Role', 'id', id);
       }
       try {
-        return await this.roles.update(id, data);
+        return await this.roles.update(id, data, tx);
       } catch (e) {
         if ((e as { code?: unknown })?.code === 'P2025') {
           throw new NotFoundError('Role', 'id', id);
@@ -95,14 +95,14 @@ export class RolesService {
     })();
   }
 
-  delete(id: string): Promise<void> {
+  delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
     return (async () => {
-      const existing = await this.roles.findById(id);
+      const existing = await this.roles.findById(id, tx);
       if (!existing) {
         throw new NotFoundError('Role', 'id', id);
       }
       try {
-        await this.roles.delete(id);
+        await this.roles.delete(id, tx);
       } catch (e) {
         if ((e as { code?: unknown })?.code === 'P2025') {
           throw new NotFoundError('Role', 'id', id);

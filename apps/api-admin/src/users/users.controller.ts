@@ -92,7 +92,6 @@ export class UsersController {
         email: user.identity!.email!,
         countryCode: user.identity!.countryCode!,
         phone: user.identity!.phone!,
-        nationalCode: user.identity!.nationalCode!,
         createdAt: user.identity!.createdAt!,
         updatedAt: user.identity!.updatedAt!,
       },
@@ -125,7 +124,6 @@ export class UsersController {
       name: dto.name,
       phone: dto.phone,
       countryCode: dto.countryCode,
-      nationalCode: dto.nationalCode,
       email: dto.email,
     });
 
@@ -140,7 +138,6 @@ export class UsersController {
         name: user.identity!.name!,
         email: user.identity!.email!,
         phone: user.identity?.countryCode + user.identity!.phone!,
-        nationalCode: user.identity!.nationalCode!,
         createdAt: user.identity!.createdAt!,
         updatedAt: user.identity!.updatedAt!,
       },

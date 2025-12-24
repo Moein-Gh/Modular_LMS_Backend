@@ -3,7 +3,6 @@ export interface Identity {
   phone: string;
   name: string | null;
   countryCode: string | null;
-  nationalCode: string | null;
   email: string | null;
   createdAt: Date;
   updatedAt: Date;

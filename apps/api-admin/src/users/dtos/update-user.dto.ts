@@ -18,9 +18,5 @@ export class UpdateUserDto {
 
   @IsString()
   @IsOptional()
-  nationalCode: string;
-
-  @IsString()
-  @IsOptional()
   email: string;
 }

@@ -1,4 +1,5 @@
 import {
+  CurrentUserId,
   FilesService,
   ImageUpload,
   PaginatedResponseDto,
@@ -26,6 +27,8 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { CreateTransactionDto } from './dtos/transactions/create-transaction.dto';
+
+import { CreateTransferTransactionDto } from './dtos/transactions/create-transfer-transaction.dto';
 import { GetTransactionsQueryDto } from './dtos/transactions/get-transaction.dto';
 import { UpdateTransactionDto } from './dtos/transactions/update-transaction.dto';
 
@@ -67,6 +70,7 @@ export class TransactionsController {
   @HttpCode(HttpStatus.CREATED)
   @ImageUpload()
   async create(
+    @CurrentUserId() userId: string | undefined,
     @UploadedFile() image: Express.Multer.File | undefined,
     @Body() dto: CreateTransactionDto,
   ) {
@@ -84,7 +88,7 @@ export class TransactionsController {
     }
 
     const input: CreateTransactionInput = {
-      userId: dto.userId,
+      userId: userId ?? dto.userId,
       kind: dto.kind,
       amount: typeof dto.amount === 'string' ? Number(dto.amount) : dto.amount,
       externalRef: dto.externalRef || null,
@@ -103,6 +107,25 @@ export class TransactionsController {
     }
 
     return tx;
+  }
+
+  @Post('/transfer')
+  @HttpCode(HttpStatus.CREATED)
+  async createTransfer(
+    @CurrentUserId() userId: string | undefined,
+    @Body() dto: CreateTransferTransactionDto,
+  ) {
+    const input = {
+      sourceAccountId: dto.sourceAccountId,
+      destinationAccountId: dto.destinationAccountId,
+      amount: typeof dto.amount === 'string' ? dto.amount : String(dto.amount),
+      description: dto.description ?? null,
+    };
+
+    return await this.transactionsService.createTransferTransaction(
+      input,
+      userId,
+    );
   }
 
   @Post('/approve/:id')

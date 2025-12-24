@@ -90,15 +90,14 @@ model PermissionGrant {
 }
 
 model Identity {
-  id           String    @id @default(uuid()) @db.Uuid
-  phone        String    @unique @db.Text
-  email        String?   @unique @db.Text
-  name         String?   @map("name") @db.Text
-  countryCode  String?   @map("country_code") @db.Text
-  nationalCode String?   @map("national_code") @db.Text
-  lastLoginAt  DateTime? @map("last_login_at")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  id          String    @id @default(uuid()) @db.Uuid
+  phone       String    @unique @db.Text
+  email       String?   @unique @db.Text
+  name        String?   @map("name") @db.Text
+  countryCode String?   @map("country_code") @db.Text
+  lastLoginAt DateTime? @map("last_login_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   user User?
 
@@ -398,9 +397,7 @@ enum TransactionKind {
   DEPOSIT
   WITHDRAWAL
   LOAN_DISBURSEMENT
-  LOAN_REPAYMENT
-  SUBSCRIPTION_PAYMENT
-  FEE
+  TRANSFER
 }
 
 model Transaction {

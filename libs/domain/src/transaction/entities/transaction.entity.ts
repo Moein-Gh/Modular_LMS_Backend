@@ -5,9 +5,7 @@ export enum TransactionKind {
   DEPOSIT = 'DEPOSIT',
   WITHDRAWAL = 'WITHDRAWAL',
   LOAN_DISBURSEMENT = 'LOAN_DISBURSEMENT',
-  LOAN_REPAYMENT = 'LOAN_REPAYMENT',
-  SUBSCRIPTION_PAYMENT = 'SUBSCRIPTION_PAYMENT',
-  FEE = 'FEE',
+  TRANSFER = 'TRANSFER',
 }
 
 export enum TransactionStatus {
@@ -16,6 +14,7 @@ export enum TransactionStatus {
   REJECTED = 'REJECTED',
   ALLOCATED = 'ALLOCATED',
 }
+
 export interface Transaction {
   id: string;
   code: number;
