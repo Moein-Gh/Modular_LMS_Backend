@@ -6,6 +6,9 @@ export interface Role {
   description?: string;
   createdAt: Date;
   updatedAt: Date;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 
   userCount?: number;
 }

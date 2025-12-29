@@ -5,4 +5,7 @@ export interface AccountType {
   maxAccounts: number | null;
   createdAt: Date;
   updatedAt: Date;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }

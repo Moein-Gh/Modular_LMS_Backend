@@ -15,12 +15,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model User {
-  id        String   @id @default(uuid()) @db.Uuid
-  code      Int      @unique @default(autoincrement())
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String     @id @default(uuid()) @db.Uuid
+  code      Int        @unique @default(autoincrement())
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   identity      Identity       @relation(fields: [identityId], references: [id])
   identityId    String         @unique @db.Uuid
@@ -29,6 +34,13 @@ model User {
 
   roleAssignments RoleAssignment[]
   transactions    Transaction[]
+  isDeleted       Boolean          @default(false) @map("is_deleted")
+  deletedAt       DateTime?        @map("deleted_at")
+  deletedBy       String?          @map("deleted_by") @db.Uuid
+  loans           Loan[]
+  devices         Device[]
+
+  @@index([isDeleted], map: "user_is_deleted_idx")
 }
 
 model Role {
@@ -43,7 +55,12 @@ model Role {
 
   // Back-relation: users assigned to this role via RoleAssignment
   roleAssignments RoleAssignment[]
+  isDeleted       Boolean          @default(false) @map("is_deleted")
+  deletedAt       DateTime?        @map("deleted_at")
+  deletedBy       String?          @map("deleted_by") @db.Uuid
+  rolePermissions RolePermission[]
 
+  @@index([isDeleted], map: "role_is_deleted_idx")
   @@map("role")
 }
 
@@ -57,35 +74,77 @@ model Permission {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  isDeleted        Boolean           @default(false) @map("is_deleted")
+  deletedAt        DateTime?         @map("deleted_at")
+  deletedBy        String?           @map("deleted_by") @db.Uuid
+  rolePermissions  RolePermission[]
+  permissionGrants PermissionGrant[]
+
+  @@index([isDeleted], map: "permission_is_deleted_idx")
   @@map("permission")
 }
 
-model RoleAssignment {
-  id         String    @id @default(uuid()) @db.Uuid
-  userId     String    @map("user_id") @db.Uuid
-  roleId     String    @map("role_id") @db.Uuid
-  assignedBy String?   @map("assigned_by")
-  isActive   Boolean   @default(true) @map("is_active")
-  expiresAt  DateTime? @map("expires_at")
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
+// Bridge table for Role <-> Permission (explicit RBAC mapping)
+model RolePermission {
+  id           String @id @default(uuid()) @db.Uuid
+  roleId       String @db.Uuid
+  permissionId String @db.Uuid
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([roleId, permissionId])
+}
+
+enum RoleAssignmentStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model RoleAssignment {
+  id         String               @id @default(uuid()) @db.Uuid
+  userId     String               @map("user_id") @db.Uuid
+  roleId     String               @map("role_id") @db.Uuid
+  assignedBy String?              @map("assigned_by")
+  status     RoleAssignmentStatus @default(ACTIVE) @map("is_active")
+  expiresAt  DateTime?            @map("expires_at")
+  createdAt  DateTime             @default(now()) @map("created_at")
+  updatedAt  DateTime             @updatedAt @map("updated_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "role_assignment_is_deleted_idx")
+}
+
+enum GranteeType {
+  USER
+  ROLE
 }
 
 model PermissionGrant {
-  id           String    @id @default(uuid()) @db.Uuid
-  granteeType  String // 'user' or 'role'
+  id           String      @id @default(uuid()) @db.Uuid
+  granteeType  GranteeType
   granteeId    String // references User.id or Role.id (no FK constraint)
-  permissionId String    @db.Uuid
-  grantedBy    String?   @db.Uuid
-  isGranted    Boolean   @default(true)
+  permissionId String      @db.Uuid
+  permission   Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  grantedBy    String?     @db.Uuid
+  isGranted    Boolean     @default(true)
   reason       String?
   expiresAt    DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "permission_grant_is_deleted_idx")
   @@map("permission_grant")
 }
 
@@ -101,6 +160,11 @@ model Identity {
 
   user User?
 
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "identity_is_deleted_idx")
   @@map("identity")
 }
 
@@ -118,9 +182,47 @@ model RefreshToken {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
   @@unique([userId, tokenHash], map: "refresh_token_user_hash_unique")
+  @@index([isDeleted], map: "refresh_token_is_deleted_idx")
   @@index([userId], map: "refresh_token_user_idx")
   @@map("refresh_token")
+}
+
+// Devices / sessions recorded per user (for session management and revocation)
+model Device {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  deviceId   String   @db.Text
+  deviceName String?  @db.Text
+  ip         String?  @db.Text
+  userAgent  String?  @db.Text
+  lastSeen   DateTime @default(now())
+  createdAt  DateTime @default(now())
+  revoked    Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Audit log for recording changes and important actions
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  actorId   String?  @db.Uuid
+  model     String   @db.Text
+  recordId  String   @db.Text
+  action    String   @db.Text
+  changes   Json?
+  ip        String?  @db.Text
+  userAgent String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([actorId])
+  @@index([model, recordId])
 }
 
 model SmsCode {
@@ -134,6 +236,11 @@ model SmsCode {
   consumedAt  DateTime? @map("consumed_at")
   createdAt   DateTime  @default(now()) @map("created_at")
 
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "sms_code_is_deleted_idx")
   @@index([phone], map: "sms_code_phone_idx")
   @@index([phone, code], map: "sms_code_phone_code_idx")
   @@map("sms_code")
@@ -147,6 +254,18 @@ model AccountType {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   accounts    Account[]
+
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "account_type_is_deleted_idx")
+}
+
+enum AccountStatus {
+  ACTIVE
+  INACTIVE
+  BUSY
 }
 
 model Account {
@@ -159,18 +278,27 @@ model Account {
   userId String @db.Uuid
   user   User   @relation(fields: [userId], references: [id])
 
-  cardNumber String @unique
+  cardNumber String        @unique
   bankName   String
-  status     String @default("active")
+  status     AccountStatus @default(ACTIVE)
+  bookCode   String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
   // Back-relation: bank using this account
   bank            Bank?
   loans           Loan[]
   SubscriptionFee SubscriptionFee[]
   journalEntries  JournalEntry[]
+  isDeleted       Boolean           @default(false) @map("is_deleted")
+  deletedAt       DateTime?         @map("deleted_at")
+  deletedBy       String?           @map("deleted_by") @db.Uuid
+  ownerId         String?           @map("owner_id") @db.Uuid
+  createdBy       String?           @map("created_by") @db.Uuid
+
+  @@index([isDeleted], map: "account_is_deleted_idx")
+  @@index([ownerId], map: "account_owner_id_idx")
+  @@index([createdBy], map: "account_created_by_idx")
 }
 
 /// Singleton bank configuration for the platform (exactly one row expected with id = 1)
@@ -192,6 +320,11 @@ model Bank {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "bank_is_deleted_idx")
   @@map("bank")
 }
 
@@ -208,16 +341,20 @@ model LoanType {
 
   loans Loan[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "loan_type_is_deleted_idx")
 }
 
 enum LoanStatus {
   PENDING // created, awaiting approval
   APPROVED // approved but not yet disbursed
   ACTIVE // disbursed, being repaid
-  CLOSED // fully repaid
-  DEFAULTED // borrower failed to repay
+  PAID // fully repaid
 }
 
 model Loan {
@@ -231,15 +368,27 @@ model Loan {
   loanTypeId String   @db.Uuid
   loanType   LoanType @relation(fields: [loanTypeId], references: [id])
 
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
+
   amount Decimal @db.Decimal(18, 4)
 
   startDate     DateTime
   paymentMonths Int
   status        LoanStatus @default(PENDING)
 
+  installments Installment[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  installments Installment[]
+  isDeleted    Boolean       @default(false) @map("is_deleted")
+  deletedAt    DateTime?     @map("deleted_at")
+  deletedBy    String?       @map("deleted_by") @db.Uuid
+  ownerId      String?       @map("owner_id") @db.Uuid
+  createdBy    String?       @map("created_by") @db.Uuid
+
+  @@index([isDeleted], map: "loan_is_deleted_idx")
+  @@index([ownerId], map: "loan_owner_id_idx")
+  @@index([createdBy], map: "loan_created_by_idx")
 }
 
 enum InstallmentStatus {
@@ -265,8 +414,17 @@ model Installment {
 
   loan         Loan          @relation(fields: [loanId], references: [id])
   journalEntry JournalEntry? @relation(fields: [journalEntryId], references: [id])
+  isDeleted    Boolean       @default(false) @map("is_deleted")
+  deletedAt    DateTime?     @map("deleted_at")
+  deletedBy    String?       @map("deleted_by") @db.Uuid
+
+  ownerId   String? @map("owner_id") @db.Uuid
+  createdBy String? @map("created_by") @db.Uuid
 
   @@unique([loanId, installmentNumber])
+  @@index([isDeleted], map: "installment_is_deleted_idx")
+  @@index([ownerId], map: "installment_owner_id_idx")
+  @@index([createdBy], map: "installment_created_by_idx")
 }
 
 enum SubscriptionFeeStatus {
@@ -291,8 +449,18 @@ model SubscriptionFee {
   account      Account       @relation(fields: [accountId], references: [id])
   journalEntry JournalEntry? @relation(fields: [journalEntryId], references: [id])
 
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  ownerId   String? @map("owner_id") @db.Uuid
+  createdBy String? @map("created_by") @db.Uuid
+
   @@unique([accountId, periodStart])
+  @@index([isDeleted], map: "subscription_fee_is_deleted_idx")
   @@index([status, periodStart])
+  @@index([ownerId], map: "subscription_fee_owner_id_idx")
+  @@index([createdBy], map: "subscription_fee_created_by_idx")
 }
 
 // ========================= LEDGER MODULE =========================
@@ -331,7 +499,12 @@ model LedgerAccount {
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
 
-  entries JournalEntry[]
+  entries   JournalEntry[]
+  isDeleted Boolean        @default(false) @map("is_deleted")
+  deletedAt DateTime?      @map("deleted_at")
+  deletedBy String?        @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "ledger_account_is_deleted_idx")
 }
 
 model Journal {
@@ -347,6 +520,12 @@ model Journal {
   entries     JournalEntry[]
   transaction Transaction?   @relation(fields: [transactionId], references: [id], onDelete: SetNull)
 
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "journal_is_deleted_idx")
+  @@index([status, postedAt], map: "journal_status_posted_at_idx")
   @@index([transactionId])
 }
 
@@ -376,7 +555,11 @@ model JournalEntry {
   ledgerAccount    LedgerAccount     @relation(fields: [ledgerAccountId], references: [id])
   installments     Installment[]
   subscriptionFees SubscriptionFee[]
+  isDeleted        Boolean           @default(false) @map("is_deleted")
+  deletedAt        DateTime?         @map("deleted_at")
+  deletedBy        String?           @map("deleted_by") @db.Uuid
 
+  @@index([isDeleted], map: "journal_entry_is_deleted_idx")
   @@index([journalId])
   @@index([ledgerAccountId])
   @@index([targetType, targetId])
@@ -413,9 +596,19 @@ model Transaction {
   updatedAt   DateTime          @updatedAt
 
   // Relations
-  user    User               @relation(fields: [userId], references: [id])
-  images  TransactionImage[]
-  journal Journal[]
+  user      User               @relation(fields: [userId], references: [id])
+  images    TransactionImage[]
+  journal   Journal[]
+  isDeleted Boolean            @default(false) @map("is_deleted")
+  deletedAt DateTime?          @map("deleted_at")
+  deletedBy String?            @map("deleted_by") @db.Uuid
+
+  ownerId   String? @map("owner_id") @db.Uuid
+  createdBy String? @map("created_by") @db.Uuid
+
+  @@index([isDeleted], map: "transaction_is_deleted_idx")
+  @@index([ownerId], map: "transaction_owner_id_idx")
+  @@index([createdBy], map: "transaction_created_by_idx")
 }
 
 model TransactionImage {
@@ -430,8 +623,18 @@ model TransactionImage {
   transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   file        File        @relation(fields: [fileId], references: [id], onDelete: Cascade)
 
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  ownerId   String? @map("owner_id") @db.Uuid
+  createdBy String? @map("created_by") @db.Uuid
+
+  @@index([isDeleted], map: "transaction_image_is_deleted_idx")
   @@index([transactionId])
   @@index([fileId])
+  @@index([ownerId], map: "transaction_image_owner_id_idx")
+  @@index([createdBy], map: "transaction_image_created_by_idx")
 }
 
 // ========================= FILE MODULE =========================
@@ -444,4 +647,9 @@ model File {
   createdAt DateTime @default(now())
 
   transactionImages TransactionImage[]
+  isDeleted         Boolean            @default(false) @map("is_deleted")
+  deletedAt         DateTime?          @map("deleted_at")
+  deletedBy         String?            @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "file_is_deleted_idx")
 }

@@ -1,12 +1,12 @@
 import { CreateUserInput } from '@app/application';
 import { UpdateUserInput } from '@app/application/user/types/update-user.type';
 import { BaseQueryParams } from '@app/domain/common';
-import { User } from '../entities/user.entity';
+import { User, UserStatus } from '../entities/user.entity';
 
 export interface ListUserParams extends BaseQueryParams {
   identityName?: string;
   identityEmail?: string;
-  isActive?: boolean;
+  status?: UserStatus;
 }
 
 export interface IUserRepository {

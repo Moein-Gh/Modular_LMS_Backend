@@ -26,8 +26,13 @@ export interface Transaction {
   userId: string;
   createdAt: Date;
   updatedAt: Date;
+  ownerId?: string;
+  createdBy?: string;
 
   // Relations
   user?: User;
   images: TransactionImage[];
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }

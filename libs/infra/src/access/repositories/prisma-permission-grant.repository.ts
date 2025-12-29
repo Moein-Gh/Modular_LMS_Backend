@@ -19,6 +19,9 @@ const permissionGrantSelect: Prisma.PermissionGrantSelect = {
   expiresAt: true,
   createdAt: true,
   updatedAt: true,
+  isDeleted: true,
+  deletedAt: true,
+  deletedBy: true,
 };
 
 type PermissionGrantModel = Prisma.PermissionGrantGetPayload<{
@@ -37,6 +40,9 @@ function toDomain(model: PermissionGrantModel): PermissionGrant {
     expiresAt: model.expiresAt ?? undefined,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
+    isDeleted: model.isDeleted,
+    deletedAt: model.deletedAt ?? undefined,
+    deletedBy: model.deletedBy ?? undefined,
   };
 }
 
@@ -60,9 +66,12 @@ export class PrismaPermissionGrantRepository
   ): Promise<PermissionGrant[]> {
     const prisma = tx ?? this.prisma;
 
-    const items = await prisma.permissionGrant.findMany(options);
+    const items = await prisma.permissionGrant.findMany({
+      ...(options ?? {}),
+      select: permissionGrantSelect,
+    });
 
-    return items.map((m) => toDomain(m));
+    return items.map((m) => toDomain(m as PermissionGrantModel));
   }
 
   async count(

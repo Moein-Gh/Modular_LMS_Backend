@@ -19,5 +19,8 @@ export interface LedgerAccount {
   type: LedgerAccountType;
   status: LedgerAccountStatus;
   createdAt: Date;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
   updatedAt: Date;
 }

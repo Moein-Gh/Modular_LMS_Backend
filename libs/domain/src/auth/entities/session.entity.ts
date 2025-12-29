@@ -9,4 +9,7 @@ export interface Session {
   replacedByTokenId?: string;
   userAgent?: string;
   ipAddress?: string;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }

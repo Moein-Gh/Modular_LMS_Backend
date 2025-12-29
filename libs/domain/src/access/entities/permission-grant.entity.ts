@@ -1,6 +1,6 @@
 export enum GrantType {
-  USER = 'user',
-  ROLE = 'role',
+  USER = 'USER',
+  ROLE = 'ROLE',
 }
 
 export interface PermissionGrant {
@@ -14,4 +14,7 @@ export interface PermissionGrant {
   expiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }

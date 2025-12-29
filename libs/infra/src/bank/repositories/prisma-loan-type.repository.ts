@@ -38,6 +38,9 @@ function toDomain(model: LoanTypeModel): LoanType {
     description: model.description ?? null,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
+    isDeleted: model.isDeleted,
+    deletedAt: model.deletedAt ?? undefined,
+    deletedBy: model.deletedBy ?? undefined,
   };
 }
 

@@ -2,9 +2,9 @@ import { AccountBalanceResult } from '@app/application/ledger/dto/journal-balanc
 import { AccountType, User } from '@app/domain';
 
 export enum AccountStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  RESTRICTED = 'restricted',
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  BUSY = 'BUSY',
 }
 
 export interface Account {
@@ -16,9 +16,14 @@ export interface Account {
   cardNumber: string;
   bankName: string;
   status: AccountStatus;
-
+  bookCode?: string;
   createdAt: Date;
   updatedAt: Date;
+  ownerId?: string;
+  createdBy?: string;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 
   accountType?: AccountType;
   user?: User;

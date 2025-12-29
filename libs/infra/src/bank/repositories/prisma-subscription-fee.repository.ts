@@ -46,6 +46,9 @@ function toDomain(
     updatedAt: m.updatedAt,
     account: m.account,
     journalEntry: m.journalEntry,
+    isDeleted: m.isDeleted,
+    deletedAt: m.deletedAt ?? undefined,
+    deletedBy: m.deletedBy ?? undefined,
   };
 }
 

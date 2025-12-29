@@ -19,4 +19,7 @@ export interface Journal {
 
   transaction?: Transaction;
   entries?: JournalEntry[];
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }

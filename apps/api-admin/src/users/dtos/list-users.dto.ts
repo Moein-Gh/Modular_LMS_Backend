@@ -1,5 +1,5 @@
-import { Type } from 'class-transformer';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { UserStatus } from '@generated/prisma';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class ListUsersDto {
   @IsOptional()
@@ -7,9 +7,8 @@ export class ListUsersDto {
   id?: string;
 
   @IsOptional()
-  @IsBoolean()
-  @Type(() => Boolean)
-  isActive?: boolean;
+  @IsEnum(UserStatus)
+  status: UserStatus;
 
   @IsOptional()
   @IsString()

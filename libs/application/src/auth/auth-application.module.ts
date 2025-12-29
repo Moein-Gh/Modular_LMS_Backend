@@ -6,6 +6,7 @@ import { AccessApplicationModule } from '../access/access-application.module';
 import { UserApplicationModule } from '../user/user-application.module';
 import { AccessTokenGuard } from './guards/access-token.guard';
 import { AuthService } from './services/auth.service';
+import { DevicesService } from './services/devices.service';
 import { IdentitiesService } from './services/identities.service';
 import { RegisterUserUseCase } from './use-cases/register-user.usecase';
 
@@ -21,12 +22,16 @@ import { RegisterUserUseCase } from './use-cases/register-user.usecase';
     RegisterUserUseCase,
     IdentitiesService,
     AuthService,
+    IdentitiesService,
+    DevicesService,
     AccessTokenGuard,
   ],
   exports: [
     RegisterUserUseCase,
     IdentitiesService,
     AuthService,
+    IdentitiesService,
+    DevicesService,
     AccessTokenGuard,
     UserApplicationModule,
   ],

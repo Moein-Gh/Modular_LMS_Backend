@@ -25,6 +25,9 @@ type PermissionModel = {
   description: string | null;
   createdAt: Date;
   updatedAt: Date;
+  isDeleted: boolean;
+  deletedAt: Date | null;
+  deletedBy: string | null;
 };
 
 function toDomain(model: PermissionModel): Permission {
@@ -36,6 +39,9 @@ function toDomain(model: PermissionModel): Permission {
     description: model.description ?? undefined,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
+    isDeleted: model.isDeleted,
+    deletedAt: model.deletedAt ?? undefined,
+    deletedBy: model.deletedBy ?? undefined,
   };
 }
 

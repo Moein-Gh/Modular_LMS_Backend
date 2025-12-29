@@ -1,7 +1,7 @@
 import { NotFoundError } from '@app/application/errors/not-found.error';
 import { UsersService } from '@app/application/user/services/users.service';
 import { ConfigService } from '@app/config';
-import { AccessToken, Payload, RefreshToken } from '@app/domain';
+import { AccessToken, Payload, RefreshToken, UserStatus } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
@@ -10,6 +10,7 @@ import type { LogoutDto } from '../dtos/logout.dto';
 import type { RequestSmsCodeDto } from '../dtos/request-sms-code.dto';
 import type { VerifySmsCodeDto } from '../dtos/verify-sms-code.dto';
 import { InvalidOrExpiredCodeError } from '../errors/invalid-or-expired-code.error';
+import { DevicesService } from './devices.service';
 import { IdentitiesService } from './identities.service';
 
 @Injectable()
@@ -19,6 +20,7 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly identityService: IdentitiesService,
     private readonly usersService: UsersService,
+    private readonly devicesService: DevicesService,
   ) {}
 
   // 1. Request SMS code
@@ -34,7 +36,7 @@ export class AuthService {
     if (!user) {
       throw new NotFoundError('کاربر', 'شناسه', identity.id);
     }
-    if (!user.isActive) {
+    if (user.status === UserStatus.ACTIVE) {
       throw new BadRequestException('کاربر فعال نیست');
     }
 
@@ -65,7 +67,15 @@ export class AuthService {
   }
 
   // 2. Verify SMS code and issue tokens
-  public async verifySmsCode(cmd: VerifySmsCodeDto): Promise<Payload> {
+  public async verifySmsCode(
+    cmd: VerifySmsCodeDto,
+    deviceMeta?: {
+      deviceId?: string;
+      deviceName?: string;
+      userAgent?: string;
+      ip?: string;
+    },
+  ): Promise<Payload> {
     const identity = await this.identityService.findOne({ phone: cmd.phone });
     if (!identity) {
       throw new NotFoundError('Identity', 'phone number', cmd.phone);
@@ -75,7 +85,7 @@ export class AuthService {
     if (!user) {
       throw new NotFoundError('User', 'identity ID', identity.id);
     }
-    if (!user.isActive) {
+    if (user.status !== UserStatus.ACTIVE) {
       throw new BadRequestException('User is not active');
     }
 
@@ -97,6 +107,45 @@ export class AuthService {
     await this.prisma.smsCode.delete({
       where: { id: sms.id },
     });
+
+    if (deviceMeta?.deviceId) {
+      try {
+        const { deviceId, deviceName, userAgent, ip } = deviceMeta;
+        const existing = await this.devicesService.findByDeviceId(deviceId);
+        if (existing) {
+          if (existing.userId === user.id) {
+            await this.devicesService.update(existing.id, {
+              lastSeen: new Date(),
+              userAgent: userAgent ?? existing.userAgent,
+              ip: ip ?? existing.ip,
+              deviceName: deviceName ?? existing.deviceName,
+            });
+          } else {
+            await this.devicesService.create({
+              lastSeen: new Date(),
+              deviceId: deviceId,
+              userId: user.id,
+              deviceName: deviceName ?? null,
+              userAgent: userAgent ?? null,
+              ip: ip ?? null,
+              revoked: false,
+            });
+          }
+        } else {
+          await this.devicesService.create({
+            deviceId: deviceId,
+            lastSeen: new Date(),
+            userId: user.id,
+            deviceName: deviceName ?? null,
+            userAgent: userAgent ?? null,
+            ip: ip ?? null,
+            revoked: false,
+          });
+        }
+      } catch (e) {
+        console.warn('Device tracking failed', e);
+      }
+    }
 
     // Create refresh token value object
     const refreshTokenExpiresIn = Number(
@@ -130,7 +179,9 @@ export class AuthService {
       accessTokenExpiresIn,
       refreshTokenExpiresIn,
       userId: user.id,
+      user,
       sessionId: refreshTokenRecord.id,
+      isDeleted: false,
     };
   }
 
@@ -171,13 +222,7 @@ export class AuthService {
     });
 
     // Issue new access token value object
-    const user = await this.prisma.user.findUnique({
-      where: { id: session.userId },
-      include: { identity: true },
-    });
-    if (!user) {
-      throw new Error('User not found');
-    }
+    const user = await this.usersService.findById(session.userId);
     const jwtSecret = this.config.get('JWT_SECRET') || 'dev_secret';
     const payload = { sub: user.id, phone: user.identity?.phone };
     const accessTokenVO = AccessToken.create(
@@ -193,16 +238,39 @@ export class AuthService {
       accessTokenExpiresIn,
       refreshTokenExpiresIn,
       userId: user.id,
+      user,
       sessionId: newRefreshTokenRecord.id,
+      isDeleted: false,
     };
   }
 
   // 4. Logout (revoke refresh token)
-  public async logout(cmd: LogoutDto): Promise<LogoutResult> {
+  public async logout(
+    cmd: LogoutDto,
+    deviceId?: string,
+  ): Promise<LogoutResult> {
+    // Read session to determine the user (if exists)
+    const session = await this.prisma.refreshToken.findUnique({
+      where: { id: cmd.sessionId },
+    });
+
     await this.prisma.refreshToken.update({
       where: { id: cmd.sessionId },
       data: { revoked: true, revokedAt: new Date() },
     });
+
+    // If a deviceId was provided, mark the device as revoked (not active)
+    if (deviceId && session?.userId) {
+      try {
+        const device = await this.devicesService.findByDeviceId(deviceId);
+        if (device && device.userId === session.userId) {
+          await this.devicesService.update(device.id, { revoked: true });
+        }
+      } catch (e) {
+        console.warn('Failed to revoke device on logout', e);
+      }
+    }
+
     return { success: true };
   }
 

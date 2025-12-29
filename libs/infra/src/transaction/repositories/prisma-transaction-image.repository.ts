@@ -27,6 +27,7 @@ function toDomain(model: TransactionImageModel): TransactionImage {
     fileId: model.fileId,
     description: model.description ?? undefined,
     createdAt: model.createdAt,
+    isDeleted: false,
   };
 }
 

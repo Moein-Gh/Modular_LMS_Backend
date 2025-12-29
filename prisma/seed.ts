@@ -1,6 +1,10 @@
 import { readFile } from 'fs/promises';
 import * as path from 'path';
-import { LedgerAccountType, PrismaClient } from '../generated/prisma';
+import {
+  LedgerAccountType,
+  PrismaClient,
+  UserStatus,
+} from '../generated/prisma';
 
 const prisma = new PrismaClient();
 
@@ -103,7 +107,11 @@ async function seedAssignAdminToTestUser(): Promise<void> {
     }
 
     await prisma.roleAssignment.create({
-      data: { userId: user.id, roleId: role.id, isActive: true },
+      data: {
+        userId: user.id,
+        roleId: role.id,
+        status: 'ACTIVE',
+      },
     });
     console.log('✓ Assigned admin role to test user');
   } catch (err) {
@@ -156,30 +164,31 @@ async function seedPermissionGrants(): Promise<void> {
       return;
     }
 
-    const existingGrant = await prisma.permissionGrant.findFirst({
+    const existingRolePermission = await prisma.rolePermission.findFirst({
       where: {
-        granteeType: 'role',
-        granteeId: role.id,
+        roleId: role.id,
         permissionId: permission.id,
       },
     });
 
-    if (existingGrant) {
-      console.log('✓ Admin already has wildcard permission; skipping');
+    if (existingRolePermission) {
+      console.log(
+        '✓ Admin already has wildcard permission (role-permission); skipping',
+      );
       return;
     }
 
-    await prisma.permissionGrant.create({
+    await prisma.rolePermission.create({
       data: {
-        granteeType: 'role',
-        granteeId: role.id,
+        roleId: role.id,
         permissionId: permission.id,
-        isGranted: true,
       },
     });
-    console.log('✓ Granted wildcard permission to admin role');
+    console.log(
+      '✓ Granted wildcard permission to admin role (role-permission)',
+    );
   } catch (err) {
-    console.error('Failed to seed permission grants:', err);
+    console.error('Failed to seed role-permission grants:', err);
     throw err;
   }
 }
@@ -276,7 +285,7 @@ async function seedTestUser(): Promise<void> {
       countryCode?: string;
       name?: string;
       email?: string;
-      isActive?: boolean;
+      status?: UserStatus;
     };
 
     const testPhone = u.phone;
@@ -307,7 +316,10 @@ async function seedTestUser(): Promise<void> {
 
     if (!existingUser) {
       await prisma.user.create({
-        data: { identityId: identity.id, isActive: u.isActive ?? true },
+        data: {
+          identityId: identity.id,
+          status: u.status ?? UserStatus.ACTIVE,
+        },
       });
       console.log('✓ Created test user');
     } else {

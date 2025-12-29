@@ -9,15 +9,22 @@ export type UserBalanceSummary = {
   loans: LoanBalanceResult[];
 };
 
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+}
 export interface User {
   id: string;
   code: number;
   identityId: string;
-  isActive: boolean;
+  status: UserStatus;
   identity?: Partial<Identity>;
 
   balanceSummary?: UserBalanceSummary;
   roleAssignments?: RoleAssignment[];
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }
 
 export interface UserWithPermissions extends User {

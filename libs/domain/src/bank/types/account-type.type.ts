@@ -1,7 +1,6 @@
 import { AccountType } from '@app/domain';
 
 export type CreateAccountTypeInput = Pick<AccountType, 'name' | 'maxAccounts'>;
-export type UpdateAccountTypeInput = Omit<
-  AccountType,
-  'id' | 'code' | 'createdAt' | 'updatedAt'
+export type UpdateAccountTypeInput = Partial<
+  Omit<AccountType, 'id' | 'code' | 'createdAt' | 'updatedAt'>
 >;

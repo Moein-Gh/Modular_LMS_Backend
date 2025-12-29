@@ -16,6 +16,9 @@ type IdentityModel = {
   email: string | null;
   createdAt: Date;
   updatedAt: Date;
+  isDeleted: boolean;
+  deletedAt: Date | null;
+  deletedBy: string | null;
 };
 
 const identitySelect: Prisma.IdentitySelect = {
@@ -37,6 +40,9 @@ function toDomain(model: IdentityModel): Identity {
     email: model.email || null,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
+    isDeleted: model.isDeleted,
+    deletedAt: model.deletedAt ?? undefined,
+    deletedBy: model.deletedBy ?? undefined,
   };
 }
 

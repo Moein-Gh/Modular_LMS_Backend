@@ -4,5 +4,9 @@ export interface TransactionImage {
   fileId: string;
   description?: string | null;
   createdAt: Date;
-  // file: File;
+  ownerId?: string;
+  createdBy?: string;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }

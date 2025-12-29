@@ -211,13 +211,13 @@ export class TransactionsService {
         trx,
       );
 
-      if (!sourceAccount || sourceAccount.status !== AccountStatus.ACTIVE) {
+      if (!sourceAccount || sourceAccount.status === AccountStatus.INACTIVE) {
         throw new NotFoundError('Account', 'id', input.sourceAccountId);
       }
 
       if (
         !destinationAccount ||
-        destinationAccount.status !== AccountStatus.ACTIVE
+        destinationAccount.status === AccountStatus.INACTIVE
       ) {
         throw new NotFoundError('Account', 'id', input.destinationAccountId);
       }

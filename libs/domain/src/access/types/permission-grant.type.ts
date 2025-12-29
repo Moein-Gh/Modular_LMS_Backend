@@ -1,9 +1,8 @@
-import { PermissionGrant, GrantType } from '@app/domain';
-import { BaseQueryParams } from '@app/domain';
+import { BaseQueryParams, GrantType, PermissionGrant } from '@app/domain';
 
 export type CreatePermissionGrantInput = Omit<
   PermissionGrant,
-  'id' | 'createdAt' | 'updatedAt'
+  'id' | 'createdAt' | 'updatedAt' | 'isDeleted' | 'deletedAt' | 'deletedBy'
 >;
 
 export interface UpdatePermissionGrantInput {

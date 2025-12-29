@@ -2,7 +2,8 @@ import { PaginationQueryDto } from '@app/application/common/dto/pagination-query
 import { paginatePrisma } from '@app/application/common/pagination.util';
 import { NotFoundError } from '@app/application/errors/not-found.error';
 import { JournalBalanceUsecase } from '@app/application/ledger/journal-balance.usecase';
-import { User, USER_REPOSITORY, type IUserRepository } from '@app/domain';
+import { User, USER_REPOSITORY, UserStatus } from '@app/domain';
+import { PrismaUserRepository } from '@app/infra';
 import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
 import { Prisma } from '@generated/prisma';
 import { ConflictException, Inject, Injectable } from '@nestjs/common';
@@ -12,7 +13,7 @@ import { UpdateUserInput } from '../types/update-user.type';
 @Injectable()
 export class UsersService {
   constructor(
-    @Inject(USER_REPOSITORY) private readonly users: IUserRepository,
+    @Inject(USER_REPOSITORY) private readonly usersRepo: PrismaUserRepository,
     private readonly journalBalanceUseCase: JournalBalanceUsecase,
     private readonly prismaTransactionalRepo: PrismaTransactionalRepository,
   ) {}
@@ -21,12 +22,12 @@ export class UsersService {
     input: CreateUserInput,
     tx?: Prisma.TransactionClient,
   ): Promise<User> {
-    const created = await this.users.create(input, tx);
+    const created = await this.usersRepo.create(input, tx);
     return created;
   }
 
   async findById(id: string, tx?: Prisma.TransactionClient): Promise<User> {
-    const user = await this.users.findById(id, tx);
+    const user = await this.usersRepo.findById(id, tx);
     if (!user) {
       throw new NotFoundError('User', 'id', id);
     }
@@ -54,22 +55,20 @@ export class UsersService {
     identityId: string,
     tx?: Prisma.TransactionClient,
   ): Promise<User | null> {
-    const users = await this.users.findAll({ where: { identityId } }, tx);
-    if (!users.length) return null;
-    return users[0];
+    return await this.usersRepo.findByIdentityId(identityId, tx);
   }
 
   async setActive(
     userId: string,
-    isActive: boolean,
+    status: UserStatus,
     tx?: Prisma.TransactionClient,
   ): Promise<void> {
-    const existing = await this.users.findById(userId, tx);
+    const existing = await this.usersRepo.findById(userId, tx);
     if (!existing) {
       throw new NotFoundError('User', 'id', userId);
     }
     try {
-      await this.users.update(userId, { isActive }, tx);
+      await this.usersRepo.update(userId, { status }, tx);
     } catch (e) {
       if (this.isPrismaNotFoundError(e)) {
         throw new NotFoundError('User', 'id', userId);
@@ -80,7 +79,7 @@ export class UsersService {
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
     const run = async (trx: Prisma.TransactionClient) => {
-      const existing = await this.users.findById(id, trx);
+      const existing = await this.usersRepo.findById(id, trx);
       if (!existing) {
         throw new NotFoundError('User', 'id', id);
       }
@@ -103,7 +102,7 @@ export class UsersService {
       }
 
       try {
-        await this.users.delete(id, trx);
+        await this.usersRepo.delete(id, trx);
         // delete identity
         await trx.identity.delete({ where: { id: existing.identityId } });
       } catch (e) {
@@ -120,7 +119,7 @@ export class UsersService {
   async findAll(query?: PaginationQueryDto, tx?: Prisma.TransactionClient) {
     return paginatePrisma<User, Prisma.UserFindManyArgs, Prisma.UserWhereInput>(
       {
-        repo: this.users,
+        repo: this.usersRepo,
         query: query ?? new PaginationQueryDto(),
         defaultOrderBy: 'createdAt',
         defaultOrderDir: 'desc',
@@ -142,12 +141,12 @@ export class UsersService {
     input: UpdateUserInput,
     tx?: Prisma.TransactionClient,
   ): Promise<User> {
-    const existing = await this.users.findById(id, tx);
+    const existing = await this.usersRepo.findById(id, tx);
     if (!existing) {
       throw new NotFoundError('User', 'id', id);
     }
     try {
-      await this.users.update(id, input, tx);
+      await this.usersRepo.update(id, input, tx);
     } catch (e) {
       if (this.isPrismaNotFoundError(e)) {
         throw new NotFoundError('User', 'id', id);

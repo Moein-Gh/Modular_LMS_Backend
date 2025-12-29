@@ -18,12 +18,16 @@ const loanSelect: Prisma.LoanSelect = {
   name: true,
   accountId: true,
   loanTypeId: true,
+  userId: true,
   amount: true,
   startDate: true,
   paymentMonths: true,
   status: true,
   createdAt: true,
   updatedAt: true,
+  isDeleted: true,
+  deletedAt: true,
+  deletedBy: true,
 };
 
 type LoanModel = Prisma.LoanGetPayload<{ select: typeof loanSelect }>;
@@ -41,6 +45,7 @@ function toDomain(model: LoanModel | LoanModelWithRelations): Loan {
     name: m.name,
     accountId: m.accountId,
     loanTypeId: m.loanTypeId,
+    userId: m.userId,
     amount: m.amount.toString(),
     startDate: m.startDate,
     paymentMonths: m.paymentMonths,
@@ -49,6 +54,9 @@ function toDomain(model: LoanModel | LoanModelWithRelations): Loan {
     updatedAt: m.updatedAt,
     account: m.account,
     loanType: m.loanType,
+    isDeleted: m.isDeleted,
+    deletedAt: m.deletedAt ?? undefined,
+    deletedBy: m.deletedBy ?? undefined,
   };
 }
 
@@ -102,6 +110,7 @@ export class PrismaLoanRepository implements LoanRepository {
       status: (input.status as unknown as PrismaLoanStatus) ?? undefined,
       account: { connect: { id: input.accountId } },
       loanType: { connect: { id: input.loanTypeId } },
+      user: { connect: { id: input.userId } },
     };
     const created = await prisma.loan.create({
       data,

@@ -1,4 +1,8 @@
-import type { AccountType } from '@app/domain';
+import type {
+  AccountType,
+  CreateAccountTypeInput,
+  UpdateAccountTypeInput,
+} from '@app/domain';
 import { AccountTypeRepository } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import type { Prisma, PrismaClient } from '@generated/prisma';
@@ -25,6 +29,9 @@ function toDomain(model: AccountTypeModel): AccountType {
     maxAccounts: model.maxAccounts,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
+    isDeleted: model.isDeleted,
+    deletedAt: model.deletedAt ?? undefined,
+    deletedBy: model.deletedBy ?? undefined,
   };
 }
 
@@ -80,7 +87,7 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
   }
 
   async create(
-    input: Pick<AccountType, 'name'>,
+    input: CreateAccountTypeInput,
     tx?: Prisma.TransactionClient,
   ): Promise<AccountType> {
     const prisma = tx ?? this.prisma;
@@ -93,7 +100,7 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
 
   async update(
     id: string,
-    accountType: Pick<AccountType, 'name'>,
+    accountType: UpdateAccountTypeInput,
     tx?: Prisma.TransactionClient,
   ): Promise<AccountType> {
     const prisma = tx ?? this.prisma;

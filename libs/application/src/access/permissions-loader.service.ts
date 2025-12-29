@@ -2,6 +2,7 @@ import {
   PERMISSION_GRANT_REPOSITORY,
   PERMISSION_REPOSITORY,
   ROLE_ASSIGNMENT_REPOSITORY,
+  UserStatus,
 } from '@app/domain';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { Inject, Injectable } from '@nestjs/common';
@@ -44,7 +45,7 @@ export class PermissionsLoaderService {
 
     // find active role assignments for user
     const assignments = await this.roleAssignmentRepo.findAll({
-      where: { userId, isActive: true },
+      where: { userId, status: UserStatus.ACTIVE },
     });
     const roleIds = assignments
       .map((a: RoleAssignment) => a.roleId)

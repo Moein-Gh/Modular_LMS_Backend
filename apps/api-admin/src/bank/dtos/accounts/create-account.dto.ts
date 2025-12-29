@@ -16,6 +16,9 @@ export class CreateAccountDto {
   @MinLength(3)
   bankName: string;
 
+  @IsString()
+  bookCode: string;
+
   @Type(() => Date)
   @IsDate()
   createdAt: Date;

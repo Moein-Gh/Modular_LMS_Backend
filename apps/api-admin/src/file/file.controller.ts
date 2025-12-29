@@ -1,4 +1,4 @@
-import { FilesService } from '@app/application';
+import { CurrentUserId, FilesService } from '@app/application';
 import {
   Controller,
   Delete,
@@ -21,6 +21,7 @@ export class FilesController {
   @UseInterceptors(FileInterceptor('file'))
   @HttpCode(HttpStatus.CREATED)
   async upload(
+    @CurrentUserId() userId: string,
     @UploadedFile()
     file: {
       buffer: Buffer;

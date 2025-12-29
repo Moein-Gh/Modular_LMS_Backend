@@ -6,4 +6,7 @@ export interface Permission {
   description?: string;
   createdAt: Date;
   updatedAt: Date;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }

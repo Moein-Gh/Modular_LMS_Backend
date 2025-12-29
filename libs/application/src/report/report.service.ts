@@ -3,6 +3,7 @@ import {
   BankFinancialSummary,
   LEDGER_ACCOUNT_CODES,
   LoanStatus,
+  UserStatus,
 } from '@app/domain';
 import {
   PrismaAccountRepository,
@@ -40,6 +41,14 @@ export class ReportService {
       return parseFloat(Number(val).toFixed(4)).toString();
     };
 
+    // Example usage:
+    // const now = new Date();
+    // const jalaliNow = newDate(
+    //   now.getFullYear(),
+    //   now.getMonth() + 1,
+    //   now.getDate(),
+    // );
+    // console.log('Jalali now:', jalaliNow);
     // Helper to compute metric for a ledger account
     const computeMetric = async (accountCode: string) => {
       // Determine earliest available date if startDate not provided
@@ -209,12 +218,12 @@ export class ReportService {
   // 3. total loans (total , active , pending)
   // 4. total transactions (total , pending)
   async getEntitesSummary() {
-    const users = await this.usersRepo.count({ isActive: true });
+    const users = await this.usersRepo.count({ status: UserStatus.ACTIVE });
 
     const accountsTotal = await this.accountsRepo.count();
 
     const accountsRestricted = await this.accountsRepo.count({
-      status: AccountStatus.RESTRICTED,
+      status: AccountStatus.BUSY,
     });
 
     const accountActive = await this.accountsRepo.count({

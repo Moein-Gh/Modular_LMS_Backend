@@ -1,8 +1,10 @@
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { UserStatus } from '@app/domain';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class UpdateUserDto {
-  @IsBoolean()
-  isActive: boolean;
+  @IsEnum(UserStatus)
+  @IsOptional()
+  status?: UserStatus;
 
   @IsString()
   @IsOptional()

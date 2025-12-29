@@ -1,3 +1,5 @@
+import { UserStatus } from '@app/domain';
+
 export type CreateUserInput = {
   identityId: string;
 };
@@ -5,7 +7,7 @@ export type CreateUserInput = {
 export interface CreateUserResult {
   id: string;
   identityId: string;
-  isActive: boolean;
+  status: UserStatus;
   createdAt: Date;
   updatedAt: Date;
 }

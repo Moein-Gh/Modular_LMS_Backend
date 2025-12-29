@@ -16,6 +16,7 @@ import {
   TransactionKind,
   TransactionStatus,
   User,
+  UserStatus,
   type CreateLoanInput,
   type Loan,
   type UpdateLoanInput,
@@ -68,7 +69,6 @@ export class LoansService {
         where: {
           ...(query?.accountId && { accountId: query.accountId }),
           ...(query?.loanTypeId && { loanTypeId: query.loanTypeId }),
-          ...(query?.status && { status: query.status }),
           ...(query?.userId && { account: { userId: query.userId } }),
         },
         searchFields: ['name'],
@@ -243,7 +243,7 @@ export class LoansService {
       await this.accountRepo.update(
         loan.accountId,
         {
-          status: AccountStatus.RESTRICTED,
+          status: AccountStatus.BUSY,
         },
         DBtx,
       );
@@ -436,7 +436,7 @@ export class LoansService {
     if (!user) {
       throw new BadRequestException('Account has no associated user');
     }
-    if (!user.isActive) {
+    if (user.status !== UserStatus.ACTIVE) {
       throw new ConflictException('Account owner is not active');
     }
     return user;
@@ -569,6 +569,9 @@ export class LoansService {
       createdAt: tx_data.createdAt,
       updatedAt: tx_data.updatedAt,
       images: [],
+      isDeleted: tx_data.isDeleted,
+      deletedAt: tx_data.deletedAt ?? undefined,
+      deletedBy: tx_data.deletedBy ?? undefined,
     };
   }
 

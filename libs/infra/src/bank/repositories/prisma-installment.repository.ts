@@ -44,6 +44,9 @@ function toDomain(
     createdAt: m.createdAt,
     updatedAt: m.updatedAt,
     loan: m.loan,
+    isDeleted: m.isDeleted,
+    deletedAt: m.deletedAt ?? undefined,
+    deletedBy: m.deletedBy ?? undefined,
   };
 }
 

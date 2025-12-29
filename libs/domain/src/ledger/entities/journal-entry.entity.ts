@@ -32,4 +32,9 @@ export interface JournalEntry {
   accountId?: string;
   journal?: Journal;
   ledgerAccount?: Partial<LedgerAccount>;
+  ownerId?: string;
+  createdBy?: string;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }

@@ -5,4 +5,7 @@ export interface File {
   mimeType: string;
   size: number;
   createdAt: Date;
+  isDeleted: boolean;
+  deletedAt: Date | null;
+  deletedBy?: string | null;
 }

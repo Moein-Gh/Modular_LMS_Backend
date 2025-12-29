@@ -26,4 +26,9 @@ export interface Installment {
   // timestamps
   createdAt: Date;
   updatedAt: Date;
+  ownerId?: string;
+  createdBy?: string;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }

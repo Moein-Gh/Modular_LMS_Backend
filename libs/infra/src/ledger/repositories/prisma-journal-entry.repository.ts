@@ -22,6 +22,7 @@ const selectJournalEntry = {
   removable: true,
   createdAt: true,
   accountId: true,
+  isDeleted: true,
 };
 
 type JournalEntryModel = Prisma.JournalEntryGetPayload<{
@@ -41,6 +42,7 @@ function toDomain(model: JournalEntryModel): JournalEntry {
     removable: model.removable,
     createdAt: model.createdAt,
     accountId: model.accountId ?? undefined,
+    isDeleted: model.isDeleted,
   };
 }
 

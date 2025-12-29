@@ -33,6 +33,7 @@ function toDomain(model: AccountModelWithRelations): Account {
     code: model.code,
     accountTypeId: model.accountTypeId,
     name: model.name,
+    bookCode: model.bookCode,
     userId: model.userId,
     cardNumber: model.cardNumber,
     bankName: model.bankName,
@@ -41,6 +42,9 @@ function toDomain(model: AccountModelWithRelations): Account {
     updatedAt: model.updatedAt,
     user: model.user,
     accountType: model.accountType,
+    isDeleted: model.isDeleted,
+    deletedAt: model.deletedAt ?? undefined,
+    deletedBy: model.deletedBy ?? undefined,
   };
 }
 
@@ -113,7 +117,7 @@ export class PrismaAccountRepository implements AccountRepository {
       data: input,
       select: accountSelect,
     });
-    return toDomain(created as AccountModel);
+    return toDomain(created as AccountModelWithRelations);
   }
 
   async update(
@@ -127,7 +131,7 @@ export class PrismaAccountRepository implements AccountRepository {
       data: input,
       select: accountSelect,
     });
-    return toDomain(updated as AccountModel);
+    return toDomain(updated as AccountModelWithRelations);
   }
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {

@@ -6,4 +6,7 @@ export interface Identity {
   email: string | null;
   createdAt: Date;
   updatedAt: Date;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }

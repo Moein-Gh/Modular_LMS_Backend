@@ -1,8 +1,10 @@
 import type {
   CreateTransactionInput,
+  Identity,
   Transaction,
   TransactionRepository,
   UpdateTransactionInput,
+  UserStatus,
 } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import { Prisma, type PrismaClient } from '@generated/prisma';
@@ -19,6 +21,7 @@ const selectTransaction = {
   userId: true,
   createdAt: true,
   updatedAt: true,
+  isDeleted: true,
   images: {
     include: {
       file: true,
@@ -37,15 +40,17 @@ const selectTransactionWithRelations = {
   userId: true,
   createdAt: true,
   updatedAt: true,
+  isDeleted: true,
   user: {
     select: {
       id: true,
       code: true,
       identityId: true,
-      isActive: true,
+      status: true,
       createdAt: true,
       updatedAt: true,
       identity: true,
+      isDeleted: true,
     },
   },
   images: {
@@ -78,13 +83,14 @@ function mapTransactionBase(
     userId: model.userId,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
+    isDeleted: model.isDeleted,
   };
 }
 
 function toDomain(model: TransactionModel): Transaction {
   return {
     ...mapTransactionBase(model),
-    images: [], // Empty array for basic transactions
+    images: model.images ?? [],
   };
 }
 
@@ -102,8 +108,9 @@ function toDomainWithRelations(
       id: model.user.id,
       code: model.user.code,
       identityId: model.user.identityId,
-      isActive: model.user.isActive,
-      identity: model.user.identity,
+      status: model.user.status as UserStatus,
+      identity: model.user.identity as Identity,
+      isDeleted: model.user.isDeleted,
     };
   }
 
@@ -125,9 +132,13 @@ export class PrismaTransactionRepository implements TransactionRepository {
       ...(!options?.include && { select: selectTransactionWithRelations }),
     };
     const transactions = await prisma.transaction.findMany(args);
-    return transactions.map((t) =>
-      toDomainWithRelations(t as TransactionWithRelationsModel),
-    );
+    return transactions.map((t) => {
+      if (typeof t === 'object' && t !== null && 'user' in t) {
+        const m = t as unknown as TransactionWithRelationsModel;
+        if (m.user) return toDomainWithRelations(m);
+      }
+      return toDomain(t as unknown as TransactionModel);
+    });
   }
 
   async count(
@@ -150,7 +161,7 @@ export class PrismaTransactionRepository implements TransactionRepository {
       data: input,
       select: selectTransaction,
     });
-    return toDomain(updated as TransactionModel);
+    return toDomain(updated as unknown as TransactionModel);
   }
 
   async create(
@@ -164,7 +175,7 @@ export class PrismaTransactionRepository implements TransactionRepository {
       select: selectTransaction,
     });
 
-    return toDomain(transaction as TransactionModel);
+    return toDomain(transaction as unknown as TransactionModel);
   }
 
   async findById(
@@ -190,7 +201,9 @@ export class PrismaTransactionRepository implements TransactionRepository {
       select: selectTransactionWithRelations,
     });
     if (!transaction) return null;
-    return toDomainWithRelations(transaction as TransactionWithRelationsModel);
+    return toDomainWithRelations(
+      transaction as unknown as TransactionWithRelationsModel,
+    );
   }
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {

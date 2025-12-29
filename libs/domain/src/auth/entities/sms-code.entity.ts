@@ -8,4 +8,7 @@ export interface SmsCode {
   expiresAt: Date;
   consumedAt?: Date;
   createdAt: Date;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }

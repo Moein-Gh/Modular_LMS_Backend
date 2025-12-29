@@ -9,6 +9,7 @@ export * from './dtos/verify-sms-code.dto';
 export * from './errors/invalid-or-expired-code.error';
 export * from './guards/access-token.guard';
 export * from './services/auth.service';
+export * from './services/devices.service';
 export * from './services/identities.service';
 export * from './types/access-token-payload';
 export * from './use-cases/register-user.usecase';

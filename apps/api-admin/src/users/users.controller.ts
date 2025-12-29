@@ -23,7 +23,7 @@ import {
   UsersService,
 } from '@app/application';
 import { Permissions } from '@app/application/decorators/permissions.decorator';
-import { User } from '@app/domain';
+import { User, UserStatus } from '@app/domain';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { GetUserDto } from './dtos/get-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
@@ -47,10 +47,13 @@ export class UsersController {
     return {
       id: user.id,
       code: user.code,
-      isActive: user.isActive,
+      status: user.status,
       identityId: user.identityId,
       identity,
       balanceSummary: user.balanceSummary,
+      isDeleted: user.isDeleted,
+      deletedAt: user.deletedAt,
+      deletedBy: user.deletedBy,
     };
   }
 
@@ -83,7 +86,7 @@ export class UsersController {
     const user = await this.findUserAndIdentity(id);
     return {
       id: user.id,
-      isActive: user.isActive,
+      status: user.status,
       code: user.code,
       identityId: user.identityId,
       balanceSummary: user.balanceSummary,
@@ -109,11 +112,11 @@ export class UsersController {
     const user = await this.findUserAndIdentity(id);
     if (!user) throw new NotFoundError('User', 'id', id);
 
-    // Only allow isActive to be changed when editing other users
-    const canChangeIsActive = !currentUserId || currentUserId !== id;
-    const userUpdate: { isActive?: boolean } = {};
-    if (canChangeIsActive && dto.isActive !== undefined) {
-      userUpdate.isActive = dto.isActive;
+    // Only allow status to be changed when editing other users
+    const canChangeStatus = !currentUserId || currentUserId !== id;
+    const userUpdate: { status?: UserStatus } = {};
+    if (canChangeStatus && dto.status !== undefined) {
+      userUpdate.status = dto.status;
     }
 
     // Call usersService.update only if there is something to update at user-level
@@ -131,14 +134,16 @@ export class UsersController {
     if (!updated) throw new NotFoundError('User', 'id', id);
     return {
       id: updated.id,
-      isActive: updated.isActive,
+      status: updated.status,
       code: updated.code,
       identityId: updated.identityId,
+      balanceSummary: updated.balanceSummary,
       identity: {
         id: user.identity!.id!,
         name: user.identity!.name!,
         email: user.identity!.email!,
-        phone: user.identity?.countryCode + user.identity!.phone!,
+        countryCode: user.identity!.countryCode!,
+        phone: user.identity!.phone!,
         createdAt: user.identity!.createdAt!,
         updatedAt: user.identity!.updatedAt!,
       },

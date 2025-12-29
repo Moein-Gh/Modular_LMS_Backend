@@ -55,6 +55,7 @@ export class UploadthingFileRepository implements IFileRepository {
           },
         });
 
+        // Map deletedBy: null -> undefined to match File interface
         return created;
       } catch (error) {
         // Optionally log error here

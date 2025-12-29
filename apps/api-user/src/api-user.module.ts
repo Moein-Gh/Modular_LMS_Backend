@@ -17,6 +17,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ApiUserController } from './api-user.controller';
 import { ApiUserService } from './api-user.service';
+import { DeviceController } from './auth/device.controller';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { ApiUserService } from './api-user.service';
     AuthApplicationModule,
     UserApplicationModule,
   ],
-  controllers: [ApiUserController],
+  controllers: [ApiUserController, DeviceController],
   providers: [
     ApiUserService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },

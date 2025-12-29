@@ -11,4 +11,7 @@ export interface LoanType {
 
   createdAt: Date;
   updatedAt: Date;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }

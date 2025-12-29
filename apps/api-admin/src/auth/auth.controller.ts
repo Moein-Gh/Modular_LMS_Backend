@@ -6,15 +6,18 @@ import {
   RequestSmsCodeDto,
   VerifySmsCodeDto,
 } from '@app/application';
+import { User } from '@app/domain';
 import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
   Req,
   Res,
+  UnauthorizedException,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 
@@ -32,6 +35,17 @@ function isSecureRequest(req: Request): boolean {
   // True when server is behind HTTPS or reverse proxy sets x-forwarded-proto
   return req.secure || req.headers['x-forwarded-proto'] === 'https';
 }
+
+interface AuthenticatedRequest extends Request {
+  user?: User;
+}
+
+export type DeviceMetaType = {
+  deviceId?: string;
+  deviceName?: string;
+  userAgent?: string;
+  ip?: string;
+};
 
 @Controller('auth')
 export class AuthController {
@@ -53,13 +67,24 @@ export class AuthController {
   async verifySms(
     @Body() body: VerifySmsCodeDto,
     @Res({ passthrough: true }) res: Response,
+    @Req() req: Request,
   ) {
-    const result = await this.auth.verifySmsCode(body);
+    const deviceId = req.headers['x-device-id'] ?? undefined;
+    const deviceName = req.headers['x-device-name'] ?? undefined;
+    const userAgent = req.headers['user-agent'] ?? undefined;
+    const ip =
+      (req.headers['x-forwarded-for'] as string | undefined)
+        ?.split(',')[0]
+        .trim() ?? req.ip;
 
-    // LOGIC:
-    // 1. If NODE_ENV is explicitly 'production' (Cloud), use Secure.
-    // 2. Otherwise (Localhost, Ngrok, Docker, WiFi), use Non-Secure.
-    // This allows the cookie to work on http://192... AND https://ngrok...
+    const deviceMeta: DeviceMetaType = {
+      deviceId: deviceId as string | undefined,
+      deviceName: deviceName as string | undefined,
+      userAgent,
+      ip,
+    };
+    const result = await this.auth.verifySmsCode(body, deviceMeta);
+
     const isCloudProduction = process.env.NODE_ENV === 'production';
 
     const cookieOptions = {
@@ -81,6 +106,7 @@ export class AuthController {
 
     return {
       success: true,
+      user: result.user,
       userId: result.userId,
       sessionId: result.sessionId,
     };
@@ -114,9 +140,19 @@ export class AuthController {
     });
     return {
       success: true,
+      user: result.user,
       userId: result.userId,
       sessionId: result.sessionId,
     };
+  }
+
+  @Get('me')
+  @HttpCode(HttpStatus.OK)
+  currentUser(@Req() req: AuthenticatedRequest) {
+    if (!req.user) {
+      throw new UnauthorizedException('User context not set');
+    }
+    return req.user;
   }
 
   @Post('logout')
@@ -126,7 +162,9 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.auth.logout(body);
+    const deviceId =
+      (req.headers['x-device-id'] as string | undefined) ?? undefined;
+    const result = await this.auth.logout(body, deviceId);
     // Clear auth cookies
     res.cookie('accessToken', '', {
       httpOnly: true,

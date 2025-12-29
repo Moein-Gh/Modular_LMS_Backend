@@ -5,6 +5,7 @@ import type { Role } from '@app/domain';
 import {
   ROLE_ASSIGNMENT_REPOSITORY,
   ROLE_REPOSITORY,
+  RoleAssignmentStatus,
   type RoleAssignmentRepository,
   type RoleRepository,
 } from '@app/domain';
@@ -60,7 +61,9 @@ export class RolesService {
 
     // Fetch assignments for all roles on the page in one query
     const assignments = await this.roleAssignmentsRepo.findAll(
-      { where: { roleId: { in: roleIds }, isActive: true } } as any,
+      {
+        where: { roleId: { in: roleIds }, status: RoleAssignmentStatus.ACTIVE },
+      },
       tx,
     );
 

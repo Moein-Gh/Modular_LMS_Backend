@@ -17,6 +17,9 @@ type RoleModel = {
   description: string | null;
   createdAt: Date;
   updatedAt: Date;
+  isDeleted: boolean;
+  deletedAt: Date | undefined;
+  deletedBy: string | undefined;
 };
 
 const roleSelect = {
@@ -38,6 +41,9 @@ function toDomain(model: RoleModel): Role {
     description: model.description ?? undefined,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
+    isDeleted: model.isDeleted,
+    deletedAt: model.deletedAt ?? undefined,
+    deletedBy: model.deletedBy ?? undefined,
   };
 }
 

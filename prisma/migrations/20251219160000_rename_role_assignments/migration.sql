@@ -1,3 +1,0 @@
--- No-op migration.
--- Prisma schema change only: renamed relation fields on `User`/`Role` from `RoleAssignments` to `roleAssignments`.
--- Relation field renames do not change the underlying database schema.

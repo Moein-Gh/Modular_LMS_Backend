@@ -1,8 +1,11 @@
-import type { Role, User } from '@app/domain';
 import {
   CreateRoleAssignmentInput,
+  Role,
   RoleAssignment,
   RoleAssignmentRepository,
+  RoleAssignmentStatus,
+  User,
+  UserStatus,
 } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import type { PrismaClient } from '@generated/prisma';
@@ -17,7 +20,7 @@ const roleAssignmentSelect: Prisma.RoleAssignmentSelect = {
   expiresAt: true,
   createdAt: true,
   updatedAt: true,
-  isActive: true,
+  status: true,
 };
 
 type RoleAssignmentModel = {
@@ -28,14 +31,16 @@ type RoleAssignmentModel = {
   expiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
-  isActive: boolean;
+  status: RoleAssignmentStatus;
+  isDeleted: boolean;
 };
 
 type UserModel = {
   id: string;
   code: number;
   identityId: string;
-  isActive: boolean;
+  status: UserStatus;
+  isDeleted: boolean;
 };
 
 type RoleModel = {
@@ -46,6 +51,7 @@ type RoleModel = {
   description?: string;
   createdAt: Date;
   updatedAt: Date;
+  isDeleted: boolean;
 };
 
 function toDomainUser(model: UserModel): User {
@@ -53,7 +59,8 @@ function toDomainUser(model: UserModel): User {
     id: model.id,
     code: model.code,
     identityId: model.identityId,
-    isActive: model.isActive,
+    status: model.status,
+    isDeleted: model.isDeleted,
   };
 }
 
@@ -66,6 +73,7 @@ function toDomainRole(model: RoleModel): Role {
     description: model.description ?? undefined,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
+    isDeleted: model.isDeleted,
   };
 }
 
@@ -80,7 +88,8 @@ function toDomain(
     expiresAt: model.expiresAt,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
-    isActive: model.isActive,
+    isDeleted: model.isDeleted,
+    status: model.status,
     user: model.user ? toDomainUser(model.user) : undefined,
     role: model.role ? toDomainRole(model.role) : undefined,
   };
@@ -126,7 +135,7 @@ export class PrismaRoleAssignmentRepository
         roleId: data.roleId,
         assignedBy: data.assignedBy ?? null,
         expiresAt: data.expiresAt ?? null,
-        isActive: true,
+        status: RoleAssignmentStatus.ACTIVE,
       },
       select: roleAssignmentSelect,
     });

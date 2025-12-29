@@ -32,6 +32,7 @@ function toDomain(model: LedgerAccountModel): LedgerAccount {
     status: model.status as unknown as LedgerAccount['status'],
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
+    isDeleted: false,
   };
 }
 

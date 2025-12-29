@@ -1,5 +1,6 @@
 import { UsersService } from '@app/application/user/services/users.service';
 import { ConfigService } from '@app/config';
+import { UserStatus } from '@app/domain';
 import {
   CanActivate,
   ExecutionContext,
@@ -70,7 +71,8 @@ export class AccessTokenGuard implements CanActivate {
 
     const user = await this.usersService.findById(payload.sub);
     if (!user) throw new UnauthorizedException('User not found');
-    if (!user.isActive) throw new UnauthorizedException('User is not active');
+    if (user.status !== UserStatus.ACTIVE)
+      throw new UnauthorizedException('User is not active');
 
     // Attach full user and userId to request for downstream handlers
     req.user = user;

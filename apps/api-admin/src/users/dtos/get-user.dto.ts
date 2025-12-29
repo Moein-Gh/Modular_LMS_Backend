@@ -1,7 +1,7 @@
-import { Identity, UserBalanceSummary } from '@app/domain';
+import { Identity, UserBalanceSummary, UserStatus } from '@app/domain';
 import { Type } from 'class-transformer';
 import {
-  IsBoolean,
+  IsEnum,
   IsNumber,
   IsObject,
   IsOptional,
@@ -16,9 +16,8 @@ export class GetUserDto {
   @Type(() => Number)
   code: number;
 
-  @IsBoolean()
-  @Type(() => Boolean)
-  isActive: boolean;
+  @IsEnum(UserStatus)
+  status: UserStatus;
 
   @IsString()
   identityId: string;

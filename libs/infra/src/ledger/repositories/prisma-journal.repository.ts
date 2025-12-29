@@ -22,6 +22,7 @@ const journalSelect = {
   status: true,
   createdAt: true,
   updatedAt: true,
+  isDeleted: true,
 };
 
 const journalSelectWithEntries = {
@@ -38,6 +39,7 @@ const journalSelectWithEntries = {
       targetId: true,
       removable: true,
       createdAt: true,
+      isDeleted: true,
       ledgerAccount: {
         select: {
           id: true,
@@ -48,6 +50,7 @@ const journalSelectWithEntries = {
           name: true,
           nameFa: true,
           type: true,
+          isDeleted: true,
         },
       },
       // Relations for population
@@ -104,6 +107,7 @@ function toJournalEntry(
     target,
     removable: entry.removable,
     createdAt: entry.createdAt,
+    isDeleted: entry.isDeleted,
     ledgerAccount: entry.ledgerAccount
       ? {
           code: entry.ledgerAccount.code,
@@ -127,6 +131,7 @@ function toJournal(
     status: model.status as unknown as Journal['status'],
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
+    isDeleted: model.isDeleted,
   };
 
   if ('entries' in model && model.entries) {
@@ -229,7 +234,7 @@ export class PrismaJournalRepository implements JournalRepository {
       prisma,
     );
 
-    return rows.map((r) => toJournal(r as JournalModelWithEntries, loanMap));
+    return rows.map((r) => toJournal(r, loanMap));
   }
 
   private async fetchLoansForJournals(

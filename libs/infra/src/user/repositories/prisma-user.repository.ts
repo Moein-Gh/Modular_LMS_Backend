@@ -3,16 +3,32 @@ import {
   NotFoundError,
   UpdateUserInput,
 } from '@app/application';
-import type { IUserRepository, User } from '@app/domain';
+import {
+  RoleAssignmentStatus,
+  UserStatus,
+  type Identity,
+  type IUserRepository,
+  type Role,
+  type RoleAssignment,
+  type User,
+} from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
-import { Prisma } from '@generated/prisma';
+import type { Prisma, PrismaClient } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
+
+const userRelationsInclude = {
+  identity: true,
+  roleAssignments: {
+    include: {
+      role: true,
+    },
+  },
+} as const;
 
 @Injectable()
 export class PrismaUserRepository implements IUserRepository {
-  constructor(
-    @Inject(PrismaService) private readonly prisma: Prisma.TransactionClient,
-  ) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaClient) {}
+
   public async count(
     where?: Prisma.UserWhereInput,
     tx?: Prisma.TransactionClient,
@@ -32,7 +48,11 @@ export class PrismaUserRepository implements IUserRepository {
       where: { id },
       data: input,
     });
-    return updated;
+    return this.toDomain(
+      updated as Prisma.UserGetPayload<{
+        include: typeof userRelationsInclude;
+      }>,
+    );
   }
 
   public async create(
@@ -44,10 +64,12 @@ export class PrismaUserRepository implements IUserRepository {
     const user = await prisma.user.create({
       data: {
         identityId: input.identityId,
-        isActive: true,
+        status: UserStatus.ACTIVE,
       },
     });
-    return user;
+    return this.toDomain(
+      user as Prisma.UserGetPayload<{ include: typeof userRelationsInclude }>,
+    );
   }
 
   public async findById(
@@ -57,47 +79,34 @@ export class PrismaUserRepository implements IUserRepository {
     const prisma = tx ?? this.prisma;
     const user = await prisma.user.findUnique({
       where: { id },
-      include: {
-        identity: {
-          select: {
-            name: true,
-          },
-        },
-      },
+      include: userRelationsInclude,
     });
     if (!user) return null;
-    return user;
+    return this.toDomain(user);
   }
 
   public async setActive(
     userId: string,
-    isActive: boolean,
     tx?: Prisma.TransactionClient,
   ): Promise<void> {
     const prisma = tx ?? this.prisma;
     await prisma.user.update({
       where: { id: userId },
-      data: { isActive },
+      data: { status: UserStatus.ACTIVE },
     });
   }
 
   public async findByIdentityId(
     identityId: string,
-    include: boolean,
     tx?: Prisma.TransactionClient,
   ): Promise<User | null> {
     const prisma = tx ?? this.prisma;
     const user = await prisma.user.findUnique({
       where: { identityId },
-      include: {
-        identity: include ?? {
-          select: {
-            name: true,
-          },
-        },
-      },
+      include: userRelationsInclude,
     });
-    return user;
+    if (!user) return null;
+    return this.toDomain(user);
   }
 
   public async findAll(
@@ -106,7 +115,11 @@ export class PrismaUserRepository implements IUserRepository {
   ): Promise<User[]> {
     const prisma = tx ?? this.prisma;
     const users = await prisma.user.findMany(options);
-    return users;
+    return users.map((user) =>
+      this.toDomain(
+        user as Prisma.UserGetPayload<{ include: typeof userRelationsInclude }>,
+      ),
+    );
   }
 
   public async delete(
@@ -123,11 +136,77 @@ export class PrismaUserRepository implements IUserRepository {
   ): Promise<User> {
     const prisma = tx ?? this.prisma;
     const user = await prisma.user.findUnique({
-      where: { id, isActive: true },
+      where: { id, status: UserStatus.ACTIVE },
+      include: userRelationsInclude,
     });
     if (!user) {
       throw new NotFoundError('User', 'id', id);
     }
-    return user;
+    return this.toDomain(user);
+  }
+
+  private toDomain(
+    user: Prisma.UserGetPayload<{ include: typeof userRelationsInclude }>,
+  ): User {
+    return {
+      id: user.id,
+      code: user.code,
+      identityId: user.identityId,
+      status: user.status as UserStatus,
+      isDeleted: user.isDeleted,
+      identity: user.identity ? this.mapIdentity(user.identity) : undefined,
+      roleAssignments: user.roleAssignments
+        ? user.roleAssignments.map((assignment) =>
+            this.mapRoleAssignment(
+              assignment as Prisma.RoleAssignmentGetPayload<{
+                include: { role: true };
+              }>,
+            ),
+          )
+        : undefined,
+    };
+  }
+
+  private mapIdentity(identity: Prisma.IdentityGetPayload<object>): Identity {
+    return {
+      id: identity.id,
+      phone: identity.phone,
+      name: identity.name,
+      countryCode: identity.countryCode,
+      email: identity.email,
+      isDeleted: identity.isDeleted,
+      createdAt: identity.createdAt,
+      updatedAt: identity.updatedAt,
+    };
+  }
+
+  private mapRole(model: Prisma.RoleGetPayload<object>): Role {
+    return {
+      id: model.id,
+      code: model.code,
+      name: model.name,
+      key: model.key,
+      isDeleted: model.isDeleted,
+      description: model.description ?? undefined,
+      createdAt: model.createdAt,
+      updatedAt: model.updatedAt,
+    };
+  }
+
+  private mapRoleAssignment(
+    assignment: Prisma.RoleAssignmentGetPayload<{ include: { role: true } }>,
+  ): RoleAssignment {
+    return {
+      id: assignment.id,
+      userId: assignment.userId,
+      roleId: assignment.roleId,
+      assignedBy: assignment.assignedBy ?? undefined,
+      expiresAt: assignment.expiresAt ?? undefined,
+      createdAt: assignment.createdAt,
+      updatedAt: assignment.updatedAt,
+      status: assignment.status as RoleAssignmentStatus,
+      isDeleted: assignment.isDeleted,
+      role: assignment.role ? this.mapRole(assignment.role) : undefined,
+    };
   }
 }

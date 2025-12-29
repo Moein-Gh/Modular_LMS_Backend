@@ -38,6 +38,9 @@ function toDomain(model: BankModel): Bank {
     accountId: model.accountId ?? undefined,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
+    isDeleted: model.isDeleted,
+    deletedAt: model.deletedAt ?? undefined,
+    deletedBy: model.deletedBy ?? undefined,
   };
 }
 

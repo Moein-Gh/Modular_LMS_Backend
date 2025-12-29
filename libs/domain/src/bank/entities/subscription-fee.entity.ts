@@ -19,8 +19,13 @@ export interface SubscriptionFee {
   paidAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  ownerId?: string;
+  createdBy?: string;
 
   // relation
   account?: Account;
   journalEntry?: JournalEntry;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }
