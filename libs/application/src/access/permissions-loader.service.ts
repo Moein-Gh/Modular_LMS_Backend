@@ -1,7 +1,9 @@
 import {
+  GrantType,
   PERMISSION_GRANT_REPOSITORY,
   PERMISSION_REPOSITORY,
   ROLE_ASSIGNMENT_REPOSITORY,
+  ROLE_PERMISSION_REPOSITORY,
   UserStatus,
 } from '@app/domain';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
@@ -14,6 +16,8 @@ import type {
   PermissionRepository,
   RoleAssignment,
   RoleAssignmentRepository,
+  RolePermission,
+  RolePermissionRepository,
 } from '@app/domain';
 
 /**
@@ -31,6 +35,8 @@ export class PermissionsLoaderService {
     private readonly permissionGrantRepo: PermissionGrantRepository,
     @Inject(PERMISSION_REPOSITORY)
     private readonly permissionRepo: PermissionRepository,
+    @Inject(ROLE_PERMISSION_REPOSITORY)
+    private readonly rolePermissionRepo: RolePermissionRepository,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
@@ -58,11 +64,11 @@ export class PermissionsLoaderService {
       isGranted: boolean;
     };
     const orConditions: GrantCondition[] = [
-      { granteeType: 'user', granteeId: userId, isGranted: true },
+      { granteeType: GrantType.USER, granteeId: userId, isGranted: true },
     ];
     if (roleIds.length) {
       orConditions.push({
-        granteeType: 'role',
+        granteeType: GrantType.ROLE,
         granteeId: { in: roleIds },
         isGranted: true,
       });
@@ -70,16 +76,37 @@ export class PermissionsLoaderService {
     const where = { OR: orConditions };
 
     const grants = await this.permissionGrantRepo.findAll({ where });
+
     const permissionIds = Array.from(
       new Set(
         grants.map((g: PermissionGrant) => g.permissionId).filter(Boolean),
       ),
     );
 
+    // also include permissions assigned to roles via the role-permissions table
+    let rolePermissionIds: string[] = [];
+    if (roleIds.length) {
+      const rolePermLists = await Promise.all(
+        roleIds.map((rId: string) => this.rolePermissionRepo.findByRoleId(rId)),
+      );
+      rolePermissionIds = Array.from(
+        new Set(
+          rolePermLists
+            .flat()
+            .map((rp: RolePermission) => rp.permissionId)
+            .filter(Boolean),
+        ),
+      );
+    }
+
+    const allPermissionIds = Array.from(
+      new Set([...permissionIds, ...rolePermissionIds]),
+    );
+
     let keys: string[] = [];
-    if (permissionIds.length) {
+    if (allPermissionIds.length) {
       const perms = await this.permissionRepo.findAll({
-        where: { id: { in: permissionIds } },
+        where: { id: { in: allPermissionIds } },
       });
       keys = perms.map((p: Permission) => p.key);
     }

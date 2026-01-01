@@ -15,5 +15,5 @@ export interface IUserRepository {
   count(where?: unknown, tx?: unknown): Promise<number>;
   create(account: CreateUserInput, tx?: unknown): Promise<User>;
   update(id: string, account: UpdateUserInput, tx?: unknown): Promise<User>;
-  delete(id: string, tx?: unknown): Promise<void>;
+  softDelete(id: string, tx?: unknown): Promise<void>;
 }

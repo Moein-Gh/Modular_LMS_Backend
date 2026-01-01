@@ -12,6 +12,7 @@ import {
   type RoleAssignment,
   type User,
 } from '@app/domain';
+import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import type { Prisma, PrismaClient } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
@@ -27,7 +28,10 @@ const userRelationsInclude = {
 
 @Injectable()
 export class PrismaUserRepository implements IUserRepository {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaClient) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaClient,
+    private readonly prismaTransactionalRepo: PrismaTransactionalRepository,
+  ) {}
 
   public async count(
     where?: Prisma.UserWhereInput,
@@ -122,12 +126,15 @@ export class PrismaUserRepository implements IUserRepository {
     );
   }
 
-  public async delete(
-    id: string,
-    tx?: Prisma.TransactionClient,
-  ): Promise<void> {
-    const prisma = tx ?? this.prisma;
-    await prisma.user.delete({ where: { id } });
+  async softDelete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const run = async (DBtx: Prisma.TransactionClient) => {
+      const user = await DBtx.user.findUnique({ where: { id } });
+      await DBtx.identity.delete({ where: { id: user?.identityId } });
+      await DBtx.user.delete({ where: { id } });
+    };
+
+    if (tx) return run(tx);
+    return this.prismaTransactionalRepo.withTransaction(run);
   }
 
   public async findActiveUserOrThrow(

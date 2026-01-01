@@ -2,7 +2,8 @@ import { PrismaService } from '@app/infra/prisma/prisma.service';
 import type { Prisma } from '@generated/prisma';
 import { Injectable } from '@nestjs/common';
 import type { RolePermission } from '../../../../domain/src/access/entities/role-permission.entity';
-import type { IRolePermissionRepository } from '../../../../domain/src/access/repositories/role-permission.repository';
+
+import { RolePermissionRepository } from '@app/domain';
 import type {
   CreateRolePermissionInput,
   UpdateRolePermissionInput,
@@ -33,7 +34,7 @@ function toDomain(model: RolePermissionModel): RolePermission {
 
 @Injectable()
 export class PrismaRolePermissionRepository
-  implements IRolePermissionRepository
+  implements RolePermissionRepository
 {
   constructor(private readonly prisma: PrismaService) {}
 

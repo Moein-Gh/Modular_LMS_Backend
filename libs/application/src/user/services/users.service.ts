@@ -102,7 +102,7 @@ export class UsersService {
       }
 
       try {
-        await this.usersRepo.delete(id, trx);
+        await this.usersRepo.softDelete(id, trx);
         // delete identity
         await trx.identity.delete({ where: { id: existing.identityId } });
       } catch (e) {

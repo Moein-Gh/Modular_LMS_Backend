@@ -36,7 +36,8 @@ export class AuthService {
     if (!user) {
       throw new NotFoundError('کاربر', 'شناسه', identity.id);
     }
-    if (user.status === UserStatus.ACTIVE) {
+
+    if (user.status !== UserStatus.ACTIVE) {
       throw new BadRequestException('کاربر فعال نیست');
     }
 

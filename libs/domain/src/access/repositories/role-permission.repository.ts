@@ -4,7 +4,7 @@ import {
   UpdateRolePermissionInput,
 } from '../types/role-permission.type';
 
-export interface IRolePermissionRepository {
+export interface RolePermissionRepository {
   create(rolePermission: CreateRolePermissionInput): Promise<RolePermission>;
   findById(id: string): Promise<RolePermission | null>;
   findByRoleId(roleId: string): Promise<RolePermission[]>;
@@ -16,3 +16,5 @@ export interface IRolePermissionRepository {
   ): Promise<RolePermission>;
   delete(id: string): Promise<void>;
 }
+
+export const ROLE_PERMISSION_REPOSITORY = Symbol('ROLE_PERMISSION_REPOSITORY');
