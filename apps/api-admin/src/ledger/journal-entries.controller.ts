@@ -1,4 +1,5 @@
 import { PaginatedResponseDto } from '@app/application';
+import { AddMultipleJournalEntriesDto } from '@app/application/ledger/dto/add-multiple-journal-entries.dto';
 import { AddSingleJournalEntryDto } from '@app/application/ledger/dto/add-single-journal-entry.dto';
 import { GetJournalEntriesQueryDto } from '@app/application/ledger/dto/get-journalEntries-query.dto';
 import { JournalEntriesService } from '@app/application/ledger/journal-entries.service';
@@ -46,6 +47,19 @@ export class JournalEntriesController {
     @Body() dto: AddSingleJournalEntryDto,
   ): Promise<Journal> {
     return this.journalEntriesService.addSingleEntry(dto);
+  }
+
+  @Post('/multiple')
+  @ApiOperation({
+    summary:
+      'Add multiple journal entries of the same type to an existing journal',
+    description:
+      'Add multiple journal entries at once to a PENDING journal. Useful for bulk operations like allocating multiple installments, subscription fees, or account adjustments in a single transaction.',
+  })
+  async addMultipleEntries(
+    @Body() dto: AddMultipleJournalEntriesDto,
+  ): Promise<Journal> {
+    return this.journalEntriesService.addMultipleEntries(dto);
   }
 
   @Delete('/:id')

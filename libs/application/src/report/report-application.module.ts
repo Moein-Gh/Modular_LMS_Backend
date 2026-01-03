@@ -1,3 +1,4 @@
+import { DateModule } from '@app/date';
 import {
   BankInfraModule,
   LedgerInfraModule,
@@ -13,6 +14,7 @@ import { ReportService } from './report.service';
     BankInfraModule,
     UserInfraModule,
     TransactionInfraModule,
+    DateModule,
   ],
   providers: [ReportService],
   exports: [ReportService],

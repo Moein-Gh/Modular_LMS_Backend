@@ -104,7 +104,7 @@ export class PrismaLoanRepository implements LoanRepository {
   }
 
   async create(
-    input: CreateLoanInput,
+    input: CreateLoanInput & { userId: string },
     tx?: Prisma.TransactionClient,
   ): Promise<Loan> {
     const prisma = tx ?? this.prisma;

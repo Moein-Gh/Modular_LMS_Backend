@@ -5,7 +5,7 @@ import type { LoanType } from './loan-type.entity';
 export enum LoanStatus {
   PENDING = 'PENDING',
   ACTIVE = 'ACTIVE',
-  CLOSED = 'CLOSED',
+  PAID = 'PAID',
 }
 
 export interface Loan {

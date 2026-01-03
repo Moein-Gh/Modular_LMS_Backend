@@ -1,9 +1,9 @@
+import { DateService } from '@app/date';
 import {
   AccountStatus,
   BankFinancialSummary,
   LEDGER_ACCOUNT_CODES,
   LoanStatus,
-  UserStatus,
 } from '@app/domain';
 import {
   PrismaAccountRepository,
@@ -23,6 +23,7 @@ export class ReportService {
     private readonly accountsRepo: PrismaAccountRepository,
     private readonly loansRepo: PrismaLoanRepository,
     private readonly transactionsRepo: PrismaTransactionRepository,
+    private readonly dateService: DateService,
   ) {}
 
   // must return these
@@ -78,39 +79,14 @@ export class ReportService {
 
       // Build month-end dates between effectiveStart and end inclusive
       const monthEnds: Date[] = [];
-      const s = new Date(effectiveStart);
-      s.setUTCDate(1);
-      s.setUTCHours(0, 0, 0, 0);
-      const e = new Date(end);
-      e.setUTCHours(23, 59, 59, 999);
+      const s = this.dateService.startOfMonth(effectiveStart);
+      const e = this.dateService.endOfDay(end);
 
-      let iter = new Date(s);
-      // move iter to end of its month
-      iter = new Date(
-        Date.UTC(
-          iter.getUTCFullYear(),
-          iter.getUTCMonth() + 1,
-          0,
-          23,
-          59,
-          59,
-          999,
-        ),
-      );
+      let iter = this.dateService.endOfMonth(s);
       while (iter <= e) {
         monthEnds.push(new Date(iter));
         // advance one month
-        iter = new Date(
-          Date.UTC(
-            iter.getUTCFullYear(),
-            iter.getUTCMonth() + 2,
-            0,
-            23,
-            59,
-            59,
-            999,
-          ),
-        );
+        iter = this.dateService.endOfMonth(this.dateService.addMonths(iter, 1));
       }
 
       // If no month ends found (start after end), use single point at end
@@ -145,8 +121,8 @@ export class ReportService {
       const avg = sum / numeric.length;
 
       // Compute last month's value relative to the provided end date
-      const lastMonthEnd = new Date(
-        Date.UTC(e.getUTCFullYear(), e.getUTCMonth(), 0, 23, 59, 59, 999),
+      const lastMonthEnd = this.dateService.endOfMonth(
+        this.dateService.subMonths(e, 1),
       );
       // If lastMonthEnd < first month end, use first month's value
       let lastMonthVal: string;
@@ -218,36 +194,46 @@ export class ReportService {
   // 3. total loans (total , active , pending)
   // 4. total transactions (total , pending)
   async getEntitesSummary() {
-    const users = await this.usersRepo.count({ status: UserStatus.ACTIVE });
+    const users = await this.usersRepo.count({
+      isDeleted: false,
+    });
 
-    const accountsTotal = await this.accountsRepo.count();
+    const accountsTotal = await this.accountsRepo.count({ isDeleted: false });
 
     const accountsRestricted = await this.accountsRepo.count({
       status: AccountStatus.BUSY,
+      isDeleted: false,
     });
 
     const accountActive = await this.accountsRepo.count({
       status: AccountStatus.ACTIVE,
+      isDeleted: false,
     });
 
-    const loansTotal = await this.loansRepo.count();
+    const loansTotal = await this.loansRepo.count({ isDeleted: false });
 
     const loansActive = await this.loansRepo.count({
       status: LoanStatus.ACTIVE,
+      isDeleted: false,
     });
 
     const loansPending = await this.loansRepo.count({
       status: LoanStatus.PENDING,
+      isDeleted: false,
     });
 
-    const transactionsTotal = await this.transactionsRepo.count();
+    const transactionsTotal = await this.transactionsRepo.count({
+      isDeleted: false,
+    });
 
     const transactionsPending = await this.transactionsRepo.count({
       status: TransactionStatus.PENDING,
+      isDeleted: false,
     });
 
     const transactionsAllocated = await this.transactionsRepo.count({
       status: TransactionStatus.ALLOCATED,
+      isDeleted: false,
     });
 
     return {

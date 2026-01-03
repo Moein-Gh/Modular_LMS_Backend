@@ -4,6 +4,7 @@ import {
   paginatePrisma,
 } from '@app/application/common/pagination.util';
 import { TransactionsService } from '@app/application/transaction/services/transactions.service';
+import { DateService } from '@app/date';
 import type { Account } from '@app/domain';
 import {
   AccountStatus,
@@ -45,6 +46,7 @@ export class AccountsService {
     private readonly loansRepo: PrismaLoanRepository,
     private readonly bankFinancialsService: BankFinancialsService,
     private readonly transactionsService: TransactionsService,
+    private readonly dateService: DateService,
   ) {}
 
   async findAll(
@@ -165,19 +167,20 @@ export class AccountsService {
       const bank = await this.bankRepo.findOne(DBtx);
       if (bank && bank.subscriptionFee) {
         const baseAmount = bank.subscriptionFee;
-        const startDate = created.createdAt
+        const accountCreationDate = created.createdAt
           ? new Date(created.createdAt)
           : new Date();
-        for (let i = 1; i <= 6; i++) {
-          const d = new Date(
-            startDate.getFullYear(),
-            startDate.getMonth() + i,
-            1,
-          );
+        // Get the first day of the next month
+        const firstFeeDate = this.dateService.startOfMonth(
+          this.dateService.addMonths(accountCreationDate, 1),
+        );
+        // Create 6 months of subscription fees starting from next month
+        for (let i = 0; i < 6; i++) {
+          const periodStart = this.dateService.addMonths(firstFeeDate, i);
           await this.subscriptionFeesRepo.create(
             {
               accountId: created.id,
-              periodStart: d,
+              periodStart,
               amount: baseAmount,
               status: SubscriptionFeeStatus.DUE,
             },

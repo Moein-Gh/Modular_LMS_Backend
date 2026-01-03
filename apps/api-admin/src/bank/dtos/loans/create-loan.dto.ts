@@ -18,9 +18,6 @@ export class CreateLoanDto {
   accountId!: string;
 
   @IsUUID('4')
-  userId!: string;
-
-  @IsUUID('4')
   loanTypeId!: string;
 
   @IsString()

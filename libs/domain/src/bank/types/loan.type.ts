@@ -3,13 +3,7 @@ import { Loan, LoanStatus } from '../entities/loan.entity';
 
 export type CreateLoanInput = Pick<
   Loan,
-  | 'name'
-  | 'accountId'
-  | 'loanTypeId'
-  | 'amount'
-  | 'startDate'
-  | 'paymentMonths'
-  | 'userId'
+  'name' | 'accountId' | 'loanTypeId' | 'amount' | 'startDate' | 'paymentMonths'
 > & {
   status?: LoanStatus; // default PENDING if omitted
 };

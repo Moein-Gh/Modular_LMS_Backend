@@ -487,10 +487,10 @@ export class TransactionsService {
           );
 
           if (installments === 0 && loan) {
-            // update the loan status to closed
+            // update the loan status to paid
             await this.loanRepo.update(
               loan.id,
-              { status: LoanStatus.CLOSED },
+              { status: LoanStatus.PAID },
               trx,
             );
             await this.accountRepo.update(

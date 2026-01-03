@@ -21,6 +21,8 @@
       "@app/application/*": ["./libs/application/src/*"],
       "@app/config": ["./libs/config/src"],
       "@app/config/*": ["./libs/config/src/*"],
+      "@app/date": ["./libs/date/src"],
+      "@app/date/*": ["./libs/date/src/*"],
       "@app/domain": ["./libs/domain/src"],
       "@app/domain/*": ["./libs/domain/src/*"],
       "@app/infra": ["./libs/infra/src"],

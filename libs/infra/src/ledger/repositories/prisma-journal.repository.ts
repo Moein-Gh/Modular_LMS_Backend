@@ -166,11 +166,20 @@ export class PrismaJournalRepository implements JournalRepository {
     const prisma = tx ?? this.prisma;
     const journal = await prisma.journal.findUnique({
       where: { id },
-      select: journalSelectWithEntries,
+      select: {
+        ...journalSelectWithEntries,
+        entries: {
+          select: journalSelectWithEntries.entries.select,
+          where: { isDeleted: false },
+        },
+      },
     });
     if (!journal) return null;
 
-    const loanMap = await this.fetchLoansForJournals([journal], prisma);
+    const loanMap = await this.fetchLoansForJournals(
+      [journal as JournalModelWithEntries],
+      prisma,
+    );
     return toJournal(journal as JournalModelWithEntries, loanMap);
   }
 
@@ -225,7 +234,13 @@ export class PrismaJournalRepository implements JournalRepository {
   ): Promise<Journal[]> {
     const prisma = tx ?? this.prisma;
     const rows = await prisma.journal.findMany({
-      select: journalSelectWithEntries,
+      select: {
+        ...journalSelectWithEntries,
+        entries: {
+          select: journalSelectWithEntries.entries.select,
+          where: { isDeleted: false },
+        },
+      },
       ...(options ?? {}),
     });
 

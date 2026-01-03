@@ -142,7 +142,7 @@ export class PrismaLedgerAccountRepository implements LedgerAccountRepository {
 
     // First, get the account to determine its type
     const account = await prisma.ledgerAccount.findUnique({
-      where: { code: accountCode },
+      where: { code: accountCode, isDeleted: false },
       select: { id: true, type: true },
     });
 
@@ -173,6 +173,7 @@ export class PrismaLedgerAccountRepository implements LedgerAccountRepository {
       prisma.journalEntry.aggregate({
         where: {
           ...whereClause,
+          isDeleted: false,
           dc: 'DEBIT',
         },
         _sum: {
@@ -182,6 +183,7 @@ export class PrismaLedgerAccountRepository implements LedgerAccountRepository {
       prisma.journalEntry.aggregate({
         where: {
           ...whereClause,
+          isDeleted: false,
           dc: 'CREDIT',
         },
         _sum: {
@@ -218,14 +220,18 @@ export class PrismaLedgerAccountRepository implements LedgerAccountRepository {
     const prisma = tx ?? this.prisma;
 
     const account = await prisma.ledgerAccount.findUnique({
-      where: { code: accountCode },
+      where: { code: accountCode, isDeleted: false },
       select: { id: true },
     });
 
     if (!account) return null;
 
     const row = await prisma.journalEntry.findFirst({
-      where: { ledgerAccountId: account.id, journal: { status: 'POSTED' } },
+      where: {
+        ledgerAccountId: account.id,
+        journal: { status: 'POSTED' },
+        isDeleted: false,
+      },
       orderBy: { createdAt: 'asc' },
       select: { createdAt: true },
     });

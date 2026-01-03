@@ -26,6 +26,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { AddMultipleJournalEntriesDto } from './dto/add-multiple-journal-entries.dto';
 import { AddSingleJournalEntryDto } from './dto/add-single-journal-entry.dto';
 import { GetJournalEntriesQueryDto } from './dto/get-journalEntries-query.dto';
 
@@ -230,6 +231,154 @@ export class JournalEntriesService {
     return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
   }
 
+  /**
+   * Add multiple journal entries of the same type to a PENDING journal.
+   * For example: multiple installments, multiple subscription fees, or multiple account adjustments.
+   */
+  async addMultipleEntries(
+    dto: AddMultipleJournalEntriesDto,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Journal> {
+    const run = async (DBtx: Prisma.TransactionClient): Promise<Journal> => {
+      // 1. Validate journal exists and is in PENDING status
+      const journal = await this.journalRepository.findById(
+        dto.journalId,
+        DBtx,
+      );
+      if (!journal) {
+        throw new NotFoundException(
+          `Journal with id ${dto.journalId} not found`,
+        );
+      }
+      if (journal.status !== JournalStatus.PENDING) {
+        throw new ConflictException(
+          `Cannot add entries to journal with status ${journal.status}. Only PENDING journals can be modified.`,
+        );
+      }
+
+      // 2. Get ledger accounts
+      const ledgerAccounts = await this.ledgerAccountRepository.findAll(
+        {},
+        DBtx,
+      );
+      if (!ledgerAccounts || ledgerAccounts.length === 0) {
+        throw new NotFoundException(`No Ledger Accounts found`);
+      }
+
+      let creditLedgerAccount: LedgerAccount | undefined;
+      const debitLedgerAccount: LedgerAccount | undefined = ledgerAccounts.find(
+        (la) => la.code === '2050',
+      );
+
+      switch (dto.allocationType) {
+        case AllocationType.ACCOUNT_BALANCE:
+          creditLedgerAccount = ledgerAccounts.find((la) => la.code === '2000');
+          break;
+        case AllocationType.LOAN_REPAYMENT:
+          creditLedgerAccount = ledgerAccounts.find((la) => la.code === '1100');
+          break;
+        case AllocationType.SUBSCRIPTION_FEE:
+          creditLedgerAccount = ledgerAccounts.find((la) => la.code === '2000');
+          break;
+        default:
+          creditLedgerAccount = ledgerAccounts.find((la) => la.code === '2000');
+      }
+
+      if (!debitLedgerAccount || !creditLedgerAccount) {
+        throw new NotFoundException('Required ledger accounts not found');
+      }
+
+      // 3. Process each item
+      for (const item of dto.items) {
+        // Resolve accountId for denormalization
+        const accountId = await this.resolveAccountId(
+          dto.targetType,
+          item.targetId,
+          DBtx,
+        );
+
+        // Create the debit journal entry
+        await this.journalEntryRepository.create(
+          {
+            journalId: dto.journalId,
+            ledgerAccountId: debitLedgerAccount.id,
+            dc: DebitCredit.DEBIT,
+            amount: item.amount.toString(),
+            removable: true,
+            accountId,
+          },
+          DBtx,
+        );
+
+        // Create the credit journal entry
+        const creditJournalEntry = await this.journalEntryRepository.create(
+          {
+            journalId: dto.journalId,
+            ledgerAccountId: creditLedgerAccount.id,
+            removable: true,
+            dc: DebitCredit.CREDIT,
+            amount: item.amount.toString(),
+            targetType: dto.targetType,
+            targetId: item.targetId,
+            accountId,
+          },
+          DBtx,
+        );
+
+        // Link journal entry to target entity
+        if (dto.allocationType === AllocationType.LOAN_REPAYMENT) {
+          await DBtx.installment.update({
+            where: { id: item.targetId },
+            data: {
+              journalEntryId: creditJournalEntry.id,
+              status: InstallmentStatus.ALLOCATED,
+            },
+          });
+        } else if (dto.allocationType === AllocationType.SUBSCRIPTION_FEE) {
+          await DBtx.subscriptionFee.update({
+            where: { id: item.targetId },
+            data: {
+              journalEntryId: creditJournalEntry.id,
+              status: SubscriptionFeeStatus.ALLOCATED,
+            },
+          });
+        }
+      }
+
+      // 4. Ensure account 2050 is balanced after new entries
+      const isBalanced = await this.verifyAccountBalanced(
+        dto.journalId,
+        '2050',
+        DBtx,
+      );
+
+      if (journal.transactionId) {
+        await DBtx.transaction.update({
+          where: { id: journal.transactionId },
+          data: {
+            status: isBalanced
+              ? TransactionStatus.ALLOCATED
+              : TransactionStatus.PENDING,
+          },
+        });
+      }
+
+      // 5. Return updated journal with entries
+      const updatedJournal = await this.journalRepository.findByIdWithEntries(
+        dto.journalId,
+        DBtx,
+      );
+      if (!updatedJournal) {
+        throw new NotFoundException(
+          `Journal with id ${dto.journalId} not found after entry creation`,
+        );
+      }
+      return updatedJournal;
+    };
+
+    return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
+  }
+
   async findAll(
     query?: GetJournalEntriesQueryDto,
     tx?: Prisma.TransactionClient,
@@ -328,6 +477,10 @@ export class JournalEntriesService {
       journalId,
       tx,
     );
+
+    console.log('🚀 ---------------------🚀');
+    console.log('🚀 ~ entries:', entries);
+    console.log('🚀 ---------------------🚀');
 
     if (!entries) {
       return false;

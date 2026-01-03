@@ -1,3 +1,4 @@
+import { DateModule } from '@app/date';
 import { BankInfraModule } from '@app/infra/bank/bank.infra.module';
 import { LedgerInfraModule } from '@app/infra/ledger/ledger.infra.module';
 import { PrismaLedgerAccountRepository } from '@app/infra/ledger/repositories/prisma-ledger-account.repository';
@@ -19,6 +20,7 @@ import { SubscriptionFeesService } from './services/subscription-fees.service';
     LedgerInfraModule,
     TransactionApplicationModule,
     LedgerApplicationModule,
+    DateModule,
   ],
   providers: [
     {

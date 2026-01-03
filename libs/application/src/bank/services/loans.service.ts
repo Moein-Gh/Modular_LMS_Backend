@@ -23,6 +23,7 @@ import {
 } from '@app/domain';
 
 import { JournalBalanceUsecase } from '@app/application/ledger/journal-balance.usecase';
+import { DateService } from '@app/date';
 import {
   PrismaAccountRepository,
   PrismaInstallmentRepository,
@@ -59,6 +60,7 @@ export class LoansService {
     private readonly transactionsService: TransactionsService,
     private readonly journalsRepo: PrismaJournalRepository,
     private readonly journalBalanceUseCase: JournalBalanceUsecase,
+    private readonly dateService: DateService,
   ) {}
 
   async findAll(query?: ListLoanQueryInput, tx?: Prisma.TransactionClient) {
@@ -71,6 +73,7 @@ export class LoansService {
           ...(query?.loanTypeId && { loanTypeId: query.loanTypeId }),
           ...(query?.userId && { account: { userId: query.userId } }),
           ...(query?.isDeleted !== undefined && { isDeleted: query.isDeleted }),
+          ...(query?.status !== undefined && { status: query.status }),
         },
         searchFields: ['name'],
         defaultOrderBy: 'createdAt',
@@ -149,7 +152,10 @@ export class LoansService {
       await this.checkLoanConflict(input.accountId, DBtx);
 
       // 3. Create the loan record
-      const loan = await this.loansRepo.create(input, DBtx);
+      const loan = await this.loansRepo.create(
+        { ...input, userId: user.id },
+        DBtx,
+      );
 
       // 4. Calculate financial amounts
       const { commissionAmount, netDisbursement } =
@@ -371,10 +377,8 @@ export class LoansService {
       // If start date is after 15th, skip to next month
       const monthsToAdd = dayOfMonth > 15 ? i + 2 : i + 1;
 
-      const dueDate = new Date(
-        startDate.getFullYear(),
-        startDate.getMonth() + monthsToAdd,
-        1,
+      const dueDate = this.dateService.startOfMonth(
+        this.dateService.addMonths(startDate, monthsToAdd),
       );
 
       await this.installmentRepo.create(

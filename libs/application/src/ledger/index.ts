@@ -1,4 +1,5 @@
 export * from './dto/add-journal-entries.dto';
+export * from './dto/add-multiple-journal-entries.dto';
 export * from './dto/add-single-journal-entry.dto';
 export * from './dto/create-journal.dto';
 export * from './dto/create-ledger-account.dto';

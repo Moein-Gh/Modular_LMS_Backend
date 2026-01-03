@@ -1,5 +1,6 @@
 import { NotFoundError } from '@app/application';
 import { paginatePrisma } from '@app/application/common/pagination.util';
+import { DateService } from '@app/date';
 import {
   type CreateSubscriptionFeeInput,
   type ListSubscriptionFeeQueryInput,
@@ -23,6 +24,7 @@ export class SubscriptionFeesService {
     private readonly subscriptionFeesRepo: PrismaSubscriptionFeeRepository,
     private readonly accountsRepo: PrismaAccountRepository,
     private readonly bankService: BankService,
+    private readonly dateService: DateService,
   ) {}
 
   async findAll(
@@ -137,21 +139,17 @@ export class SubscriptionFeesService {
 
     let nextPeriodStart: Date;
     if (lastFee.items.length === 0) {
-      nextPeriodStart = new Date();
+      nextPeriodStart = this.dateService.startOfMonth(new Date());
     } else {
       const lastPeriodStart = lastFee.items[0].periodStart;
-      nextPeriodStart = new Date(
-        lastPeriodStart.getFullYear(),
-        lastPeriodStart.getMonth() + 1,
-        1,
+      nextPeriodStart = this.dateService.startOfMonth(
+        this.dateService.addMonths(lastPeriodStart, 1),
       );
     }
 
     for (let i = 0; i < input.numberOfMonths; i++) {
-      const periodStart = new Date(
-        nextPeriodStart.getFullYear(),
-        nextPeriodStart.getMonth() + i,
-        1,
+      const periodStart = this.dateService.startOfMonth(
+        this.dateService.addMonths(nextPeriodStart, i),
       );
 
       await this.create(
