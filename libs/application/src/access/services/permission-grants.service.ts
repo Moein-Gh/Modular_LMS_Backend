@@ -39,6 +39,7 @@ export class PermissionGrantsService {
       query: query ?? new PaginationQueryDto(),
       defaultOrderBy: 'createdAt',
       defaultOrderDir: 'desc',
+      where: { isDeleted: query?.isDeleted },
       tx,
     });
   }
@@ -63,14 +64,10 @@ export class PermissionGrantsService {
     })();
   }
 
-  delete(id: string): Promise<void> {
+  softDelete(id: string, CurrentUserId: string): Promise<void> {
     return (async () => {
-      const existing = await this.permissionGrants.findById(id);
-      if (!existing) {
-        throw new NotFoundError('PermissionGrant', 'id', id);
-      }
       try {
-        await this.permissionGrants.delete(id);
+        await this.permissionGrants.softDelete(id, CurrentUserId);
       } catch (e) {
         if ((e as { code?: unknown })?.code === 'P2025') {
           throw new NotFoundError('PermissionGrant', 'id', id);

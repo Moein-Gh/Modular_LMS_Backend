@@ -67,6 +67,7 @@ export class PermissionsService {
         defaultOrderBy: 'createdAt',
         defaultOrderDir: 'desc',
         tx,
+        where: { isDeleted: query?.isDeleted },
       });
 
     return tx ? run(tx) : this.transactionalRepo.withTransaction(run);
@@ -95,14 +96,18 @@ export class PermissionsService {
     return tx ? run(tx) : this.transactionalRepo.withTransaction(run);
   }
 
-  delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const run = async (tx: Prisma.TransactionClient) => {
       const existing = await this.permissions.findById(id, tx);
       if (!existing) {
         throw new NotFoundError('Permission', 'id', id);
       }
       try {
-        await this.permissions.delete(id, tx);
+        await this.permissions.softDelete(id, currentUserId, tx);
       } catch (e) {
         if ((e as { code?: unknown })?.code === 'P2025') {
           throw new NotFoundError('Permission', 'id', id);

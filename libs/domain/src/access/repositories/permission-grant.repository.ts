@@ -17,7 +17,7 @@ export interface PermissionGrantRepository {
     account: UpdatePermissionGrantInput,
     tx?: unknown,
   ): Promise<PermissionGrant>;
-  delete(id: string, tx?: unknown): Promise<void>;
+  softDelete(id: string, currentUserId: string, tx?: unknown): Promise<void>;
 }
 
 export const PERMISSION_GRANT_REPOSITORY = Symbol('PermissionGrantRepository');

@@ -17,6 +17,10 @@ export interface SubscriptionFeeRepository {
     input: UpdateSubscriptionFeeInput,
     tx?: unknown,
   ): Promise<SubscriptionFee>;
-  delete(id: string, tx?: unknown): Promise<void>;
-  deleteMany?(where: unknown, tx?: unknown): Promise<void>;
+  softDelete(id: string, currentUserId: string, tx?: unknown): Promise<void>;
+  softDeleteMany?(
+    where: unknown,
+    currentUserId: string,
+    tx?: unknown,
+  ): Promise<void>;
 }

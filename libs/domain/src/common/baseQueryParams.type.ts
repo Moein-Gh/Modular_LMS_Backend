@@ -9,4 +9,5 @@ export interface BaseQueryParams {
   take?: number;
   orderBy?: string;
   orderDir?: OrderDirection;
+  isDeleted?: boolean;
 }

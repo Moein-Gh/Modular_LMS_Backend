@@ -96,6 +96,7 @@ export class TransactionsService {
       ...(query?.userId && { userId: query.userId }),
       ...(query?.kind && { kind: query.kind }),
       ...(query?.status && { status: query.status }),
+      ...(query?.isDeleted !== undefined && { isDeleted: query.isDeleted }),
     };
     if (Object.keys(base).length) clauses.push(base);
 
@@ -703,7 +704,11 @@ export class TransactionsService {
     }
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const run = async (DBtx: Prisma.TransactionClient) => {
       const exists = await this.transactionsRepo.findByIdWithRelations(
         id,
@@ -714,16 +719,17 @@ export class TransactionsService {
         throw new NotFoundError('Transaction', 'id', id);
       }
       try {
-        // Delete files associated with transaction images (this will cascade-delete TransactionImage rows)
         if (exists.images.length > 0) {
           for (const image of exists.images) {
-            // Delete the file record and remote file via FilesService; pass DBtx to keep in same transaction
-            await this.filesService.delete(image.fileId, DBtx);
+            await this.filesService.softDelete(
+              image.fileId,
+              currentUserId,
+              DBtx,
+            );
           }
         }
 
-        // Now delete the transaction itself
-        await this.transactionsRepo.delete(id, DBtx);
+        await this.transactionsRepo.softDelete(id, currentUserId, DBtx);
       } catch (e) {
         if (this.isPrismaNotFoundError(e)) {
           throw new NotFoundError('Transaction', 'id', id);
@@ -784,7 +790,7 @@ export class TransactionsService {
   ): Promise<void> {
     const existing = await this.transactionsRepo.findAll(
       {
-        where: { externalRef },
+        where: { externalRef, isDeleted: false },
       },
       tx,
     );

@@ -1,5 +1,6 @@
 import {
   AccountTypesService,
+  CurrentUserId,
   PaginatedResponseDto,
   PaginationQueryDto,
 } from '@app/application';
@@ -65,8 +66,11 @@ export class AccountTypesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id', UUID_V4_PIPE) id: string) {
-    await this.accountTypes.delete(id);
+  async softDelete(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() currentUserId: string,
+  ) {
+    await this.accountTypes.softDelete(id, currentUserId);
     return;
   }
 }

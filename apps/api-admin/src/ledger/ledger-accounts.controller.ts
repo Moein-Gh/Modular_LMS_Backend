@@ -32,22 +32,4 @@ export class LedgerAccountsController {
       makeUrl: (p, s) => `/ledger-accounts?page=${p}&pageSize=${s}`,
     });
   }
-
-  // @Get(':id')
-  // @ApiOperation({ summary: 'Get ledger account' })
-  // findOne(@Param('id') id: string) {
-  //   return this.service.findOne(id);
-  // }
-
-  // @Patch(':id')
-  // @ApiOperation({ summary: 'Update ledger account' })
-  // update(@Param('id') id: string, @Body() dto: UpdateLedgerAccountDto) {
-  //   return this.service.update(id, dto);
-  // }
-
-  // @Delete(':id')
-  // @ApiOperation({ summary: 'Delete ledger account' })
-  // remove(@Param('id') id: string) {
-  //   return this.service.remove(id);
-  // }
 }

@@ -7,5 +7,5 @@ export interface LoanRepository {
   count(where?: unknown, tx?: unknown): Promise<number>;
   create(input: CreateLoanInput, tx?: unknown): Promise<Loan>;
   update(id: string, input: UpdateLoanInput, tx?: unknown): Promise<Loan>;
-  delete(id: string, tx?: unknown): Promise<void>;
+  softDelete(id: string, currentUserId: string, tx?: unknown): Promise<void>;
 }

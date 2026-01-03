@@ -7,7 +7,6 @@ import {
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Patch,
@@ -42,8 +41,8 @@ export class DeviceController {
     return this.devices.update(id, body);
   }
 
-  @Delete(':id')
-  async remove(@Param('id') id: string): Promise<void> {
-    return this.devices.delete(id);
+  @Patch(':id/revoke')
+  async revoke(@Param('id') id: string): Promise<void> {
+    return this.devices.revoke(id);
   }
 }

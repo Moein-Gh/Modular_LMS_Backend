@@ -1,3 +1,4 @@
+import { NotFoundError } from '@app/application';
 import type { Account } from '@app/domain';
 import {
   AccountRepository,
@@ -74,7 +75,7 @@ export class PrismaAccountRepository implements AccountRepository {
   ): Promise<Account | null> {
     const prisma = tx ?? this.prisma;
     const queryOptions: Prisma.AccountFindUniqueArgs = {
-      where: { id },
+      where: { id, isDeleted: false },
       ...(options?.includeUser
         ? { include: { user: true } }
         : { select: accountSelect }),
@@ -88,7 +89,7 @@ export class PrismaAccountRepository implements AccountRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const prisma = tx ?? this.prisma;
-    return prisma.account.count({ where });
+    return prisma.account.count({ where: { isDeleted: false, ...where } });
   }
 
   async findUnique(
@@ -105,7 +106,7 @@ export class PrismaAccountRepository implements AccountRepository {
     userId: string,
     tx?: Prisma.TransactionClient,
   ): Promise<Account[]> {
-    return this.findAll({ where: { userId } }, tx);
+    return this.findAll({ where: { userId, isDeleted: false } }, tx);
   }
 
   async create(
@@ -126,6 +127,10 @@ export class PrismaAccountRepository implements AccountRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Account> {
     const prisma = tx ?? this.prisma;
+    const existing = await prisma.account.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('Account', 'id', id);
+    }
     const updated = await prisma.account.update({
       where: { id },
       data: input,
@@ -134,8 +139,23 @@ export class PrismaAccountRepository implements AccountRepository {
     return toDomain(updated as AccountModelWithRelations);
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const prisma = tx ?? this.prisma;
-    await prisma.account.delete({ where: { id } });
+    const existing = await prisma.account.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('Account', 'id', id);
+    }
+    await prisma.account.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: currentUserId,
+      },
+    });
   }
 }

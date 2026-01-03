@@ -25,10 +25,14 @@ export class InstallmentsService {
     const where: Prisma.InstallmentWhereInput = {};
     if (query?.loanId) {
       where.loanId = query.loanId;
+    }
+    if (query?.status !== undefined) {
       where.status = query.status;
     }
+    if (query?.isDeleted !== undefined) {
+      where.isDeleted = query.isDeleted;
+    }
 
-    console.log(query);
     return paginatePrisma<
       Installment,
       Prisma.InstallmentFindManyArgs,
@@ -65,10 +69,14 @@ export class InstallmentsService {
     return this.installmentsRepo.update(id, input, tx);
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient) {
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ) {
     const exists = await this.installmentsRepo.findById(id, tx);
     if (!exists) throw new NotFoundError('Installment', 'id', id);
-    await this.installmentsRepo.delete(id, tx);
+    await this.installmentsRepo.softDelete(id, currentUserId, tx);
   }
 
   private async ensureLoanExists(

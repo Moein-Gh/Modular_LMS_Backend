@@ -27,6 +27,7 @@ export class AccountTypesService {
       defaultOrderBy: 'createdAt',
       defaultOrderDir: 'desc',
       tx,
+      where: { isDeleted: query?.isDeleted },
     });
   }
 
@@ -71,13 +72,17 @@ export class AccountTypesService {
     }
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const existing = await this.accountTypesRepo.findById(id, tx);
     if (!existing) {
       throw new NotFoundError('AccountType', 'id', id);
     }
     try {
-      await this.accountTypesRepo.delete(id, tx);
+      await this.accountTypesRepo.softDelete(id, currentUserId, tx);
     } catch (e) {
       if ((e as { code?: unknown })?.code === 'P2025') {
         throw new NotFoundError('AccountType', 'id', id);

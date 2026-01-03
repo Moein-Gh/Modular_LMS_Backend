@@ -53,8 +53,8 @@ export class PrismaPermissionGrantRepository
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(id: string): Promise<PermissionGrant | null> {
-    const model = await this.prisma.permissionGrant.findUnique({
-      where: { id },
+    const model = await this.prisma.permissionGrant.findFirst({
+      where: { id, isDeleted: false },
       select: permissionGrantSelect,
     });
     return model ? toDomain(model) : null;
@@ -68,6 +68,10 @@ export class PrismaPermissionGrantRepository
 
     const items = await prisma.permissionGrant.findMany({
       ...(options ?? {}),
+      where: {
+        isDeleted: false,
+        ...(options?.where ?? {}),
+      },
       select: permissionGrantSelect,
     });
 
@@ -80,7 +84,10 @@ export class PrismaPermissionGrantRepository
   ): Promise<number> {
     const prisma = (tx ?? this.prisma) as PrismaService;
     return prisma.permissionGrant.count({
-      where: where as Prisma.PermissionGrantWhereInput,
+      where: {
+        isDeleted: false,
+        ...(where ?? {}),
+      } as Prisma.PermissionGrantWhereInput,
     });
   }
 
@@ -117,7 +124,14 @@ export class PrismaPermissionGrantRepository
     return toDomain(updated);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.prisma.permissionGrant.delete({ where: { id } });
+  async softDelete(id: string, currentUserId: string): Promise<void> {
+    await this.prisma.permissionGrant.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: currentUserId,
+      },
+    });
   }
 }

@@ -59,9 +59,9 @@ export class DevicesService {
     return this.deviceRepository.update(id, input, tx);
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async revoke(id: string, tx?: Prisma.TransactionClient): Promise<void> {
     const existing = await this.deviceRepository.findById(id, tx);
     if (!existing) throw new NotFoundError('Device', 'id', id);
-    return this.deviceRepository.delete(id, tx);
+    return this.deviceRepository.revoke(id, tx);
   }
 }

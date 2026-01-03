@@ -1,3 +1,4 @@
+import { NotFoundError } from '@app/application';
 import type { Loan } from '@app/domain';
 import { LoanRepository } from '@app/domain';
 import type {
@@ -83,8 +84,13 @@ export class PrismaLoanRepository implements LoanRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Loan | null> {
     const prisma = tx ?? this.prisma;
+    const where = { ...(options?.where ?? {}) } as Prisma.LoanWhereUniqueInput;
+    if (where.isDeleted === undefined) {
+      where.isDeleted = false;
+    }
     const model = await prisma.loan.findUnique({
       ...options,
+      where,
     });
     return model ? toDomain(model as LoanModel) : null;
   }
@@ -94,7 +100,7 @@ export class PrismaLoanRepository implements LoanRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const prisma = tx ?? this.prisma;
-    return prisma.loan.count({ where });
+    return prisma.loan.count({ where: { isDeleted: false, ...where } });
   }
 
   async create(
@@ -133,15 +139,38 @@ export class PrismaLoanRepository implements LoanRepository {
         : {}),
     };
     const updated = await prisma.loan.update({
-      where: { id },
+      where: { isDeleted: false, id },
       data,
       select: loanSelect,
     });
     return toDomain(updated as LoanModel);
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const prisma = tx ?? this.prisma;
-    await prisma.loan.delete({ where: { id } });
+    const existing = await prisma.loan.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('Loan', 'id', id);
+    }
+    await prisma.loan.update({
+      where: { isDeleted: false, id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: currentUserId,
+      },
+    });
+    await prisma.installment.updateMany({
+      where: { isDeleted: false, loanId: id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: currentUserId,
+      },
+    });
   }
 }

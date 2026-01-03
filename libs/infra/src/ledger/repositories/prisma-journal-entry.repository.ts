@@ -6,6 +6,7 @@ import type {
   UpdateJournalEntryInput,
 } from '@app/domain';
 
+import { NotFoundError } from '@app/application';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import type { Prisma, PrismaClient } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
@@ -23,6 +24,8 @@ const selectJournalEntry = {
   createdAt: true,
   accountId: true,
   isDeleted: true,
+  deletedAt: true,
+  deletedBy: true,
 };
 
 type JournalEntryModel = Prisma.JournalEntryGetPayload<{
@@ -55,16 +58,20 @@ export class PrismaJournalEntryRepository implements JournalEntryRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<JournalEntry[]> {
     const prisma = tx ?? this.prisma;
-    const rows = await prisma.journalEntry.findMany({
-      ...(options ?? {}),
-    });
+    const { include, where, ...rest } = options ?? {};
+    const args: Prisma.JournalEntryFindManyArgs = {
+      ...(include ? { include } : { select: selectJournalEntry }),
+      where: { isDeleted: false, ...(where as object) },
+      ...rest,
+    };
+    const rows = await prisma.journalEntry.findMany(args);
     return rows.map((r) => toDomain(r as JournalEntryModel));
   }
 
   async findById(id: string, tx?: Prisma.TransactionClient) {
     const prisma = tx ?? this.prisma;
     const row = await prisma.journalEntry.findUnique({
-      where: { id },
+      where: { id, isDeleted: false },
       select: selectJournalEntry,
     });
     return row ? toDomain(row as JournalEntryModel) : null;
@@ -75,7 +82,7 @@ export class PrismaJournalEntryRepository implements JournalEntryRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const prisma = tx ?? this.prisma;
-    return prisma.journalEntry.count({ where });
+    return prisma.journalEntry.count({ where: { isDeleted: false, ...where } });
   }
 
   async create(
@@ -112,8 +119,12 @@ export class PrismaJournalEntryRepository implements JournalEntryRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<JournalEntry> {
     const prisma = tx ?? this.prisma;
+    const existing = await prisma.journalEntry.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('JournalEntry', 'id', id);
+    }
     const updated = await prisma.journalEntry.update({
-      where: { id },
+      where: { isDeleted: false, id },
       data: input,
       select: selectJournalEntry,
     });
@@ -134,6 +145,13 @@ export class PrismaJournalEntryRepository implements JournalEntryRepository {
 
   async delete(id: string, tx?: Prisma.TransactionClient) {
     const prisma = tx ?? this.prisma;
-    await prisma.journalEntry.delete({ where: { id } });
+    const existing = await prisma.journalEntry.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('JournalEntry', 'id', id);
+    }
+    await prisma.journalEntry.update({
+      where: { id },
+      data: { isDeleted: true, deletedAt: new Date(), deletedBy: null },
+    });
   }
 }

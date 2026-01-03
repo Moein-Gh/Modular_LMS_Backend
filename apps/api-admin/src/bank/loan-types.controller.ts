@@ -1,4 +1,5 @@
 import {
+  CurrentUserId,
   LoanTypesService,
   PaginatedResponseDto,
   PaginationQueryDto,
@@ -59,8 +60,11 @@ export class LoanTypesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id', UUID_V4_PIPE) id: string) {
-    await this.loanTypes.delete(id);
+  async softDelete(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() currentUserId: string,
+  ): Promise<void> {
+    await this.loanTypes.softDelete(id, currentUserId);
     return;
   }
 }

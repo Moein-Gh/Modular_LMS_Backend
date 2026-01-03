@@ -155,8 +155,11 @@ export class TransactionsController {
   @ApiOperation({ summary: 'Delete transaction' })
   @ApiResponse({ status: 204, description: 'Transaction deleted successfully' })
   @ApiResponse({ status: 404, description: 'Transaction not found' })
-  async remove(@Param('id', UUID_V4_PIPE) id: string) {
-    await this.transactionsService.delete(id);
+  async softDelete(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() currentUserId: string,
+  ): Promise<void> {
+    await this.transactionsService.softDelete(id, currentUserId);
     return;
   }
 }

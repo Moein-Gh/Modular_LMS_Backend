@@ -46,8 +46,11 @@ export class FilesController {
   }
 
   @Delete(':id')
-  async remove(@Param('id', UUID_V4_PIPE) id: string) {
-    await this.filesService.delete(id);
+  async softDelete(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() currentUserId: string,
+  ) {
+    await this.filesService.softDelete(id, currentUserId);
     return { success: true };
   }
 }

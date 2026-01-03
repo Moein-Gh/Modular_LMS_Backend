@@ -1,4 +1,5 @@
 import {
+  CurrentUserId,
   PaginatedResponseDto,
   PaginationQueryDto,
   RolesService,
@@ -46,7 +47,10 @@ export class RolesController {
   }
 
   @Delete(':id')
-  delete(@Param('id', UUID_V4_PIPE) id: string) {
-    return this.roleService.delete(id);
+  softDelete(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() CurrentUserId: string,
+  ) {
+    return this.roleService.softDelete(id, CurrentUserId);
   }
 }

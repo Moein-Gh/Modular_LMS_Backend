@@ -1,4 +1,8 @@
-import { InstallmentsService, PaginatedResponseDto } from '@app/application';
+import {
+  CurrentUserId,
+  InstallmentsService,
+  PaginatedResponseDto,
+} from '@app/application';
 import {
   Body,
   Controller,
@@ -56,8 +60,11 @@ export class InstallmentsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id', UUID_V4_PIPE) id: string) {
-    await this.installments.delete(id);
+  async softDelete(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() currentUserId: string,
+  ): Promise<void> {
+    await this.installments.softDelete(id, currentUserId);
     return;
   }
 }

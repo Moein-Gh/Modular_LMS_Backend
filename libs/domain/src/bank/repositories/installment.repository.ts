@@ -14,6 +14,10 @@ export interface InstallmentRepository {
     input: UpdateInstallmentInput,
     tx?: unknown,
   ): Promise<Installment>;
-  delete(id: string, tx?: unknown): Promise<void>;
-  deleteMany(where: unknown, tx?: unknown): Promise<void>;
+  softDelete(id: string, currentUserId: string, tx?: unknown): Promise<void>;
+  softDeleteMany(
+    where: unknown,
+    currentUserId: string,
+    tx?: unknown,
+  ): Promise<void>;
 }

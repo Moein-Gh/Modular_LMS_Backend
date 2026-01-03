@@ -17,7 +17,7 @@ export interface RoleAssignmentRepository {
     account: UpdateRoleAssignmentInput,
     tx?: unknown,
   ): Promise<RoleAssignment>;
-  delete(id: string, tx?: unknown): Promise<void>;
+  softDelete(id: string, currentUserId: string, tx?: unknown): Promise<void>;
 }
 
 export const ROLE_ASSIGNMENT_REPOSITORY = Symbol('ROLE_ASSIGNMENT_REPOSITORY');

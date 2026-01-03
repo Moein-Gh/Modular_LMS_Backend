@@ -70,6 +70,7 @@ export class LoansService {
           ...(query?.accountId && { accountId: query.accountId }),
           ...(query?.loanTypeId && { loanTypeId: query.loanTypeId }),
           ...(query?.userId && { account: { userId: query.userId } }),
+          ...(query?.isDeleted !== undefined && { isDeleted: query.isDeleted }),
         },
         searchFields: ['name'],
         defaultOrderBy: 'createdAt',
@@ -138,10 +139,6 @@ export class LoansService {
       // 1. Validate and fetch dependencies
       const loanType = await this.validateLoanTypeId(input.loanTypeId, DBtx);
       const account = await this.validateAccountId(input.accountId, DBtx);
-
-      console.log('🚀 ---------------------🚀');
-      console.log('🚀 ~ account:', account);
-      console.log('🚀 ---------------------🚀');
 
       const user = this.validateActiveUser(account);
 
@@ -254,7 +251,11 @@ export class LoansService {
     return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const run = async (DBtx: Prisma.TransactionClient) => {
       const loan = await this.loansRepo.findOne({ where: { id } }, DBtx);
       if (!loan) {
@@ -266,12 +267,7 @@ export class LoansService {
         );
       }
 
-      // Delete all installments for this loan
-
-      await this.installmentRepo.deleteMany({ loanId: id }, DBtx);
-
       // Find journal entries for this loan
-
       const journalEntries = await this.journalEntriesRepo.findAll(
         {
           where: {
@@ -294,7 +290,7 @@ export class LoansService {
 
       // Delete the loan itself
       try {
-        await this.loansRepo.delete(id, DBtx);
+        await this.loansRepo.softDelete(id, currentUserId, DBtx);
       } catch (e) {
         if (this.isPrismaNotFoundError(e)) {
           throw new NotFoundError('Loan', 'id', id);

@@ -1,3 +1,4 @@
+import { NotFoundError } from '@app/application';
 import {
   CreateIdentityInput,
   Identity,
@@ -29,6 +30,9 @@ const identitySelect: Prisma.IdentitySelect = {
   email: true,
   createdAt: true,
   updatedAt: true,
+  isDeleted: true,
+  deletedAt: true,
+  deletedBy: true,
 };
 
 function toDomain(model: IdentityModel): Identity {
@@ -73,8 +77,12 @@ export class PrismaIdentityRepository implements IdentityRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Identity> {
     const client = (tx ?? this.prisma) as PrismaService;
+    const existing = await client.identity.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('Identity', 'id', id);
+    }
     const updated: IdentityModel = await client.identity.update({
-      where: { id },
+      where: { isDeleted: false, id },
       data: {
         phone: data.phone,
         name: data.name,
@@ -88,7 +96,18 @@ export class PrismaIdentityRepository implements IdentityRepository {
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
     const client = (tx ?? this.prisma) as PrismaService;
-    await client.identity.delete({ where: { id } });
+    const existing = await client.identity.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('Identity', 'id', id);
+    }
+    await client.identity.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: null,
+      },
+    });
   }
 
   async findOne(
@@ -96,8 +115,12 @@ export class PrismaIdentityRepository implements IdentityRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Identity | null> {
     const client = (tx ?? this.prisma) as PrismaService;
+    const whereWithDeleted = {
+      ...(where ?? {}),
+      isDeleted: false,
+    } as Prisma.IdentityWhereInput;
     const identity = await client.identity.findFirst({
-      where,
+      where: whereWithDeleted,
       select: identitySelect,
     });
     return identity ? toDomain(identity) : null;
@@ -108,11 +131,16 @@ export class PrismaIdentityRepository implements IdentityRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Identity[]> {
     const client = (tx ?? this.prisma) as PrismaService;
-    const { where } = (options ?? {}) as { where?: Prisma.IdentityWhereInput };
-    const identities = await client.identity.findMany({
-      where,
-      select: identitySelect,
-    });
+    const { where, select, ...rest } = (options ?? {}) as {
+      where?: Prisma.IdentityWhereInput;
+      select?: Prisma.IdentitySelect;
+    };
+    const args: Prisma.IdentityFindManyArgs = {
+      ...(select ? { select } : { select: identitySelect }),
+      where: { isDeleted: false, ...(where as object) },
+      ...rest,
+    };
+    const identities = await client.identity.findMany(args);
     return identities.map(toDomain);
   }
 
@@ -122,7 +150,7 @@ export class PrismaIdentityRepository implements IdentityRepository {
   ): Promise<Identity | null> {
     const client = (tx ?? this.prisma) as PrismaService;
     const identity = await client.identity.findUnique({
-      where: { id },
+      where: { id, isDeleted: false },
       select: identitySelect,
     });
     return identity ? toDomain(identity) : null;
@@ -133,6 +161,6 @@ export class PrismaIdentityRepository implements IdentityRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const client = (tx ?? this.prisma) as PrismaService;
-    return client.identity.count({ where });
+    return client.identity.count({ where: { isDeleted: false, ...where } });
   }
 }

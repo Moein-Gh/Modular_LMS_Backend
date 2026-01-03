@@ -1,3 +1,4 @@
+import { NotFoundError } from '@app/application';
 import type { Role } from '@app/domain';
 import {
   type CreateRoleInput,
@@ -57,7 +58,7 @@ export class PrismaRoleRepository implements RoleRepository {
   ): Promise<Role | null> {
     const prisma = (tx ?? this.prisma) as PrismaService;
     const model = await prisma.role.findUnique({
-      where: { id },
+      where: { id, isDeleted: false },
       select: roleSelect,
     });
     return model ? toDomain(model as RoleModel) : null;
@@ -68,7 +69,13 @@ export class PrismaRoleRepository implements RoleRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Role[]> {
     const prisma = tx ?? this.prisma;
-    const roles = await prisma.role.findMany(options);
+    const { include, where, ...rest } = options ?? {};
+    const args: Prisma.RoleFindManyArgs = {
+      ...(include ? { include } : { select: roleSelect }),
+      where: { isDeleted: false, ...(where as object) },
+      ...rest,
+    };
+    const roles = await prisma.role.findMany(args);
     return roles.map((r) => toDomain(r as RoleModel));
   }
 
@@ -77,7 +84,7 @@ export class PrismaRoleRepository implements RoleRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const prisma = (tx ?? this.prisma) as PrismaService;
-    return prisma.role.count({ where });
+    return prisma.role.count({ where: { isDeleted: false, ...where } });
   }
 
   async create(
@@ -102,8 +109,12 @@ export class PrismaRoleRepository implements RoleRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Role> {
     const prisma = (tx ?? this.prisma) as PrismaService;
+    const existing = await prisma.role.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('Role', 'id', id);
+    }
     const updated = await prisma.role.update({
-      where: { id },
+      where: { isDeleted: false, id },
       data: {
         name: data.name,
         description: data.description ?? null,
@@ -113,8 +124,23 @@ export class PrismaRoleRepository implements RoleRepository {
     return toDomain(updated as RoleModel);
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async softDelete(
+    id: string,
+    CurrentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const prisma = (tx ?? this.prisma) as PrismaService;
-    await prisma.role.delete({ where: { id } });
+    const existing = await prisma.role.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('Role', 'id', id);
+    }
+    await prisma.role.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: CurrentUserId,
+      },
+    });
   }
 }

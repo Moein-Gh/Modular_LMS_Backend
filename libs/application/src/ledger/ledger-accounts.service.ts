@@ -38,6 +38,7 @@ export class LedgerAccountsService {
       defaultOrderBy: 'code',
       defaultOrderDir: 'asc',
       tx,
+      where: { isDeleted: query?.isDeleted },
     });
   }
 

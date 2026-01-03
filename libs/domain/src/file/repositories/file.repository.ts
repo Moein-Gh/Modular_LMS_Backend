@@ -12,5 +12,5 @@ export interface IFileRepository {
   findById(id: string, tx?: unknown): Promise<File | null>;
   findByCode(code: number, tx?: unknown): Promise<File | null>;
   findAll(options?: unknown, tx?: unknown): Promise<File[]>;
-  delete(id: string, tx?: unknown): Promise<void>;
+  softDelete(id: string, currentUserId: string, tx?: unknown): Promise<void>;
 }

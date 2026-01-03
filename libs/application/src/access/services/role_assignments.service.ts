@@ -90,14 +90,18 @@ export class RoleAssignmentsService {
     })();
   }
 
-  delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     return (async () => {
       const existing = await this.roleAssignment.findById(id, tx);
       if (!existing) {
         throw new NotFoundError('RoleAssignment', 'id', id);
       }
       try {
-        await this.roleAssignment.delete(id, tx);
+        await this.roleAssignment.softDelete(id, currentUserId, tx);
       } catch (e) {
         if ((e as { code?: unknown })?.code === 'P2025') {
           throw new NotFoundError('RoleAssignment', 'id', id);

@@ -14,5 +14,5 @@ export interface LoanTypeRepository {
     input: UpdateLoanTypeInput,
     tx?: unknown,
   ): Promise<LoanType>;
-  delete(id: string, tx?: unknown): Promise<void>;
+  softDelete(id: string, currentUserId: string, tx?: unknown): Promise<void>;
 }

@@ -1,4 +1,8 @@
-import { PaginatedResponseDto, RoleAssignmentsService } from '@app/application';
+import {
+  CurrentUserId,
+  PaginatedResponseDto,
+  RoleAssignmentsService,
+} from '@app/application';
 import { GetRoleAssignmentQueryDto } from '@app/application/access/dtos/get-role-assignment.dto';
 import { RoleAssignment } from '@app/domain';
 import {
@@ -44,7 +48,10 @@ export class RoleAssignmentsController {
   }
 
   @Delete(':id')
-  delete(@Param('id', UUID_V4_PIPE) id: string) {
-    return this.roleAssignmentService.delete(id);
+  softDelete(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() currentUserId: string,
+  ) {
+    return this.roleAssignmentService.softDelete(id, currentUserId);
   }
 }

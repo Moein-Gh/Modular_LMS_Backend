@@ -38,7 +38,7 @@ export class PrismaUserRepository implements IUserRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const prisma = tx ?? this.prisma;
-    return prisma.user.count({ where: where });
+    return prisma.user.count({ where: { isDeleted: false, ...where } });
   }
 
   public async update(
@@ -49,7 +49,7 @@ export class PrismaUserRepository implements IUserRepository {
     const prisma = tx ?? this.prisma;
 
     const updated = await prisma.user.update({
-      where: { id },
+      where: { isDeleted: false, id },
       data: input,
     });
     return this.toDomain(
@@ -82,7 +82,7 @@ export class PrismaUserRepository implements IUserRepository {
   ): Promise<User | null> {
     const prisma = tx ?? this.prisma;
     const user = await prisma.user.findUnique({
-      where: { id },
+      where: { isDeleted: false, id },
       include: userRelationsInclude,
     });
     if (!user) return null;
@@ -95,7 +95,7 @@ export class PrismaUserRepository implements IUserRepository {
   ): Promise<void> {
     const prisma = tx ?? this.prisma;
     await prisma.user.update({
-      where: { id: userId },
+      where: { isDeleted: false, id: userId },
       data: { status: UserStatus.ACTIVE },
     });
   }
@@ -106,7 +106,7 @@ export class PrismaUserRepository implements IUserRepository {
   ): Promise<User | null> {
     const prisma = tx ?? this.prisma;
     const user = await prisma.user.findUnique({
-      where: { identityId },
+      where: { isDeleted: false, identityId },
       include: userRelationsInclude,
     });
     if (!user) return null;
@@ -126,11 +126,72 @@ export class PrismaUserRepository implements IUserRepository {
     );
   }
 
-  async softDelete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const run = async (DBtx: Prisma.TransactionClient) => {
       const user = await DBtx.user.findUnique({ where: { id } });
-      await DBtx.identity.delete({ where: { id: user?.identityId } });
-      await DBtx.user.delete({ where: { id } });
+      // softdelete identity
+      await DBtx.identity.update({
+        where: { isDeleted: false, id: user?.identityId },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedBy: currentUserId,
+        },
+      });
+      // softdelete user
+      await DBtx.user.update({
+        where: { isDeleted: false, id },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedBy: currentUserId,
+        },
+      });
+    };
+
+    if (tx) return run(tx);
+    return this.prismaTransactionalRepo.withTransaction(run);
+  }
+
+  public async restore(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<User> {
+    const run = async (DBtx: Prisma.TransactionClient) => {
+      const user = await DBtx.user.findUnique({
+        where: { isDeleted: true, id },
+      });
+      if (!user) {
+        throw new NotFoundError('User', 'id', id);
+      }
+      // restore identity
+      await DBtx.identity.update({
+        where: { isDeleted: true, id: user.identityId },
+        data: {
+          isDeleted: false,
+          deletedAt: null,
+          deletedBy: null,
+        },
+      });
+      // restore user
+      const restoredUser = await DBtx.user.update({
+        where: { isDeleted: true, id },
+        data: {
+          isDeleted: false,
+          deletedAt: null,
+          deletedBy: null,
+        },
+        include: userRelationsInclude,
+      });
+      return this.toDomain(
+        restoredUser as Prisma.UserGetPayload<{
+          include: typeof userRelationsInclude;
+        }>,
+      );
     };
 
     if (tx) return run(tx);
@@ -143,7 +204,7 @@ export class PrismaUserRepository implements IUserRepository {
   ): Promise<User> {
     const prisma = tx ?? this.prisma;
     const user = await prisma.user.findUnique({
-      where: { id, status: UserStatus.ACTIVE },
+      where: { isDeleted: false, id, status: UserStatus.ACTIVE },
       include: userRelationsInclude,
     });
     if (!user) {

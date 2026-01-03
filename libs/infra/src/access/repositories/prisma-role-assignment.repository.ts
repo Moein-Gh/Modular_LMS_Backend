@@ -21,6 +21,9 @@ const roleAssignmentSelect: Prisma.RoleAssignmentSelect = {
   createdAt: true,
   updatedAt: true,
   status: true,
+  isDeleted: true,
+  deletedAt: true,
+  deletedBy: true,
 };
 
 type RoleAssignmentModel = {
@@ -108,7 +111,7 @@ export class PrismaRoleAssignmentRepository
     const prisma = tx ?? this.prisma;
     try {
       const model = await prisma.roleAssignment.findUnique({
-        where: { id },
+        where: { id, isDeleted: false },
         select: roleAssignmentSelect,
       });
       return model ? toDomain(model as RoleAssignmentModel) : null;
@@ -147,7 +150,13 @@ export class PrismaRoleAssignmentRepository
     tx?: Prisma.TransactionClient,
   ): Promise<RoleAssignment[]> {
     const prisma = tx ?? this.prisma;
-    const roleAssignments = await prisma.roleAssignment.findMany(options);
+    const { include, where, ...rest } = options ?? {};
+    const args: Prisma.RoleAssignmentFindManyArgs = {
+      ...(include ? { include } : { select: roleAssignmentSelect }),
+      where: { isDeleted: false, ...(where as object) },
+      ...rest,
+    };
+    const roleAssignments = await prisma.roleAssignment.findMany(args);
     return roleAssignments.map((m) => toDomain(m as RoleAssignmentModel));
   }
 
@@ -156,7 +165,9 @@ export class PrismaRoleAssignmentRepository
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const prisma = tx ?? this.prisma;
-    return prisma.roleAssignment.count({ where });
+    return prisma.roleAssignment.count({
+      where: { isDeleted: false, ...where },
+    });
   }
 
   async update(
@@ -165,8 +176,16 @@ export class PrismaRoleAssignmentRepository
     tx: Prisma.TransactionClient,
   ): Promise<RoleAssignment> {
     const prisma = tx ?? this.prisma;
+    const existing = await prisma.roleAssignment.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new (await import('@app/application')).NotFoundError(
+        'RoleAssignment',
+        'id',
+        id,
+      );
+    }
     const updated = await prisma.roleAssignment.update({
-      where: { id },
+      where: { isDeleted: false, id },
       data: {
         assignedBy: data.assignedBy ?? null,
         expiresAt: data.expiresAt ?? null,
@@ -176,10 +195,27 @@ export class PrismaRoleAssignmentRepository
     return toDomain(updated as RoleAssignmentModel);
   }
 
-  async delete(id: string, tx: Prisma.TransactionClient): Promise<void> {
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const prisma = tx ?? this.prisma;
-    await prisma.roleAssignment.delete({
+    const existing = await prisma.roleAssignment.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new (await import('@app/application')).NotFoundError(
+        'RoleAssignment',
+        'id',
+        id,
+      );
+    }
+    await prisma.roleAssignment.update({
       where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: currentUserId,
+      },
     });
   }
 }

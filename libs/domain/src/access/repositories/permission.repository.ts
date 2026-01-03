@@ -14,7 +14,7 @@ export interface PermissionRepository {
     account: UpdatePermissionInput,
     tx?: unknown,
   ): Promise<Permission>;
-  delete(id: string, tx?: unknown): Promise<void>;
+  softDelete(id: string, currentUserId: string, tx?: unknown): Promise<void>;
 }
 
 export const PERMISSION_REPOSITORY = Symbol('PERMISSION_REPOSITORY');

@@ -1,3 +1,4 @@
+import { NotFoundError } from '@app/application';
 import type { Installment } from '@app/domain';
 import { InstallmentRepository } from '@app/domain';
 import type {
@@ -59,8 +60,13 @@ export class PrismaInstallmentRepository implements InstallmentRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Installment[]> {
     const prisma = tx ?? this.prisma;
-
-    const items = await prisma.installment.findMany(options);
+    const { include, where, ...rest } = options ?? {};
+    const args: Prisma.InstallmentFindManyArgs = {
+      ...(include ? { include } : { select: installmentSelect }),
+      where: { isDeleted: false, ...(where as object) },
+      ...rest,
+    };
+    const items = await prisma.installment.findMany(args);
     return items.map((m) => toDomain(m as InstallmentModelWithRelations));
   }
 
@@ -70,7 +76,7 @@ export class PrismaInstallmentRepository implements InstallmentRepository {
   ): Promise<Installment | null> {
     const prisma = tx ?? this.prisma;
     const model = await prisma.installment.findUnique({
-      where: { id },
+      where: { id, isDeleted: false },
       select: installmentSelect,
     });
     return model ? toDomain(model as InstallmentModel) : null;
@@ -81,7 +87,9 @@ export class PrismaInstallmentRepository implements InstallmentRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const prisma = tx ?? this.prisma;
-    return await prisma.installment.count({ where });
+    return await prisma.installment.count({
+      where: { isDeleted: false, ...where },
+    });
   }
 
   async create(
@@ -103,25 +111,52 @@ export class PrismaInstallmentRepository implements InstallmentRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Installment> {
     const prisma = tx ?? this.prisma;
+    const existing = await prisma.installment.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('Installment', 'id', id);
+    }
 
     const updated = await prisma.installment.update({
-      where: { id },
+      where: { isDeleted: false, id },
       data: input,
       select: installmentSelect,
     });
     return toDomain(updated as InstallmentModel);
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
-    const prisma = tx ?? this.prisma;
-    await prisma.installment.delete({ where: { id } });
-  }
-
-  async deleteMany(
-    where: Prisma.InstallmentWhereInput,
+  async softDelete(
+    id: string,
+    currentUserId: string,
     tx?: Prisma.TransactionClient,
   ): Promise<void> {
     const prisma = tx ?? this.prisma;
-    await prisma.installment.deleteMany({ where });
+    const existing = await prisma.installment.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('Installment', 'id', id);
+    }
+    await prisma.installment.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: currentUserId,
+      },
+    });
+  }
+
+  async softDeleteMany(
+    where: Prisma.InstallmentWhereInput,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const prisma = tx ?? this.prisma;
+    await prisma.installment.updateMany({
+      where,
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: currentUserId,
+      },
+    });
   }
 }

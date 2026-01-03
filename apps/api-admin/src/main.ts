@@ -3,6 +3,7 @@ import { ProcessErrorHandlers } from '@app/logger';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ApiAdminModule } from './api-admin.module';
+import { ForbidDeletedFieldsPipe } from './common/pipes/forbid-deleted-fields.pipe';
 
 async function bootstrap(): Promise<void> {
   ProcessErrorHandlers.setupProcessHandlers();
@@ -61,6 +62,11 @@ async function bootstrap(): Promise<void> {
       transform: true,
       transformOptions: { enableImplicitConversion: false },
     }),
+  );
+
+  app.useGlobalPipes(
+    new ForbidDeletedFieldsPipe(),
+    new ValidationPipe({ whitelist: true, transform: true }),
   );
 
   setupDocs(app, 'Loan Platform – Admin API');

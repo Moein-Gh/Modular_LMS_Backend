@@ -1,4 +1,5 @@
 import {
+  CurrentUserId,
   PaginatedResponseDto,
   PaginationQueryDto,
   PermissionsService,
@@ -46,7 +47,10 @@ export class PermissionsController {
   }
 
   @Delete(':id')
-  delete(@Param('id', UUID_V4_PIPE) id: string) {
-    return this.permissionService.delete(id);
+  softDelete(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() currentUserId: string,
+  ) {
+    return this.permissionService.softDelete(id, currentUserId);
   }
 }

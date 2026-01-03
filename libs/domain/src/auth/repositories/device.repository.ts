@@ -12,7 +12,7 @@ export interface IDeviceRepository {
   list(params?: ListDevicesParams): Promise<Device[]>;
   create(input: CreateDeviceInput): Promise<Device>;
   update(id: string, input: UpdateDeviceInput): Promise<Device>;
-  delete(id: string): Promise<void>;
+  revoke(id: string): Promise<void>;
 }
 
 export const DEVICE_REPOSITORY = Symbol('DEVICE_REPOSITORY');

@@ -52,7 +52,11 @@ export class TransactionImagesService {
     }
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const run = async (DBtx: Prisma.TransactionClient) => {
       const exists = await this.repo.findById(id, DBtx);
 
@@ -60,7 +64,8 @@ export class TransactionImagesService {
         throw new NotFoundError('Transaction Image', 'id', id);
       }
 
-      if (exists?.fileId) await this.filesService.delete(exists?.fileId, DBtx);
+      if (exists?.fileId)
+        await this.filesService.softDelete(exists?.fileId, currentUserId, DBtx);
       await this.repo.delete(id, DBtx);
     };
     if (tx) {

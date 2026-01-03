@@ -25,6 +25,7 @@ export class LoanTypesService {
       defaultOrderBy: 'createdAt',
       defaultOrderDir: 'desc',
       tx,
+      where: { isDeleted: query?.isDeleted },
     });
   }
 
@@ -62,13 +63,17 @@ export class LoanTypesService {
     }
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const exists = await this.loanTypesRepo.findById(id, tx);
     if (!exists) {
       throw new NotFoundError('LoanType', 'id', id);
     }
     try {
-      await this.loanTypesRepo.delete(id, tx);
+      await this.loanTypesRepo.softDelete(id, currentUserId, tx);
     } catch (e) {
       if (this.isPrismaNotFoundError(e)) {
         throw new NotFoundError('LoanType', 'id', id);

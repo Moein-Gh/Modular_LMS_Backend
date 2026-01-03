@@ -38,6 +38,8 @@ export class SubscriptionFeesService {
     if (query?.periodStart)
       conditions.push({ periodStart: query.periodStart as unknown as Date });
     if (query?.userId) conditions.push({ account: { userId: query.userId } });
+    if (query?.isDeleted !== undefined)
+      conditions.push({ isDeleted: query.isDeleted });
 
     if (conditions.length === 1) {
       Object.assign(where, conditions[0]);
@@ -97,10 +99,14 @@ export class SubscriptionFeesService {
     return this.subscriptionFeesRepo.update(id, input, tx);
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const exists = await this.subscriptionFeesRepo.findById(id, tx);
     if (!exists) throw new NotFoundError('SubscriptionFee', 'id', id);
-    await this.subscriptionFeesRepo.delete(id, tx);
+    await this.subscriptionFeesRepo.softDelete(id, currentUserId, tx);
   }
 
   private async ensureAccountExists(

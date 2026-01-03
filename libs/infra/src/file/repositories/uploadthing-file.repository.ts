@@ -108,7 +108,11 @@ export class UploadthingFileRepository implements IFileRepository {
     }
   }
 
-  public async delete(id: string, tx?: Prisma.TransactionClient) {
+  public async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ) {
     const run = async (DBtx: Prisma.TransactionClient) => {
       // First, get the file to extract the URL
       const file = await DBtx.file.findUnique({ where: { id } });

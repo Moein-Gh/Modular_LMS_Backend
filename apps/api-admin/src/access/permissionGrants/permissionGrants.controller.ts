@@ -1,4 +1,5 @@
 import {
+  CurrentUserId,
   PaginatedResponseDto,
   PaginationQueryDto,
   PermissionGrantsService,
@@ -60,7 +61,10 @@ export class PermissionGrantsController {
   }
 
   @Delete(':id')
-  delete(@Param('id', UUID_V4_PIPE) id: string) {
-    return this.permissionGrantService.delete(id);
+  softDelete(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() CurrentUserId: string,
+  ) {
+    return this.permissionGrantService.softDelete(id, CurrentUserId);
   }
 }

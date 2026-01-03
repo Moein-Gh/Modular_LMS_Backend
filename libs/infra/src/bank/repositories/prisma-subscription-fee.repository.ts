@@ -1,3 +1,4 @@
+import { NotFoundError } from '@app/application';
 import type { SubscriptionFee } from '@app/domain';
 import { SubscriptionFeeRepository } from '@app/domain';
 import type { UpdateSubscriptionFeeInput } from '@app/domain/bank/types/subscription-fee.type';
@@ -63,7 +64,13 @@ export class PrismaSubscriptionFeeRepository
     tx?: Prisma.TransactionClient,
   ): Promise<SubscriptionFee[]> {
     const prisma = tx ?? this.prisma;
-    const items = await prisma.subscriptionFee.findMany(options);
+    const { include, where, ...rest } = options ?? {};
+    const args: Prisma.SubscriptionFeeFindManyArgs = {
+      ...(include ? { include } : { select: subscriptionFeeSelect }),
+      where: { isDeleted: false, ...(where as object) },
+      ...rest,
+    };
+    const items = await prisma.subscriptionFee.findMany(args);
     return items.map((m) => toDomain(m as SubscriptionFeeModelWithRelations));
   }
 
@@ -73,7 +80,7 @@ export class PrismaSubscriptionFeeRepository
   ): Promise<SubscriptionFee | null> {
     const prisma = tx ?? this.prisma;
     const model = await prisma.subscriptionFee.findUnique({
-      where: { id },
+      where: { id, isDeleted: false },
       select: subscriptionFeeSelect,
     });
     return model ? toDomain(model as SubscriptionFeeModel) : null;
@@ -84,7 +91,9 @@ export class PrismaSubscriptionFeeRepository
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const prisma = tx ?? this.prisma;
-    return await prisma.subscriptionFee.count({ where });
+    return await prisma.subscriptionFee.count({
+      where: { isDeleted: false, ...where },
+    });
   }
 
   async create(
@@ -105,24 +114,51 @@ export class PrismaSubscriptionFeeRepository
     tx?: Prisma.TransactionClient,
   ): Promise<SubscriptionFee> {
     const prisma = tx ?? this.prisma;
+    const existing = await prisma.subscriptionFee.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('SubscriptionFee', 'id', id);
+    }
     const updated = await prisma.subscriptionFee.update({
-      where: { id },
+      where: { isDeleted: false, id },
       data: input as Prisma.SubscriptionFeeUpdateInput,
       select: subscriptionFeeSelect,
     });
     return toDomain(updated as SubscriptionFeeModel);
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
-    const prisma = tx ?? this.prisma;
-    await prisma.subscriptionFee.delete({ where: { id } });
-  }
-
-  async deleteMany(
-    where: Prisma.SubscriptionFeeWhereInput,
+  async softDelete(
+    id: string,
+    currentUserId: string,
     tx?: Prisma.TransactionClient,
   ): Promise<void> {
     const prisma = tx ?? this.prisma;
-    await prisma.subscriptionFee.deleteMany({ where });
+    const existing = await prisma.subscriptionFee.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('SubscriptionFee', 'id', id);
+    }
+    await prisma.subscriptionFee.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: currentUserId,
+      },
+    });
+  }
+
+  async softDeleteMany(
+    where: Prisma.SubscriptionFeeWhereInput,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const prisma = tx ?? this.prisma;
+    await prisma.subscriptionFee.updateMany({
+      where,
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: currentUserId,
+      },
+    });
   }
 }

@@ -1,5 +1,8 @@
 import { NotFoundError, PaginationQueryDto } from '@app/application';
-import { paginatePrisma } from '@app/application/common/pagination.util';
+import {
+  PaginatedResponse,
+  paginatePrisma,
+} from '@app/application/common/pagination.util';
 import { TransactionsService } from '@app/application/transaction/services/transactions.service';
 import type { Account } from '@app/domain';
 import {
@@ -44,81 +47,102 @@ export class AccountsService {
     private readonly transactionsService: TransactionsService,
   ) {}
 
-  async findAll(query?: ListAccountQueryInput, tx?: Prisma.TransactionClient) {
-    const where: Prisma.AccountWhereInput = {};
+  async findAll(
+    query?: ListAccountQueryInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<PaginatedResponse<Account>> {
+    if (tx) {
+      const where: Prisma.AccountWhereInput = {};
 
-    if (query?.userId) {
-      where.userId = query.userId;
+      if (query?.userId) {
+        where.userId = query.userId;
+      }
+
+      if (query?.accountTypeId) {
+        where.accountTypeId = query.accountTypeId;
+      }
+
+      if (query?.status) {
+        where.status = query.status;
+      }
+
+      if (query?.isDeleted !== undefined) {
+        where.isDeleted = query.isDeleted;
+      }
+
+      const page = await paginatePrisma<
+        Account,
+        Prisma.AccountFindManyArgs,
+        Prisma.AccountWhereInput
+      >({
+        repo: this.accountsRepo,
+        where,
+        query: query ?? new PaginationQueryDto(),
+        searchFields: ['name', 'cardNumber', 'bankName'],
+        defaultOrderBy: 'createdAt',
+        defaultOrderDir: 'desc',
+        tx,
+        include: {
+          accountType: true,
+          user: { include: { identity: { select: { name: true } } } },
+        },
+      });
+
+      // Attach balanceSummary to each account (parallelized)
+      const itemsWithBalances = await Promise.all(
+        page.items.map(async (acct) => {
+          try {
+            const balance = await this.journalBalanceUsecase.getAccountBalance(
+              acct.id,
+              tx,
+            );
+            acct.balanceSummary = balance;
+          } catch {
+            acct.balanceSummary = undefined;
+          }
+          return acct;
+        }),
+      );
+
+      return { ...page, items: itemsWithBalances };
     }
 
-    if (query?.accountTypeId) {
-      where.accountTypeId = query.accountTypeId;
-    }
-
-    if (query?.status) {
-      where.status = query.status;
-    }
-
-    const page = await paginatePrisma<
-      Account,
-      Prisma.AccountFindManyArgs,
-      Prisma.AccountWhereInput
-    >({
-      repo: this.accountsRepo,
-      where,
-      query: query ?? new PaginationQueryDto(),
-      searchFields: ['name', 'cardNumber', 'bankName'],
-      defaultOrderBy: 'createdAt',
-      defaultOrderDir: 'desc',
-      tx,
-      include: {
-        accountType: true,
-        user: { include: { identity: { select: { name: true } } } },
-      },
-    });
-
-    // Attach balanceSummary to each account (parallelized)
-    const itemsWithBalances = await Promise.all(
-      page.items.map(async (acct) => {
-        try {
-          const balance = await this.journalBalanceUsecase.getAccountBalance(
-            acct.id,
-            tx,
-          );
-          // Attach the balance summary (keeps original object shape)
-          acct.balanceSummary = balance;
-        } catch {
-          // If fetching balance fails for an account, attach undefined and continue
-          acct.balanceSummary = undefined;
-        }
-        return acct;
-      }),
+    return this.transactionalRepo.withTransaction((t) =>
+      this.findAll(query, t),
     );
-
-    return { ...page, items: itemsWithBalances };
   }
 
   async findById(id: string, tx?: Prisma.TransactionClient): Promise<Account> {
-    const account = await this.accountsRepo.findUnique(
-      {
-        where: { id },
-        include: { accountType: true, user: { include: { identity: true } } },
-      },
-      tx,
-    );
-    if (!account) {
-      throw new NotFoundError('Account', 'id', id);
+    if (tx) {
+      const account = await this.accountsRepo.findUnique(
+        {
+          where: { isDeleted: false, id },
+          include: { accountType: true, user: { include: { identity: true } } },
+        },
+        tx,
+      );
+      if (!account) {
+        throw new NotFoundError('Account', 'id', id);
+      }
+      const balance = await this.journalBalanceUsecase.getAccountBalance(
+        id,
+        tx,
+      );
+      account.balanceSummary = balance;
+      return account;
     }
-    const balance = await this.journalBalanceUsecase.getAccountBalance(id);
-    account.balanceSummary = balance;
-    return account;
+
+    return this.transactionalRepo.withTransaction((t) => this.findById(id, t));
   }
 
   async findByUserId(
     userId: string,
     tx?: Prisma.TransactionClient,
   ): Promise<Account[]> {
-    return this.accountsRepo.findByUserId(userId, tx);
+    if (tx) return this.accountsRepo.findByUserId(userId, tx);
+    return this.transactionalRepo.withTransaction((t) =>
+      this.findByUserId(userId, t),
+    );
   }
 
   async create(
@@ -173,36 +197,57 @@ export class AccountsService {
     account: UpdateAccountInput,
     tx?: Prisma.TransactionClient,
   ): Promise<Account> {
-    const exists = await this.accountsRepo.findUnique({ where: { id } }, tx);
-    if (!exists) {
-      throw new NotFoundError('Account', 'id', id);
-    }
-    try {
-      return await this.accountsRepo.update(id, account, tx);
-    } catch (e) {
-      if (this.isPrismaNotFoundError(e)) {
+    if (tx) {
+      const exists = await this.accountsRepo.findUnique({ where: { id } }, tx);
+      if (!exists) {
         throw new NotFoundError('Account', 'id', id);
       }
-      throw e;
+      try {
+        return await this.accountsRepo.update(id, account, tx);
+      } catch (e) {
+        if (this.isPrismaNotFoundError(e)) {
+          throw new NotFoundError('Account', 'id', id);
+        }
+        throw e;
+      }
     }
+
+    return this.transactionalRepo.withTransaction((t) =>
+      this.update(id, account, t),
+    );
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
-    const exists = await this.accountsRepo.findUnique({ where: { id } }, tx);
-    if (!exists) {
-      throw new NotFoundError('Account', 'id', id);
-    }
-    try {
-      await this.accountsRepo.delete(id, tx);
-    } catch (e) {
-      if (this.isPrismaNotFoundError(e)) {
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    if (tx) {
+      const exists = await this.accountsRepo.findUnique({ where: { id } }, tx);
+      if (!exists) {
         throw new NotFoundError('Account', 'id', id);
       }
-      throw e;
+      try {
+        await this.accountsRepo.softDelete(id, currentUserId, tx);
+      } catch (e) {
+        if (this.isPrismaNotFoundError(e)) {
+          throw new NotFoundError('Account', 'id', id);
+        }
+        throw e;
+      }
+      return;
     }
+
+    return this.transactionalRepo.withTransaction((t) =>
+      this.softDelete(id, currentUserId, t),
+    );
   }
 
-  async buyOut(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async buyOut(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const run = async (DBtx: Prisma.TransactionClient) => {
       // 1. Ensure account exists
       const account = await this.accountsRepo.findUnique(
@@ -225,11 +270,12 @@ export class AccountsService {
       // If there's nothing to pay out, skip creating a transaction but still cleanup and deactivate
       if (buyoutAmount <= 0) {
         // Delete all non-paid subscription fees (due + future), keep only PAID
-        await this.subscriptionFeesRepo.deleteMany(
+        await this.subscriptionFeesRepo.softDeleteMany(
           {
             accountId: account.id,
             status: { not: SubscriptionFeeStatus.PAID },
           },
+          currentUserId,
           DBtx,
         );
 
@@ -281,8 +327,9 @@ export class AccountsService {
       await this.transactionsService.createSpecificTransaction(txInput, DBtx);
 
       // 8. Delete all non-paid subscription fees (due + future), keep only PAID
-      await this.subscriptionFeesRepo.deleteMany(
+      await this.subscriptionFeesRepo.softDeleteMany(
         { accountId: account.id, status: { not: SubscriptionFeeStatus.PAID } },
+        currentUserId,
         DBtx,
       );
 

@@ -6,6 +6,13 @@ export interface PrismaRepository<T, TFindArgs, TWhere> {
   count(where?: TWhere, tx?: Prisma.TransactionClient): Promise<number>;
 }
 
+export interface PaginatedResponse<T> {
+  items: T[];
+  totalItems: number;
+  page: number;
+  pageSize: number;
+}
+
 export type PaginatePrismaConfig<T, TFindArgs, TWhere> = {
   repo: PrismaRepository<T, TFindArgs, TWhere>;
   query: PaginationQueryDto;

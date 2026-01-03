@@ -1,4 +1,8 @@
-import { LoansService, PaginatedResponseDto } from '@app/application';
+import {
+  CurrentUserId,
+  LoansService,
+  PaginatedResponseDto,
+} from '@app/application';
 import { Loan } from '@app/domain';
 import {
   Body,
@@ -60,8 +64,11 @@ export class LoansController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id', UUID_V4_PIPE) id: string) {
-    await this.loans.delete(id);
+  async remove(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() currentUserId: string,
+  ) {
+    await this.loans.softDelete(id, currentUserId);
     return;
   }
 }

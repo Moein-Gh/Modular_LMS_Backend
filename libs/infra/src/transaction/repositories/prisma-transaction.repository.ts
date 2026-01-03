@@ -1,3 +1,4 @@
+import { NotFoundError } from '@app/application';
 import type {
   CreateTransactionInput,
   Identity,
@@ -6,6 +7,7 @@ import type {
   UpdateTransactionInput,
   UserStatus,
 } from '@app/domain';
+import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import { Prisma, type PrismaClient } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
@@ -119,7 +121,10 @@ function toDomainWithRelations(
 
 @Injectable()
 export class PrismaTransactionRepository implements TransactionRepository {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaClient) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaClient,
+    private readonly prismaTransactionalRepo: PrismaTransactionalRepository,
+  ) {}
 
   async findAll(
     options?: Prisma.TransactionFindManyArgs,
@@ -146,7 +151,7 @@ export class PrismaTransactionRepository implements TransactionRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const prisma = tx ?? this.prisma;
-    return prisma.transaction.count({ where: where });
+    return prisma.transaction.count({ where: { isDeleted: false, ...where } });
   }
 
   async update(
@@ -155,9 +160,13 @@ export class PrismaTransactionRepository implements TransactionRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Transaction> {
     const prisma = tx ?? this.prisma;
+    const existing = await prisma.transaction.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('Transaction', 'id', id);
+    }
 
     const updated = await prisma.transaction.update({
-      where: { id },
+      where: { isDeleted: false, id },
       data: input,
       select: selectTransaction,
     });
@@ -184,7 +193,7 @@ export class PrismaTransactionRepository implements TransactionRepository {
   ): Promise<Transaction | null> {
     const prisma = tx ?? this.prisma;
     const transaction = await prisma.transaction.findUnique({
-      where: { id },
+      where: { id, isDeleted: false },
       select: selectTransaction,
     });
     if (!transaction) return null;
@@ -197,7 +206,7 @@ export class PrismaTransactionRepository implements TransactionRepository {
   ): Promise<Transaction | null> {
     const prisma = tx ?? this.prisma;
     const transaction = await prisma.transaction.findUnique({
-      where: { id },
+      where: { id, isDeleted: false },
       select: selectTransactionWithRelations,
     });
     if (!transaction) return null;
@@ -206,24 +215,38 @@ export class PrismaTransactionRepository implements TransactionRepository {
     );
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
-    if (tx) {
-      console.log(id);
-      // Detach related journals first to satisfy FK, then delete the transaction
-      await tx.journal.updateMany({
-        where: { transactionId: id },
-        data: { transactionId: null },
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const run = async (DBtx: Prisma.TransactionClient) => {
+      const existing = await DBtx.transaction.findUnique({
+        where: { isDeleted: false, id },
       });
-      await tx.transaction.delete({ where: { id } });
-      return;
-    }
+      if (!existing) {
+        throw new NotFoundError('Transaction', 'id', id);
+      }
 
-    await this.prisma.$transaction(async (trx) => {
-      await trx.journal.updateMany({
-        where: { transactionId: id },
-        data: { transactionId: null },
+      await DBtx.journal.updateMany({
+        where: { isDeleted: false, transactionId: id },
+        data: {
+          isDeleted: true,
+          deletedBy: currentUserId,
+          deletedAt: new Date(),
+        },
       });
-      await trx.transaction.delete({ where: { id } });
-    });
+      await DBtx.transaction.update({
+        where: { isDeleted: false, id },
+        data: {
+          isDeleted: true,
+          deletedBy: currentUserId,
+          deletedAt: new Date(),
+        },
+      });
+    };
+
+    if (tx) return run(tx);
+    return this.prismaTransactionalRepo.withTransaction(run);
   }
 }

@@ -16,4 +16,5 @@ export interface IUserRepository {
   create(account: CreateUserInput, tx?: unknown): Promise<User>;
   update(id: string, account: UpdateUserInput, tx?: unknown): Promise<User>;
   softDelete(id: string, tx?: unknown): Promise<void>;
+  restore(id: string, tx?: unknown): Promise<User>;
 }

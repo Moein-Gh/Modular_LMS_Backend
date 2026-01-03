@@ -136,8 +136,13 @@ export class PrismaDeviceRepository implements IDeviceRepository {
     return toDomain(updated as DeviceModel);
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async revoke(id: string, tx?: Prisma.TransactionClient): Promise<void> {
     const prisma = (tx ?? this.prisma) as PrismaService;
-    await prisma.device.delete({ where: { id } });
+    await prisma.device.update({
+      where: { id },
+      data: {
+        revoked: true,
+      },
+    });
   }
 }

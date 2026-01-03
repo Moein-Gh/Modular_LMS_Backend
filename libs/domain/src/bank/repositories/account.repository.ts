@@ -11,5 +11,5 @@ export interface AccountRepository {
     account: UpdateAccountInput,
     tx?: unknown,
   ): Promise<Account>;
-  delete(id: string, tx?: unknown): Promise<void>;
+  softDelete(id: string, currentUserId: string, tx?: unknown): Promise<void>;
 }

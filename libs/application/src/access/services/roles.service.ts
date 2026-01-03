@@ -53,6 +53,7 @@ export class RolesService {
       defaultOrderBy: 'createdAt',
       defaultOrderDir: 'desc',
       tx,
+      where: { isDeleted: query?.isDeleted },
     });
 
     // Enrich each role with `userCount` (number of active role assignments)
@@ -98,14 +99,18 @@ export class RolesService {
     })();
   }
 
-  delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  softDelete(
+    id: string,
+    CurrentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     return (async () => {
       const existing = await this.roles.findById(id, tx);
       if (!existing) {
         throw new NotFoundError('Role', 'id', id);
       }
       try {
-        await this.roles.delete(id, tx);
+        await this.roles.softDelete(id, CurrentUserId, tx);
       } catch (e) {
         if ((e as { code?: unknown })?.code === 'P2025') {
           throw new NotFoundError('Role', 'id', id);

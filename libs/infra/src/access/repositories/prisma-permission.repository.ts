@@ -1,3 +1,4 @@
+import { NotFoundError } from '@app/application';
 import type { Permission } from '@app/domain';
 import {
   type CreatePermissionInput,
@@ -55,7 +56,7 @@ export class PrismaPermissionRepository implements PermissionRepository {
   ): Promise<Permission | null> {
     const prisma = tx ?? this.prisma;
     const model = await prisma.permission.findUnique({
-      where: { id },
+      where: { id, isDeleted: false },
       select: permissionSelect,
     });
     return model ? toDomain(model as PermissionModel) : null;
@@ -67,7 +68,7 @@ export class PrismaPermissionRepository implements PermissionRepository {
   ): Promise<Permission | null> {
     const prisma = tx ?? this.prisma;
     const model = await prisma.permission.findUnique({
-      where: { key },
+      where: { key, isDeleted: false },
       select: permissionSelect,
     });
     return model ? toDomain(model as PermissionModel) : null;
@@ -78,10 +79,15 @@ export class PrismaPermissionRepository implements PermissionRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Permission[]> {
     const prisma = tx ?? this.prisma;
+    const { include, where, ...rest } = options ?? {};
+    const args: Prisma.PermissionFindManyArgs = {
+      ...(include ? { include } : { select: permissionSelect }),
+      where: { isDeleted: false, ...(where as object) },
+      ...rest,
+    };
+    const items = await prisma.permission.findMany(args);
 
-    const items = await prisma.permission.findMany(options);
-
-    return items.map((m) => toDomain(m));
+    return items.map((m) => toDomain(m as PermissionModel));
   }
 
   async count(
@@ -89,7 +95,7 @@ export class PrismaPermissionRepository implements PermissionRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const prisma = tx ?? this.prisma;
-    return prisma.permission.count({ where });
+    return prisma.permission.count({ where: { isDeleted: false, ...where } });
   }
 
   async create(
@@ -114,8 +120,12 @@ export class PrismaPermissionRepository implements PermissionRepository {
     tx: Prisma.TransactionClient,
   ): Promise<Permission> {
     const prisma = tx ?? this.prisma;
+    const existing = await prisma.permission.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('Permission', 'id', id);
+    }
     const updated = await prisma.permission.update({
-      where: { id },
+      where: { isDeleted: false, id },
       data: {
         name: data.name,
         description: data.description ?? null,
@@ -125,7 +135,22 @@ export class PrismaPermissionRepository implements PermissionRepository {
     return toDomain(updated as PermissionModel);
   }
 
-  async delete(id: string, tx: Prisma.TransactionClient): Promise<void> {
-    await tx.permission.delete({ where: { id } });
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<void> {
+    const existing = await tx.permission.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('Permission', 'id', id);
+    }
+    await tx.permission.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: currentUserId,
+      },
+    });
   }
 }

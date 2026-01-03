@@ -153,10 +153,19 @@ export class UsersController {
   // delete user
   @Permissions('user/delete')
   @Delete(':id')
-  async deleteUser(@Param('id', UUID_V4_PIPE) id: string): Promise<void> {
-    const user = await this.usersService.findById(id);
-    if (!user) throw new NotFoundException('User not found');
+  async deleteUser(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() currentUserId: string,
+  ): Promise<void> {
+    await this.usersService.softDelete(id, currentUserId);
+  }
 
-    await this.usersService.delete(id);
+  // restore deleted user
+  @Permissions('user/restore')
+  @Post(':id/restore')
+  async restoreUser(
+    @Param('id', UUID_V4_PIPE) id: string,
+  ): Promise<GetUserDto> {
+    return await this.usersService.restore(id);
   }
 }

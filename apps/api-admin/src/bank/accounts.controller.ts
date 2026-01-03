@@ -1,4 +1,8 @@
-import { AccountsService, PaginatedResponseDto } from '@app/application';
+import {
+  AccountsService,
+  CurrentUserId,
+  PaginatedResponseDto,
+} from '@app/application';
 import { Account, AccountStatus } from '@app/domain';
 import {
   Body,
@@ -50,8 +54,11 @@ export class AccountsController {
 
   @Post(':id/buy-out')
   @HttpCode(HttpStatus.OK)
-  async buyOut(@Param('id', UUID_V4_PIPE) id: string): Promise<Account> {
-    await this.accounts.buyOut(id);
+  async buyOut(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() currentUserId: string,
+  ): Promise<Account> {
+    await this.accounts.buyOut(id, currentUserId);
     return this.accounts.findById(id);
   }
 
@@ -62,8 +69,11 @@ export class AccountsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id', UUID_V4_PIPE) id: string) {
-    await this.accounts.delete(id);
+  async softDelete(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() currentUserId: string,
+  ): Promise<void> {
+    await this.accounts.softDelete(id, currentUserId);
     return;
   }
 

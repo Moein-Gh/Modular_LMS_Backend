@@ -1,3 +1,4 @@
+import { NotFoundError } from '@app/application';
 import type { LedgerAccount } from '@app/domain';
 import { LedgerAccountRepository } from '@app/domain';
 import { LedgerAccountNotFoundError } from '@app/domain/ledger/errors/ledger-account-not-found.error';
@@ -17,6 +18,9 @@ const selectLedgerAccount: Prisma.LedgerAccountSelect = {
   status: true,
   createdAt: true,
   updatedAt: true,
+  isDeleted: true,
+  deletedAt: true,
+  deletedBy: true,
 };
 
 type LedgerAccountModel = Prisma.LedgerAccountGetPayload<{
@@ -32,7 +36,7 @@ function toDomain(model: LedgerAccountModel): LedgerAccount {
     status: model.status as unknown as LedgerAccount['status'],
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
-    isDeleted: false,
+    isDeleted: model.isDeleted,
   };
 }
 
@@ -45,10 +49,13 @@ export class PrismaLedgerAccountRepository implements LedgerAccountRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<LedgerAccount[]> {
     const prisma = tx ?? this.prisma;
-    const rows = await prisma.ledgerAccount.findMany({
-      select: selectLedgerAccount,
-      ...(options ?? {}),
-    });
+    const { include, where, ...rest } = options ?? {};
+    const args: Prisma.LedgerAccountFindManyArgs = {
+      ...(include ? { include } : { select: selectLedgerAccount }),
+      where: { isDeleted: false, ...(where as object) },
+      ...rest,
+    };
+    const rows = await prisma.ledgerAccount.findMany(args);
     return rows.map((r) => toDomain(r as LedgerAccountModel));
   }
 
@@ -57,13 +64,15 @@ export class PrismaLedgerAccountRepository implements LedgerAccountRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const prisma = tx ?? this.prisma;
-    return prisma.ledgerAccount.count({ where });
+    return prisma.ledgerAccount.count({
+      where: { isDeleted: false, ...where },
+    });
   }
 
   async findById(id: string, tx?: Prisma.TransactionClient) {
     const prisma = tx ?? this.prisma;
     const row = await prisma.ledgerAccount.findUnique({
-      where: { id },
+      where: { id, isDeleted: false },
       select: selectLedgerAccount,
     });
     return row ? toDomain(row as LedgerAccountModel) : null;
@@ -72,7 +81,7 @@ export class PrismaLedgerAccountRepository implements LedgerAccountRepository {
   async findByCode(code: string, tx?: Prisma.TransactionClient) {
     const prisma = tx ?? this.prisma;
     const row = await prisma.ledgerAccount.findUnique({
-      where: { code },
+      where: { code, isDeleted: false },
       select: selectLedgerAccount,
     });
     return row ? toDomain(row as LedgerAccountModel) : null;
@@ -96,8 +105,12 @@ export class PrismaLedgerAccountRepository implements LedgerAccountRepository {
     tx?: Prisma.TransactionClient,
   ) {
     const prisma = tx ?? this.prisma;
+    const existing = await prisma.ledgerAccount.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('LedgerAccount', 'id', id);
+    }
     const updated = await prisma.ledgerAccount.update({
-      where: { id },
+      where: { isDeleted: false, id },
       data: input,
       select: selectLedgerAccount,
     });
@@ -106,7 +119,18 @@ export class PrismaLedgerAccountRepository implements LedgerAccountRepository {
 
   async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
     const prisma = tx ?? this.prisma;
-    await prisma.ledgerAccount.delete({ where: { id } });
+    const existing = await prisma.ledgerAccount.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('LedgerAccount', 'id', id);
+    }
+    await prisma.ledgerAccount.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: null,
+      },
+    });
   }
 
   async getAccountBalance(

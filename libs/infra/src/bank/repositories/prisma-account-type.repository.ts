@@ -1,3 +1,4 @@
+import { NotFoundError } from '@app/application';
 import type {
   AccountType,
   CreateAccountTypeInput,
@@ -15,6 +16,9 @@ const accountTypeSelect: Prisma.AccountTypeSelect = {
   maxAccounts: true,
   createdAt: true,
   updatedAt: true,
+  isDeleted: true,
+  deletedAt: true,
+  deletedBy: true,
 };
 
 type AccountTypeModel = Prisma.AccountTypeGetPayload<{
@@ -44,9 +48,10 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<AccountType[]> {
     const prisma = tx ?? this.prisma;
-    const { include, ...rest } = options ?? {};
+    const { include, where, ...rest } = options ?? {};
     const args: Prisma.AccountTypeFindManyArgs = {
       ...(include ? { include } : { select: accountTypeSelect }),
+      where: { isDeleted: false, ...(where as object) },
       ...rest,
     };
     const items = await prisma.accountType.findMany(args);
@@ -58,7 +63,9 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const prisma = tx ?? this.prisma;
-    return await prisma.accountType.count({ where });
+    return await prisma.accountType.count({
+      where: { isDeleted: false, ...where },
+    });
   }
 
   async findById(
@@ -67,7 +74,7 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
   ): Promise<AccountType | null> {
     const prisma = tx ?? this.prisma;
     const accountType = await prisma.accountType.findUnique({
-      where: { id },
+      where: { id, isDeleted: false },
       select: accountTypeSelect,
     });
     if (!accountType) return null;
@@ -80,7 +87,7 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
   ): Promise<AccountType | null> {
     const prisma = tx ?? this.prisma;
     const accountType = await prisma.accountType.findFirst({
-      where: { name },
+      where: { name, isDeleted: false },
       select: accountTypeSelect,
     });
     return accountType ? toDomain(accountType as AccountTypeModel) : null;
@@ -104,16 +111,35 @@ export class PrismaAccountTypeRepository implements AccountTypeRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<AccountType> {
     const prisma = tx ?? this.prisma;
+    const existing = await prisma.accountType.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('AccountType', 'id', id);
+    }
     const updated = await prisma.accountType.update({
-      where: { id },
+      where: { isDeleted: false, id },
       data: accountType,
       select: accountTypeSelect,
     });
     return toDomain(updated as AccountTypeModel);
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const prisma = tx ?? this.prisma;
-    await prisma.accountType.delete({ where: { id } });
+    const existing = await prisma.accountType.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new NotFoundError('AccountType', 'id', id);
+    }
+    await prisma.accountType.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: currentUserId,
+      },
+    });
   }
 }

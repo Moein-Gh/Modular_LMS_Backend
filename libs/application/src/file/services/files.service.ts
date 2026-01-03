@@ -64,7 +64,11 @@ export class FilesService {
     }
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const run = async (DBtx: Prisma.TransactionClient) => {
       const exists = await this.repo.findById(id, DBtx);
 
@@ -72,7 +76,7 @@ export class FilesService {
         throw new Error(`File with id ${id} not found`);
       }
 
-      await this.repo.delete(id, DBtx);
+      await this.repo.softDelete(id, currentUserId, DBtx);
     };
     if (tx) {
       return await run(tx);

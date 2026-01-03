@@ -20,6 +20,9 @@ const loanTypeSelect: Prisma.LoanTypeSelect = {
   description: true,
   createdAt: true,
   updatedAt: true,
+  isDeleted: true,
+  deletedAt: true,
+  deletedBy: true,
 };
 
 type LoanTypeModel = Prisma.LoanTypeGetPayload<{
@@ -53,9 +56,10 @@ export class PrismaLoanTypeRepository implements LoanTypeRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<LoanType[]> {
     const prisma = tx ?? this.prisma;
-    const { include, ...rest } = options ?? {};
+    const { include, where, ...rest } = options ?? {};
     const args: Prisma.LoanTypeFindManyArgs = {
       ...(include ? { include } : { select: loanTypeSelect }),
+      where: { isDeleted: false, ...(where as object) },
       ...rest,
     };
     const items = await prisma.loanType.findMany(args);
@@ -68,7 +72,7 @@ export class PrismaLoanTypeRepository implements LoanTypeRepository {
   ): Promise<LoanType | null> {
     const prisma = tx ?? this.prisma;
     const model = await prisma.loanType.findUnique({
-      where: { id },
+      where: { id, isDeleted: false },
       select: loanTypeSelect,
     });
     return model ? toDomain(model as LoanTypeModel) : null;
@@ -79,7 +83,7 @@ export class PrismaLoanTypeRepository implements LoanTypeRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const prisma = tx ?? this.prisma;
-    return prisma.loanType.count({ where });
+    return prisma.loanType.count({ where: { isDeleted: false, ...where } });
   }
 
   async findUnique(
@@ -87,10 +91,17 @@ export class PrismaLoanTypeRepository implements LoanTypeRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<LoanType | null> {
     const prisma = tx ?? this.prisma;
+    const where = {
+      ...(options?.where ?? {}),
+    } as Prisma.LoanTypeWhereUniqueInput;
+    if (where.isDeleted === undefined) {
+      where.isDeleted = false;
+    }
     const { include, ...rest } = options ?? {};
     const args: Prisma.LoanTypeFindUniqueArgs = {
       ...(include ? { include } : { select: loanTypeSelect }),
       ...rest,
+      where,
     };
     const model = await prisma.loanType.findUnique(args);
     return model ? toDomain(model as LoanTypeModel) : null;
@@ -114,16 +125,43 @@ export class PrismaLoanTypeRepository implements LoanTypeRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<LoanType> {
     const prisma = tx ?? this.prisma;
+    const existing = await prisma.loanType.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new (await import('@app/application')).NotFoundError(
+        'LoanType',
+        'id',
+        id,
+      );
+    }
     const updated = await prisma.loanType.update({
-      where: { id },
+      where: { isDeleted: false, id },
       data: input,
       select: loanTypeSelect,
     });
     return toDomain(updated as LoanTypeModel);
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+  async softDelete(
+    id: string,
+    currentUserId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const prisma = tx ?? this.prisma;
-    await prisma.loanType.delete({ where: { id } });
+    const existing = await prisma.loanType.findUnique({ where: { id } });
+    if (!existing || existing.isDeleted) {
+      throw new (await import('@app/application')).NotFoundError(
+        'LoanType',
+        'id',
+        id,
+      );
+    }
+    await prisma.loanType.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: currentUserId,
+      },
+    });
   }
 }
