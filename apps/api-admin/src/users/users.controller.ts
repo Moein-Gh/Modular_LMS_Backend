@@ -11,15 +11,18 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import {
   CurrentUserId,
+  GetUpcomingPaymentsQueryDto,
   IdentitiesService,
   NotFoundError,
   PaginatedResponseDto,
   PaginationQueryDto,
   RegisterUserInput,
   RegisterUserUseCase,
+  UpcomingPaymentsResponseDto,
   UsersService,
 } from '@app/application';
 import { Permissions } from '@app/application/decorators/permissions.decorator';
@@ -28,6 +31,7 @@ import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { GetUserDto } from './dtos/get-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 
+@ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(
@@ -167,5 +171,28 @@ export class UsersController {
     @Param('id', UUID_V4_PIPE) id: string,
   ): Promise<GetUserDto> {
     return await this.usersService.restore(id);
+  }
+
+  // get user's upcoming payments
+  @Permissions('user/get')
+  @Get(':id/upcoming-payments')
+  @ApiOperation({
+    summary: "Get user's upcoming payments",
+    description:
+      'Returns a list of upcoming loan installments and subscription fees grouped by Persian calendar month. ' +
+      'Includes payment status, transaction details, and monthly totals. ' +
+      'Past unpaid payments are always included. Use includePastPaid query parameter to also retrieve paid past payments.',
+  })
+  @ApiQuery({
+    name: 'includePastPaid',
+    required: false,
+    type: Boolean,
+    description: 'Include fully paid past months in the response',
+  })
+  async getUpcomingPayments(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @Query() query: GetUpcomingPaymentsQueryDto,
+  ): Promise<UpcomingPaymentsResponseDto> {
+    return this.usersService.getUserUpcomingPayments(id, query);
   }
 }
