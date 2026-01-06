@@ -711,19 +711,19 @@ model Message {
 }
 
 model MessageRecipient {
-  id           String          @id @default(uuid()) @db.Uuid
-  code         Int             @unique @default(autoincrement())
-  messageId    String          @map("message_id") @db.Uuid
-  userId       String?         @map("user_id") @db.Uuid
-  phone        String?         @db.Text
-  renderedContent String?      @map("rendered_content") @db.Text
-  email        String?         @db.Text
-  status       RecipientStatus @default(PENDING)
-  deliveredAt  DateTime?       @map("delivered_at")
-  readAt       DateTime?       @map("read_at")
-  errorMessage String?         @map("error_message") @db.Text
-  createdAt    DateTime        @default(now()) @map("created_at")
-  updatedAt    DateTime        @updatedAt @map("updated_at")
+  id              String          @id @default(uuid()) @db.Uuid
+  code            Int             @unique @default(autoincrement())
+  messageId       String          @map("message_id") @db.Uuid
+  userId          String?         @map("user_id") @db.Uuid
+  phone           String?         @db.Text
+  renderedContent String?         @map("rendered_content") @db.Text
+  email           String?         @db.Text
+  status          RecipientStatus @default(PENDING)
+  deliveredAt     DateTime?       @map("delivered_at")
+  readAt          DateTime?       @map("read_at")
+  errorMessage    String?         @map("error_message") @db.Text
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
 
   // Relations
   message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
