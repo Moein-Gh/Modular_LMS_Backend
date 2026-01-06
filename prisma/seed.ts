@@ -53,6 +53,9 @@ async function main(): Promise<void> {
   // Seed roles
   await seedRoles();
 
+  // Seed users from test-user.json and assign 'account-holder' role
+  await seedUsersFromTestData();
+
   // Seed permission grants (e.g., give admin wildcard permission)
   await seedPermissionGrants();
 
@@ -69,8 +72,9 @@ async function seedAssignAdminToTestUser(): Promise<void> {
       path.join(__dirname, '..', 'db-seed-data', 'test-user.json'),
       'utf8',
     );
-    const u = JSON.parse(data) as { phone: string };
-    const testPhone = u.phone;
+    const parsed = JSON.parse(data) as any;
+    const u = Array.isArray(parsed) ? parsed[0] : parsed;
+    const testPhone = u?.identity?.phone ?? u?.phone;
 
     const identity = await prisma.identity.findUnique({
       where: { phone: testPhone },
@@ -280,15 +284,9 @@ async function seedTestUser(): Promise<void> {
       path.join(__dirname, '..', 'db-seed-data', 'test-user.json'),
       'utf8',
     );
-    const u = JSON.parse(data) as {
-      phone: string;
-      countryCode?: string;
-      name?: string;
-      email?: string;
-      status?: UserStatus;
-    };
-
-    const testPhone = u.phone;
+    const parsed = JSON.parse(data) as any;
+    const u = Array.isArray(parsed) ? parsed[0] : parsed;
+    const testPhone = u?.identity?.phone ?? u?.phone;
 
     // Check if identity already exists
     let identity = await prisma.identity.findUnique({
@@ -298,10 +296,10 @@ async function seedTestUser(): Promise<void> {
     if (!identity) {
       identity = await prisma.identity.create({
         data: {
-          countryCode: u.countryCode ?? null,
-          phone: u.phone,
-          name: u.name ?? null,
-          email: u.email ?? null,
+          countryCode: u.identity?.countryCode ?? u.countryCode ?? null,
+          phone: u.identity?.phone ?? u.phone,
+          name: u.identity?.name ?? u.name ?? null,
+          email: u.identity?.email ?? u.email ?? null,
         },
       });
       console.log('✓ Created test identity');
@@ -392,6 +390,79 @@ async function seedLoanTypes(): Promise<void> {
     }
   } catch (err) {
     console.error('Failed to seed loan types from JSON:', err);
+    throw err;
+  }
+}
+
+async function seedUsersFromTestData(): Promise<void> {
+  try {
+    const data = await readFile(
+      path.join(__dirname, '..', 'db-seed-data', 'test-user.json'),
+      'utf8',
+    );
+    const parsed = JSON.parse(data) as Array<any>;
+    if (!Array.isArray(parsed)) {
+      console.warn('test-user.json is not an array; skipping bulk user seeding');
+      return;
+    }
+
+    // Find the account-holder role if it exists
+    const accountHolderRole = await prisma.role.findUnique({
+      where: { key: 'account-holder' },
+    });
+    if (!accountHolderRole) {
+      console.warn('Role "account-holder" not found; role assignments will be skipped');
+    }
+
+    for (const entry of parsed) {
+      const identityData = entry.identity ?? {};
+      const phone = identityData.phone;
+      if (!phone) {
+        console.warn('Skipping entry without phone:', entry);
+        continue;
+      }
+
+      let identity = await prisma.identity.findUnique({ where: { phone } });
+      if (!identity) {
+        identity = await prisma.identity.create({
+          data: {
+            countryCode: identityData.countryCode ?? null,
+            phone: identityData.phone,
+            name: identityData.name ?? null,
+            email: identityData.email ?? null,
+          },
+        });
+        console.log(`✓ Created identity ${phone}`);
+      } else {
+        console.log(`✓ Identity ${phone} already exists`);
+      }
+
+      let user = await prisma.user.findUnique({
+        where: { identityId: identity.id },
+      });
+      if (!user) {
+        user = await prisma.user.create({
+          data: { identityId: identity.id, status: UserStatus.ACTIVE },
+        });
+        console.log(`✓ Created user for ${phone}`);
+      } else {
+        console.log(`✓ User for ${phone} already exists`);
+      }
+
+      if (accountHolderRole) {
+        const existing = await prisma.roleAssignment.findFirst({
+          where: { userId: user.id, roleId: accountHolderRole.id },
+        });
+        if (!existing) {
+          await prisma.roleAssignment.create({
+            data: { userId: user.id, roleId: accountHolderRole.id, status: 'ACTIVE' },
+          });
+          console.log(`✓ Assigned role account-holder to ${phone}`);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to seed users from test-user.json:', err);
     throw err;
   }
 }

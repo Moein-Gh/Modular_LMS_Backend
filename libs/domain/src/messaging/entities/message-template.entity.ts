@@ -1,4 +1,4 @@
-import { MessageType } from './message.entity';
+import { Message, MessageType } from './message.entity';
 
 export interface MessageTemplate {
   id: string;
@@ -12,12 +12,11 @@ export interface MessageTemplate {
   createdBy?: string | null;
   createdAt: Date;
   updatedAt: Date;
-
-  // Relations
-  messages?: unknown[];
-
   // Soft delete
   isDeleted: boolean;
   deletedAt?: Date | null;
   deletedBy?: string | null;
+
+  // Relations
+  messages?: Message[];
 }

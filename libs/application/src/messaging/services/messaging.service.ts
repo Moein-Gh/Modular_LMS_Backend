@@ -1,3 +1,4 @@
+import { BadRequestError } from '@app/application/errors/bad-request.error';
 import { NotFoundError } from '@app/application/errors/not-found.error';
 import {
   MESSAGE_REPOSITORY,
@@ -20,9 +21,19 @@ import { Queue } from 'bullmq';
 import { MessageTemplateService } from './message-template.service';
 import { RecipientGroupService } from './recipient-group.service';
 
+export type MetaDataValue =
+  | string
+  | number
+  | boolean
+  | Date
+  | null
+  | MetaDataValue[];
+
+export type MetaDataType = Record<string, MetaDataValue>;
+
 interface SendMessageInput {
   type: MessageType;
-  content: string;
+  content?: string;
   subject?: string;
   templateId?: string;
   scheduledAt?: Date;
@@ -31,6 +42,12 @@ interface SendMessageInput {
   phones?: string[];
   emails?: string[];
   recipientGroupId?: string;
+  recipients?: Array<{
+    userId?: string;
+    phone?: string;
+    email?: string;
+    metadata?: Record<string, unknown>;
+  }>;
 }
 
 @Injectable()
@@ -69,6 +86,13 @@ export class MessagingService {
         if (templateObj.subject) baseSubjectTemplate = templateObj.subject;
       }
 
+      // Ensure we have a template to render: either provided `content` or a template's content
+      if (!baseTemplate) {
+        throw new BadRequestError(
+          'Either `content` or a valid `templateId` must be provided to send a message.',
+        );
+      }
+
       // Create message
       const messageData: CreateMessageInput = {
         type: input.type,
@@ -101,12 +125,37 @@ export class MessagingService {
           }
         }
 
-        const renderVars = {
+        const renderVars: Record<string, unknown> = {
           ...(input.metadata || {}),
-          user: user ? { id: user.id, identity: user.identity } : undefined,
-          phone: recipient.phone,
-          email: recipient.email,
-        } as Record<string, unknown>;
+        };
+
+        // Merge per-recipient metadata (recipient-level overrides message-level)
+        if (recipient.metadata && typeof recipient.metadata === 'object') {
+          Object.assign(renderVars, recipient.metadata);
+        }
+
+        if (user) {
+          renderVars.userId = user.id;
+
+          const identity = user.identity;
+          if (identity) {
+            if (identity.name) {
+              renderVars.fullName = identity.name;
+              const parts = String(identity.name).split(/\s+/).filter(Boolean);
+              if (parts.length > 0) renderVars.firstName = parts[0];
+              if (parts.length > 1)
+                renderVars.lastName = parts.slice(1).join(' ');
+            }
+            if (identity.email) renderVars.email = identity.email;
+            if (identity.phone) renderVars.phone = identity.phone;
+            if (identity.countryCode)
+              renderVars.countryCode = identity.countryCode;
+          }
+        }
+
+        // recipient-specific overrides
+        if (recipient.phone) renderVars.phone = recipient.phone;
+        if (recipient.email) renderVars.email = recipient.email;
 
         const rendered = this.renderTemplate(baseTemplate, renderVars);
 
@@ -121,9 +170,6 @@ export class MessagingService {
           },
           DBtx,
         );
-
-        // If the message subject was templated and not stored at message-level yet,
-        // keep the message.subject as the base subject template (unchanged here).
       }
 
       const messageWithRecipients =
@@ -274,12 +320,14 @@ export class MessagingService {
       userId?: string;
       phone?: string;
       email?: string;
+      metadata?: Record<string, unknown>;
     }>
   > {
     const recipients: Array<{
       userId?: string;
       phone?: string;
       email?: string;
+      metadata?: Record<string, unknown>;
     }> = [];
 
     // Add direct user IDs
@@ -300,6 +348,18 @@ export class MessagingService {
     if (input.emails && input.emails.length > 0) {
       for (const email of input.emails) {
         recipients.push({ email });
+      }
+    }
+
+    // Add explicit recipients with optional per-recipient metadata
+    if (input.recipients && input.recipients.length > 0) {
+      for (const r of input.recipients) {
+        recipients.push({
+          userId: r.userId,
+          phone: r.phone,
+          email: r.email,
+          metadata: r.metadata,
+        });
       }
     }
 
@@ -353,12 +413,36 @@ export class MessagingService {
     template: string,
     variables: Record<string, unknown>,
   ): string {
-    let rendered = template;
-    for (const [key, value] of Object.entries(variables)) {
-      const placeholder = `{{${key}}}`;
-      rendered = rendered.replace(new RegExp(placeholder, 'g'), String(value));
-    }
-    return rendered;
+    return template.replace(/{{\s*([^}]+)\s*}}/g, (_match, path: string) => {
+      const parts = path.split('.');
+      let val: unknown = variables;
+      for (const p of parts) {
+        if (val === undefined || val === null) break;
+        if (typeof val === 'object' && val !== null && p in val) {
+          val = (val as Record<string, unknown>)[p];
+        } else {
+          val = undefined;
+          break;
+        }
+      }
+      if (val === undefined || val === null) return '';
+      if (val instanceof Date) return val.toISOString();
+      if (typeof val === 'object') {
+        try {
+          return JSON.stringify(val);
+        } catch {
+          return '';
+        }
+      }
+      if (
+        typeof val === 'string' ||
+        typeof val === 'number' ||
+        typeof val === 'boolean'
+      ) {
+        return String(val);
+      }
+      return '';
+    });
   }
 
   async count(

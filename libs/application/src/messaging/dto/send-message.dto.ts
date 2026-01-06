@@ -9,6 +9,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  ValidateIf,
 } from 'class-validator';
 
 export class SendMessageDto {
@@ -17,10 +18,12 @@ export class SendMessageDto {
   @IsNotEmpty()
   type!: MessageType;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
+  @ValidateIf((o: SendMessageDto) => !o.templateId)
   @IsNotEmpty()
-  content!: string;
+  @IsOptional()
+  content?: string;
 
   @ApiPropertyOptional()
   @IsString()
