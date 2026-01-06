@@ -24,3 +24,6 @@ export * from './transaction/index';
 
 // FILE
 export * from './file/index';
+
+// MESSAGING
+export * from './messaging/index';

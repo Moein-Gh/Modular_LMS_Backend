@@ -41,6 +41,29 @@ services:
         max-file: "3"
 
   # =========================================
+  # Redis (for BullMQ / caching)
+  # =========================================
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - backend
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # =========================================
   # API User Service (Development)
   # =========================================
   api-user:
@@ -55,6 +78,8 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       POSTGRES_HOST: db
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-loan_db}?schema=public
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
       PORT: 3000
     depends_on:
       db:
@@ -109,6 +134,8 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       POSTGRES_HOST: db
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-loan_db}?schema=public
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
       PORT: 3000
     depends_on:
       db:
@@ -160,4 +187,6 @@ networks:
 # =========================================
 volumes:
   pgdata:
+    driver: local
+  redisdata:
     driver: local

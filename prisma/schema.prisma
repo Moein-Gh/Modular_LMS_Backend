@@ -32,13 +32,14 @@ model User {
   refreshTokens RefreshToken[]
   accounts      Account[]
 
-  roleAssignments RoleAssignment[]
-  transactions    Transaction[]
-  isDeleted       Boolean          @default(false) @map("is_deleted")
-  deletedAt       DateTime?        @map("deleted_at")
-  deletedBy       String?          @map("deleted_by") @db.Uuid
-  loans           Loan[]
-  devices         Device[]
+  roleAssignments   RoleAssignment[]
+  transactions      Transaction[]
+  isDeleted         Boolean            @default(false) @map("is_deleted")
+  deletedAt         DateTime?          @map("deleted_at")
+  deletedBy         String?            @map("deleted_by") @db.Uuid
+  loans             Loan[]
+  devices           Device[]
+  messageRecipients MessageRecipient[]
 
   @@index([isDeleted], map: "user_is_deleted_idx")
 }
@@ -652,4 +653,136 @@ model File {
   deletedBy         String?            @map("deleted_by") @db.Uuid
 
   @@index([isDeleted], map: "file_is_deleted_idx")
+}
+
+// ========================= MESSAGING MODULE =========================
+
+enum MessageType {
+  SMS
+  PUSH_NOTIFICATION
+  EMAIL
+}
+
+enum MessageStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  SCHEDULED
+  CANCELLED
+}
+
+enum RecipientStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  READ
+}
+
+model Message {
+  id          String        @id @default(uuid()) @db.Uuid
+  code        Int           @unique @default(autoincrement())
+  type        MessageType
+  status      MessageStatus @default(PENDING)
+  subject     String?       @db.Text
+  content     String        @db.Text
+  templateId  String?       @map("template_id") @db.Uuid
+  scheduledAt DateTime?     @map("scheduled_at")
+  sentAt      DateTime?     @map("sent_at")
+  metadata    Json?
+  createdBy   String?       @map("created_by") @db.Uuid
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  template   MessageTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  recipients MessageRecipient[]
+
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "message_is_deleted_idx")
+  @@index([status, scheduledAt], map: "message_status_scheduled_idx")
+  @@index([type, status], map: "message_type_status_idx")
+  @@index([createdBy], map: "message_created_by_idx")
+  @@map("message")
+}
+
+model MessageRecipient {
+  id           String          @id @default(uuid()) @db.Uuid
+  code         Int             @unique @default(autoincrement())
+  messageId    String          @map("message_id") @db.Uuid
+  userId       String?         @map("user_id") @db.Uuid
+  phone        String?         @db.Text
+  renderedContent String?      @map("rendered_content") @db.Text
+  email        String?         @db.Text
+  status       RecipientStatus @default(PENDING)
+  deliveredAt  DateTime?       @map("delivered_at")
+  readAt       DateTime?       @map("read_at")
+  errorMessage String?         @map("error_message") @db.Text
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "message_recipient_is_deleted_idx")
+  @@index([messageId], map: "message_recipient_message_idx")
+  @@index([userId], map: "message_recipient_user_idx")
+  @@index([status], map: "message_recipient_status_idx")
+  @@map("message_recipient")
+}
+
+model MessageTemplate {
+  id        String      @id @default(uuid()) @db.Uuid
+  code      Int         @unique @default(autoincrement())
+  name      String      @unique @db.Text
+  type      MessageType
+  subject   String?     @db.Text
+  content   String      @db.Text
+  variables String[]
+  isActive  Boolean     @default(true) @map("is_active")
+  createdBy String?     @map("created_by") @db.Uuid
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  messages Message[]
+
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "message_template_is_deleted_idx")
+  @@index([type, isActive], map: "message_template_type_active_idx")
+  @@index([createdBy], map: "message_template_created_by_idx")
+  @@map("message_template")
+}
+
+model RecipientGroup {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        Int      @unique @default(autoincrement())
+  name        String   @unique @db.Text
+  description String?  @db.Text
+  criteria    Json
+  isActive    Boolean  @default(true) @map("is_active")
+  createdBy   String?  @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "recipient_group_is_deleted_idx")
+  @@index([isActive], map: "recipient_group_active_idx")
+  @@index([createdBy], map: "recipient_group_created_by_idx")
+  @@map("recipient_group")
 }

@@ -33,3 +33,6 @@ export * from './transaction/transaction-application.module';
 export * from './report';
 // FILE
 export * from './file';
+
+// MESSAGING
+export * from './messaging';

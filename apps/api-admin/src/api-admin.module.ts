@@ -5,6 +5,7 @@ import {
   FileApplicationModule,
   JournalsService,
   LedgerAccountsService,
+  MessagingApplicationModule,
   ReportApplicationModule,
   TransactionApplicationModule,
 } from '@app/application';
@@ -39,6 +40,9 @@ import { FilesController } from './file/file.controller';
 import { JournalEntriesController } from './ledger/journal-entries.controller';
 import { JournalsController } from './ledger/journals.controller';
 import { LedgerAccountsController } from './ledger/ledger-accounts.controller';
+import { MessageTemplateController } from './messaging/message-template.controller';
+import { MessagingController } from './messaging/messaging.controller';
+import { RecipientGroupController } from './messaging/recipient-group.controller';
 import { ReportController } from './report/report.controller';
 import { TransactionsController } from './transactions/transactions.controller';
 import { UsersController } from './users/users.controller';
@@ -58,6 +62,7 @@ import { UsersController } from './users/users.controller';
     BankApplicationModule,
     TransactionApplicationModule,
     ReportApplicationModule,
+    MessagingApplicationModule,
     AccessModule,
   ],
   controllers: [
@@ -78,6 +83,10 @@ import { UsersController } from './users/users.controller';
     JournalsController,
     JournalEntriesController,
     ReportController,
+    // Messaging controllers
+    MessagingController,
+    MessageTemplateController,
+    RecipientGroupController,
   ],
   providers: [
     ApiAdminService,
