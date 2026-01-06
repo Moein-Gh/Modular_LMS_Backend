@@ -1,6 +1,10 @@
-{
-  "phone": "9100971433",
-  "countryCode": "98",
-  "name": "معین قربانعلی",
-  "email": "moein@test.com"
-}
+[
+  {
+    "identity": {
+      "phone": "9100971433",
+      "countryCode": "98",
+      "name": "معین قربانعلی"
+    },
+    "accounts": []
+  }
+]
