@@ -27,5 +27,5 @@ export class GetTransactionsQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   @IsEnum(TransactionKind)
-  kind?: TransactionKind | undefined;
+  kind?: TransactionKind;
 }

@@ -402,7 +402,9 @@ async function seedUsersFromTestData(): Promise<void> {
     );
     const parsed = JSON.parse(data) as Array<any>;
     if (!Array.isArray(parsed)) {
-      console.warn('test-user.json is not an array; skipping bulk user seeding');
+      console.warn(
+        'test-user.json is not an array; skipping bulk user seeding',
+      );
       return;
     }
 
@@ -411,7 +413,9 @@ async function seedUsersFromTestData(): Promise<void> {
       where: { key: 'account-holder' },
     });
     if (!accountHolderRole) {
-      console.warn('Role "account-holder" not found; role assignments will be skipped');
+      console.warn(
+        'Role "account-holder" not found; role assignments will be skipped',
+      );
     }
 
     for (const entry of parsed) {
@@ -455,7 +459,11 @@ async function seedUsersFromTestData(): Promise<void> {
         });
         if (!existing) {
           await prisma.roleAssignment.create({
-            data: { userId: user.id, roleId: accountHolderRole.id, status: 'ACTIVE' },
+            data: {
+              userId: user.id,
+              roleId: accountHolderRole.id,
+              status: 'ACTIVE',
+            },
           });
           console.log(`✓ Assigned role account-holder to ${phone}`);
         }

@@ -10,4 +10,8 @@ export interface BaseQueryParams {
   orderBy?: string;
   orderDir?: OrderDirection;
   isDeleted?: boolean;
+  minCreatedAt?: Date;
+  maxCreatedAt?: Date;
+  minUpdatedAt?: Date;
+  maxUpdatedAt?: Date;
 }

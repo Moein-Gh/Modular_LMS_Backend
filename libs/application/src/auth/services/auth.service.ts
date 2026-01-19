@@ -3,7 +3,11 @@ import { UsersService } from '@app/application/user/services/users.service';
 import { ConfigService } from '@app/config';
 import { AccessToken, Payload, RefreshToken, UserStatus } from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as crypto from 'crypto';
 import { LogoutResult, RequestSmsCodeResult } from '../dtos/auth.responses';
 import type { LogoutDto } from '../dtos/logout.dto';
@@ -199,7 +203,8 @@ export class AuthService {
     const session = await this.prisma.refreshToken.findFirst({
       where: { tokenHash, revoked: false, expiresAt: { gt: new Date() } },
     });
-    if (!session) throw new Error('Invalid or expired refresh token');
+    if (!session)
+      throw new UnauthorizedException('Invalid or expired refresh token');
 
     // Rotate refresh token using value object
     const refreshTokenExpiresIn = this.config.get('REFRESH_TOKEN_EXPIRES_IN')

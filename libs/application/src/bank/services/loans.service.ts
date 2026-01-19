@@ -291,7 +291,11 @@ export class LoansService {
       const transactionId = journal?.transactionId;
 
       if (transactionId) {
-        await this.transactionsService.reject(transactionId, DBtx);
+        await this.transactionsService.reject(
+          transactionId,
+          currentUserId,
+          DBtx,
+        );
       }
 
       // Delete the loan itself

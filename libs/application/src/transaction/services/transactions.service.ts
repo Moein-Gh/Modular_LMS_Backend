@@ -86,9 +86,6 @@ export class TransactionsService {
   }
 
   async findAll(query?: ListTransactionParams, tx?: Prisma.TransactionClient) {
-    // Build filters below; initial temporary vars removed to avoid duplication
-
-    // Build where conditions succinctly. We collect clauses and AND them.
     const clauses: Prisma.TransactionWhereInput[] = [];
 
     // Basic transaction filters
@@ -742,6 +739,7 @@ export class TransactionsService {
 
   async reject(
     id: string,
+    currentUserId: string,
     tx?: Prisma.TransactionClient,
   ): Promise<Transaction> {
     const run = async (DBtx: Prisma.TransactionClient) => {
@@ -766,12 +764,55 @@ export class TransactionsService {
       // Update transaction status to REJECTED
       const updatedTransaction = await this.transactionsRepo.update(
         id,
-        { status: TransactionStatus.REJECTED },
+        {
+          status: TransactionStatus.REJECTED,
+        },
         DBtx,
       );
+      // Soft delete the transaction
+      await this.transactionsRepo.softDelete(id, currentUserId, DBtx);
 
       // Void the journal associated with this transaction
       await this.journalService.void(journal.id, DBtx);
+
+      // get journal entries for the journal
+      const journalEntries = await this.journalEntryRepo.findAll(
+        { where: { journalId: journal.id } },
+        DBtx,
+      );
+
+      // For each journal entry, if it is linked to an installment or subscription fee, revert its status
+      for (const entry of journalEntries) {
+        if (
+          String(entry.targetType) === JournalTargetType.INSTALLMENT &&
+          entry.targetId
+        ) {
+          // Revert installment to active
+          await this.installmentRepo.update(
+            entry.targetId,
+            {
+              status: InstallmentStatus.ACTIVE,
+            },
+            DBtx,
+          );
+        }
+
+        if (
+          String(entry.targetType) === JournalTargetType.SUBSCRIPTION_FEE &&
+          entry.targetId
+        ) {
+          // Revert subscription fee to due
+          await this.subscriptionFeesRepo.update(
+            entry.targetId,
+            {
+              status: SubscriptionFeeStatus.DUE,
+              paidAt: null,
+              journalEntryId: null,
+            },
+            DBtx,
+          );
+        }
+      }
 
       return updatedTransaction;
     };

@@ -27,3 +27,6 @@ export * from './file/index';
 
 // MESSAGING
 export * from './messaging/index';
+
+// REPORT
+export * from './report/index';

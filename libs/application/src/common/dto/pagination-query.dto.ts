@@ -60,4 +60,36 @@ export class PaginationQueryDto {
   @IsBoolean()
   @IsOptional()
   isDeleted?: boolean = false;
+
+  // add minCreatedAt , maxCreatedAt for date range filtering
+
+  @ApiPropertyOptional({ description: 'Filter by minimum createdAt timestamp' })
+  @Transform(({ value }) =>
+    value !== undefined ? new Date(String(value)) : undefined,
+  )
+  @IsOptional()
+  minCreatedAt?: Date;
+
+  @ApiPropertyOptional({ description: 'Filter by maximum createdAt timestamp' })
+  @Transform(({ value }) =>
+    value !== undefined ? new Date(String(value)) : undefined,
+  )
+  @IsOptional()
+  maxCreatedAt?: Date;
+
+  // add minUpdatedAt , maxUpdatedAt for date range filtering
+
+  @ApiPropertyOptional({ description: 'Filter by minimum updatedAt timestamp' })
+  @Transform(({ value }) =>
+    value !== undefined ? new Date(String(value)) : undefined,
+  )
+  @IsOptional()
+  minUpdatedAt?: Date;
+
+  @ApiPropertyOptional({ description: 'Filter by maximum updatedAt timestamp' })
+  @Transform(({ value }) =>
+    value !== undefined ? new Date(String(value)) : undefined,
+  )
+  @IsOptional()
+  maxUpdatedAt?: Date;
 }

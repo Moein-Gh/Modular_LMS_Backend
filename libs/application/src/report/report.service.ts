@@ -1,12 +1,19 @@
+import { PaginationQueryDto } from '@app/application';
 import { DateService } from '@app/date';
 import {
   AccountStatus,
   BankFinancialSummary,
+  Installment,
+  InstallmentGroup,
+  InstallmentProjectionsResponse,
+  InstallmentStatus,
+  InstallmentWithDetails,
   LEDGER_ACCOUNT_CODES,
   LoanStatus,
 } from '@app/domain';
 import {
   PrismaAccountRepository,
+  PrismaInstallmentRepository,
   PrismaLedgerAccountRepository,
   PrismaLoanRepository,
   PrismaTransactionRepository,
@@ -23,6 +30,7 @@ export class ReportService {
     private readonly accountsRepo: PrismaAccountRepository,
     private readonly loansRepo: PrismaLoanRepository,
     private readonly transactionsRepo: PrismaTransactionRepository,
+    private readonly installmentsRepo: PrismaInstallmentRepository,
     private readonly dateService: DateService,
   ) {}
 
@@ -254,6 +262,209 @@ export class ReportService {
         pending: transactionsPending,
         allocated: transactionsAllocated,
       },
+    };
+  }
+
+  async getInstallmentProjections(
+    query?: PaginationQueryDto,
+    tx?: Prisma.TransactionClient,
+  ): Promise<InstallmentProjectionsResponse> {
+    const now = new Date();
+
+    // Calculate date ranges
+    const currentMonthStart = this.dateService.startOfMonth(now);
+    const currentMonthEnd = this.dateService.endOfMonth(now);
+    const nextMonthStart = this.dateService.startOfMonth(
+      this.dateService.addMonths(now, 1),
+    );
+    const nextMonthEnd = this.dateService.endOfMonth(
+      this.dateService.addMonths(now, 1),
+    );
+    const next3MonthsEnd = this.dateService.endOfMonth(
+      this.dateService.addMonths(now, 3),
+    );
+
+    // Manual pagination for current / next / next3 periods
+    const page = query?.page ?? 1;
+    const pageSize = query?.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+    const take = pageSize;
+
+    const currentWhere: Prisma.InstallmentWhereInput = {
+      dueDate: {
+        gte: currentMonthStart,
+        lte: currentMonthEnd,
+      },
+    };
+
+    // Fetch totals without pagination
+    const currentTotalCount = await this.installmentsRepo.count(
+      currentWhere,
+      tx,
+    );
+    const currentAllForSum = await this.installmentsRepo.findAll(
+      { where: currentWhere },
+      tx,
+    );
+    const currentTotalAmount = currentAllForSum
+      .reduce((sum, inst) => sum + BigInt(inst.amount), BigInt(0))
+      .toString();
+
+    // Fetch paginated items with relations
+    const currentRaw = await this.installmentsRepo.findAll(
+      {
+        where: currentWhere,
+        include: {
+          loan: { include: { user: { include: { identity: true } } } },
+        },
+        skip,
+        take,
+        orderBy: { dueDate: 'asc' },
+      },
+      tx,
+    );
+
+    const nextWhere: Prisma.InstallmentWhereInput = {
+      dueDate: { gte: nextMonthStart, lte: nextMonthEnd },
+    };
+
+    const nextTotalCount = await this.installmentsRepo.count(nextWhere, tx);
+    const nextAllForSum = await this.installmentsRepo.findAll(
+      { where: nextWhere },
+      tx,
+    );
+    const nextTotalAmount = nextAllForSum
+      .reduce((sum, inst) => sum + BigInt(inst.amount), BigInt(0))
+      .toString();
+
+    const nextRaw = await this.installmentsRepo.findAll(
+      {
+        where: nextWhere,
+        include: {
+          loan: { include: { user: { include: { identity: true } } } },
+        },
+        skip,
+        take,
+        orderBy: { dueDate: 'asc' },
+      },
+      tx,
+    );
+
+    const next3Where: Prisma.InstallmentWhereInput = {
+      dueDate: { gte: nextMonthStart, lte: next3MonthsEnd },
+    };
+
+    const next3TotalCount = await this.installmentsRepo.count(next3Where, tx);
+    const next3AllForSum = await this.installmentsRepo.findAll(
+      { where: next3Where },
+      tx,
+    );
+    const next3TotalAmount = next3AllForSum
+      .reduce((sum, inst) => sum + BigInt(inst.amount), BigInt(0))
+      .toString();
+
+    const next3Raw = await this.installmentsRepo.findAll(
+      {
+        where: next3Where,
+        include: {
+          loan: { include: { user: { include: { identity: true } } } },
+        },
+        skip,
+        take,
+        orderBy: { dueDate: 'asc' },
+      },
+      tx,
+    );
+
+    // Type guard to ensure loan and user are present
+    const isInstallmentWithDetails = (
+      inst: Installment,
+    ): inst is InstallmentWithDetails => {
+      return (
+        !!inst.loan && (inst.loan as unknown as { user?: unknown }).user != null
+      );
+    };
+
+    const currentMonthInstallments = currentRaw.filter(
+      isInstallmentWithDetails,
+    );
+    const nextMonthInstallments = nextRaw.filter(isInstallmentWithDetails);
+    const next3MonthsInstallments = next3Raw.filter(isInstallmentWithDetails);
+
+    // Helper function to create group with total count/amount and paginated installments
+    const createGroup = (
+      installments: InstallmentWithDetails[],
+      totalCount: number,
+      totalAmount: string,
+    ): InstallmentGroup => {
+      return {
+        count: totalCount,
+        totalAmount,
+        installments,
+      };
+    };
+
+    // Split current month by status - for paginated list
+    const currentMonthPaid = currentMonthInstallments.filter(
+      (inst) => inst.status === InstallmentStatus.PAID,
+    );
+    const currentMonthPending = currentMonthInstallments.filter(
+      (inst) =>
+        inst.status === InstallmentStatus.PENDING ||
+        inst.status === InstallmentStatus.ACTIVE,
+    );
+
+    // Calculate totals for paid and pending from full dataset
+    const currentPaidCount = currentAllForSum.filter(
+      (inst) => inst.status === InstallmentStatus.PAID,
+    ).length;
+    const currentPaidAmount = currentAllForSum
+      .filter((inst) => inst.status === InstallmentStatus.PAID)
+      .reduce((sum, inst) => sum + BigInt(inst.amount), BigInt(0))
+      .toString();
+
+    const currentPendingCount = currentAllForSum.filter(
+      (inst) =>
+        inst.status === InstallmentStatus.PENDING ||
+        inst.status === InstallmentStatus.ACTIVE,
+    ).length;
+    const currentPendingAmount = currentAllForSum
+      .filter(
+        (inst) =>
+          inst.status === InstallmentStatus.PENDING ||
+          inst.status === InstallmentStatus.ACTIVE,
+      )
+      .reduce((sum, inst) => sum + BigInt(inst.amount), BigInt(0))
+      .toString();
+
+    return {
+      currentMonth: {
+        expected: createGroup(
+          currentMonthInstallments,
+          currentTotalCount,
+          currentTotalAmount,
+        ),
+        paid: createGroup(
+          currentMonthPaid,
+          currentPaidCount,
+          currentPaidAmount,
+        ),
+        pending: createGroup(
+          currentMonthPending,
+          currentPendingCount,
+          currentPendingAmount,
+        ),
+      },
+      nextMonth: createGroup(
+        nextMonthInstallments,
+        nextTotalCount,
+        nextTotalAmount,
+      ),
+      next3Months: createGroup(
+        next3MonthsInstallments,
+        next3TotalCount,
+        next3TotalAmount,
+      ),
     };
   }
 }

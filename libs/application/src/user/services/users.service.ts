@@ -129,6 +129,22 @@ export class UsersService {
     tx?: Prisma.TransactionClient,
   ): Promise<PaginatedResponse<User>> {
     if (tx) {
+      const where: Prisma.UserWhereInput = {
+        isDeleted: query?.isDeleted,
+      };
+
+      if (query?.search) {
+        where.AND = [
+          {
+            identity: {
+              is: {
+                name: { contains: query.search, mode: 'insensitive' },
+              },
+            },
+          },
+        ];
+      }
+
       return paginatePrisma<
         User,
         Prisma.UserFindManyArgs,
@@ -147,7 +163,7 @@ export class UsersService {
             },
           },
         },
-        where: { isDeleted: query?.isDeleted },
+        where,
       });
     }
 

@@ -21,6 +21,7 @@ export * from './ledger';
 // COMMON DTOs
 export * from './common/dto/paginated-response.dto';
 export * from './common/dto/pagination-query.dto';
+export * from './common/pagination.util';
 
 // COMMON VALIDATORS
 export * from './common/validators/is-mutually-exclusive-with.validator';
