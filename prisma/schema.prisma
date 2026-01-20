@@ -40,6 +40,7 @@ model User {
   loans             Loan[]
   devices           Device[]
   messageRecipients MessageRecipient[]
+  loanRequests      LoanRequest[]
 
   @@index([isDeleted], map: "user_is_deleted_idx")
 }
@@ -291,6 +292,7 @@ model Account {
   loans           Loan[]
   SubscriptionFee SubscriptionFee[]
   journalEntries  JournalEntry[]
+  loanRequests    LoanRequest[]
   isDeleted       Boolean           @default(false) @map("is_deleted")
   deletedAt       DateTime?         @map("deleted_at")
   deletedBy       String?           @map("deleted_by") @db.Uuid
@@ -340,7 +342,8 @@ model LoanType {
   creditRequirementPct Int     @default(20)
   description          String?
 
-  loans Loan[]
+  loans        Loan[]
+  loanRequests LoanRequest[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -356,6 +359,14 @@ enum LoanStatus {
   APPROVED // approved but not yet disbursed
   ACTIVE // disbursed, being repaid
   PAID // fully repaid
+}
+
+enum LoanRequestStatus {
+  PENDING
+  IN_QUEUE
+  APPROVED
+  REJECTED
+  CONVERTED
 }
 
 model Loan {
@@ -426,6 +437,55 @@ model Installment {
   @@index([isDeleted], map: "installment_is_deleted_idx")
   @@index([ownerId], map: "installment_owner_id_idx")
   @@index([createdBy], map: "installment_created_by_idx")
+}
+
+model LoanRequest {
+  id            String            @id @default(uuid()) @db.Uuid
+  code          Int               @unique @default(autoincrement())
+  accountId     String            @db.Uuid
+  loanTypeId    String            @db.Uuid
+  userId        String            @db.Uuid
+  amount        Decimal           @db.Decimal(18, 4)
+  startDate     DateTime
+  paymentMonths Int
+  status        LoanRequestStatus @default(PENDING)
+  note          String?           @db.Text
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  isDeleted     Boolean           @default(false) @map("is_deleted")
+  deletedAt     DateTime?         @map("deleted_at")
+  deletedBy     String?           @map("deleted_by") @db.Uuid
+  ownerId       String?           @map("owner_id") @db.Uuid
+  createdBy     String?           @map("created_by") @db.Uuid
+
+  loanQueue LoanQueue?
+  account   Account    @relation(fields: [accountId], references: [id])
+  loanType  LoanType   @relation(fields: [loanTypeId], references: [id])
+  user      User       @relation(fields: [userId], references: [id])
+
+  @@index([isDeleted], map: "loan_request_is_deleted_idx")
+  @@index([status], map: "loan_request_status_idx")
+  @@index([ownerId], map: "loan_request_owner_id_idx")
+  @@index([createdBy], map: "loan_request_created_by_idx")
+  @@map("loan_request")
+}
+
+model LoanQueue {
+  id            String      @id @default(uuid()) @db.Uuid
+  code          Int         @unique @default(autoincrement())
+  loanRequestId String      @unique @db.Uuid
+  loanRequest   LoanRequest @relation(fields: [loanRequestId], references: [id])
+  queueOrder    Int
+  adminNotes    String?     @db.Text
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  isDeleted     Boolean     @default(false) @map("is_deleted")
+  deletedAt     DateTime?   @map("deleted_at")
+  deletedBy     String?     @map("deleted_by") @db.Uuid
+
+  @@index([queueOrder], map: "loan_queue_order_idx")
+  @@index([isDeleted], map: "loan_queue_is_deleted_idx")
+  @@map("loan_queue")
 }
 
 enum SubscriptionFeeStatus {

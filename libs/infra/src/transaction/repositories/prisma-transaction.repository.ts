@@ -92,7 +92,18 @@ function mapTransactionBase(
 function toDomain(model: TransactionModel): Transaction {
   return {
     ...mapTransactionBase(model),
-    images: model.images ?? [],
+    images: (model.images ?? []).map((img) => ({
+      id: img.id,
+      transactionId: img.transactionId,
+      fileId: img.fileId,
+      description: img.description ?? undefined,
+      createdAt: img.createdAt,
+      ownerId: img.ownerId ?? undefined,
+      createdBy: img.createdBy ?? undefined,
+      isDeleted: img.isDeleted,
+      deletedAt: img.deletedAt ?? undefined,
+      deletedBy: img.deletedBy ?? undefined,
+    })),
   };
 }
 
@@ -101,7 +112,18 @@ function toDomainWithRelations(
 ): Transaction {
   const result: Transaction = {
     ...mapTransactionBase(model),
-    images: model.images ?? [],
+    images: (model.images ?? []).map((img) => ({
+      id: img.id,
+      transactionId: img.transactionId,
+      fileId: img.fileId,
+      description: img.description ?? undefined,
+      createdAt: img.createdAt,
+      ownerId: img.ownerId ?? undefined,
+      createdBy: img.createdBy ?? undefined,
+      isDeleted: img.isDeleted,
+      deletedAt: img.deletedAt ?? undefined,
+      deletedBy: img.deletedBy ?? undefined,
+    })),
   };
 
   // Add user with complete identity if available

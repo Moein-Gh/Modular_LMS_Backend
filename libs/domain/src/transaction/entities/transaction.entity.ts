@@ -1,5 +1,5 @@
 import { User } from '@app/domain/user';
-import { TransactionImage } from '@generated/prisma';
+import { TransactionImage } from './transaction-image.entity';
 
 export enum TransactionKind {
   DEPOSIT = 'DEPOSIT',

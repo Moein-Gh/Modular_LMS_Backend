@@ -4,6 +4,8 @@ import { PrismaAccountTypeRepository } from './repositories/prisma-account-type.
 import { PrismaAccountRepository } from './repositories/prisma-account.repository';
 import { PrismaBankRepository } from './repositories/prisma-bank.repository';
 import { PrismaInstallmentRepository } from './repositories/prisma-installment.repository';
+import { PrismaLoanQueueRepository } from './repositories/prisma-loan-queue.repository';
+import { PrismaLoanRequestRepository } from './repositories/prisma-loan-request.repository';
 import { PrismaLoanTypeRepository } from './repositories/prisma-loan-type.repository';
 import { PrismaLoanRepository } from './repositories/prisma-loan.repository';
 import { PrismaSubscriptionFeeRepository } from './repositories/prisma-subscription-fee.repository';
@@ -16,6 +18,8 @@ import { PrismaSubscriptionFeeRepository } from './repositories/prisma-subscript
     PrismaBankRepository,
     PrismaLoanTypeRepository,
     PrismaLoanRepository,
+    PrismaLoanRequestRepository,
+    PrismaLoanQueueRepository,
     PrismaInstallmentRepository,
     PrismaSubscriptionFeeRepository,
   ],
@@ -25,6 +29,8 @@ import { PrismaSubscriptionFeeRepository } from './repositories/prisma-subscript
     PrismaBankRepository,
     PrismaLoanTypeRepository,
     PrismaLoanRepository,
+    PrismaLoanRequestRepository,
+    PrismaLoanQueueRepository,
     PrismaInstallmentRepository,
     PrismaSubscriptionFeeRepository,
   ],

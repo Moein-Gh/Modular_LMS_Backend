@@ -32,6 +32,8 @@ import { AccountTypesController } from './bank/account-types.controller';
 import { AccountsController } from './bank/accounts.controller';
 import { BankFinancialsController } from './bank/bank-financials.controller';
 import { InstallmentsController } from './bank/installments.controller';
+import { LoanQueueController } from './bank/loan-queue.controller';
+import { LoanRequestsController } from './bank/loan-requests.controller';
 import { LoanTypesController } from './bank/loan-types.controller';
 import { LoansController } from './bank/loans.controller';
 import { SubscriptionFeesController } from './bank/subscription-fees.controller';
@@ -76,6 +78,8 @@ import { UsersController } from './users/users.controller';
     InstallmentsController,
     SubscriptionFeesController,
     LoanTypesController,
+    LoanRequestsController,
+    LoanQueueController,
     AccountTypesController,
     BankFinancialsController,
     TransactionsController,
