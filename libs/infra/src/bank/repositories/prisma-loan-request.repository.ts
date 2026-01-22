@@ -41,7 +41,6 @@ type LoanRequestModelWithRelations = LoanRequestModel & {
   account?: LoanRequest['account'];
   loanType?: LoanRequest['loanType'];
   user?: LoanRequest['user'];
-  loanQueue?: LoanRequest['loanQueue'];
 };
 
 function toDomain(
@@ -69,7 +68,6 @@ function toDomain(
     account: m.account,
     loanType: m.loanType,
     user: m.user,
-    loanQueue: m.loanQueue,
   };
 }
 

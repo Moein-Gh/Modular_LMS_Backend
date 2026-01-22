@@ -1,8 +1,10 @@
 import {
+  CreateLoanRequestDto,
   CurrentUserId,
   LoanRequestsService,
   PaginatedResponseDto,
   ReviewLoanRequestDto,
+  UpdateLoanRequestDto,
 } from '@app/application';
 import {
   Body,
@@ -24,6 +26,16 @@ import { GetLoanRequestsQueryDto } from './dtos/loan-requests/get-loan-requests-
 @Controller('loan-requests')
 export class LoanRequestsController {
   constructor(private readonly loanRequestsService: LoanRequestsService) {}
+
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a new loan request' })
+  async create(@Body() dto: CreateLoanRequestDto) {
+    return await this.loanRequestsService.create({
+      ...dto,
+      startDate: new Date(dto.startDate),
+    });
+  }
 
   @Get()
   @ApiOperation({ summary: 'Get all loan requests with pagination' })
@@ -47,13 +59,16 @@ export class LoanRequestsController {
     return await this.loanRequestsService.findById(id);
   }
 
-  @Post(':id/review')
-  @ApiOperation({ summary: 'Approve or reject a loan request' })
-  async review(
-    @Param('id', UUID_V4_PIPE) id: string,
-    @Body() dto: ReviewLoanRequestDto,
-  ) {
-    return await this.loanRequestsService.updateStatus(id, dto.status);
+  @Post(':id/approve')
+  @ApiOperation({ summary: 'Approve a loan request and create a loan' })
+  async approve(@Param('id', UUID_V4_PIPE) id: string) {
+    return await this.loanRequestsService.approve(id);
+  }
+
+  @Post(':id/reject')
+  @ApiOperation({ summary: 'Reject a loan request' })
+  async reject(@Param('id', UUID_V4_PIPE) id: string) {
+    return await this.loanRequestsService.reject(id);
   }
 
   @Patch(':id/status')
@@ -63,6 +78,15 @@ export class LoanRequestsController {
     @Body() dto: ReviewLoanRequestDto,
   ) {
     return await this.loanRequestsService.updateStatus(id, dto.status);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update loan request note' })
+  async update(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @Body() dto: UpdateLoanRequestDto,
+  ) {
+    return await this.loanRequestsService.update(id, { note: dto.note });
   }
 
   @Delete(':id')

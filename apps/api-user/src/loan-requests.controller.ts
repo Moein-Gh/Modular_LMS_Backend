@@ -65,14 +65,9 @@ export class LoanRequestsController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new loan request' })
-  async create(
-    @Body() dto: CreateLoanRequestDto,
-    @CurrentUserId() userId: string,
-  ) {
-    // Ensure userId in DTO matches current user
+  async create(@Body() dto: CreateLoanRequestDto) {
     return this.loanRequestsService.create({
       ...dto,
-      userId,
       startDate: new Date(dto.startDate),
     });
   }

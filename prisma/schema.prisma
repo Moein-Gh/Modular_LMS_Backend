@@ -363,7 +363,6 @@ enum LoanStatus {
 
 enum LoanRequestStatus {
   PENDING
-  IN_QUEUE
   APPROVED
   REJECTED
   CONVERTED
@@ -458,34 +457,15 @@ model LoanRequest {
   ownerId       String?           @map("owner_id") @db.Uuid
   createdBy     String?           @map("created_by") @db.Uuid
 
-  loanQueue LoanQueue?
-  account   Account    @relation(fields: [accountId], references: [id])
-  loanType  LoanType   @relation(fields: [loanTypeId], references: [id])
-  user      User       @relation(fields: [userId], references: [id])
+  account  Account  @relation(fields: [accountId], references: [id])
+  loanType LoanType @relation(fields: [loanTypeId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
 
   @@index([isDeleted], map: "loan_request_is_deleted_idx")
   @@index([status], map: "loan_request_status_idx")
   @@index([ownerId], map: "loan_request_owner_id_idx")
   @@index([createdBy], map: "loan_request_created_by_idx")
   @@map("loan_request")
-}
-
-model LoanQueue {
-  id            String      @id @default(uuid()) @db.Uuid
-  code          Int         @unique @default(autoincrement())
-  loanRequestId String      @unique @db.Uuid
-  loanRequest   LoanRequest @relation(fields: [loanRequestId], references: [id])
-  queueOrder    Int
-  adminNotes    String?     @db.Text
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  isDeleted     Boolean     @default(false) @map("is_deleted")
-  deletedAt     DateTime?   @map("deleted_at")
-  deletedBy     String?     @map("deleted_by") @db.Uuid
-
-  @@index([queueOrder], map: "loan_queue_order_idx")
-  @@index([isDeleted], map: "loan_queue_is_deleted_idx")
-  @@map("loan_queue")
 }
 
 enum SubscriptionFeeStatus {

@@ -3,7 +3,6 @@ export * from './entities/account.entity';
 export * from './entities/bank-financial-summary';
 export * from './entities/bank.entity';
 export * from './entities/installment.entity';
-export * from './entities/loan-queue.entity';
 export * from './entities/loan-request.entity';
 export * from './entities/loan-type.entity';
 export * from './entities/loan.entity';

@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  IsDateString,
+  IsDate,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -17,28 +17,14 @@ export class CreateLoanRequestDto {
   @IsNotEmpty()
   accountId: string;
 
-  @ApiProperty({ description: 'Loan type ID' })
-  @IsUUID()
-  @IsNotEmpty()
-  loanTypeId: string;
-
-  @ApiProperty({ description: 'User ID creating the request' })
-  @IsUUID()
-  @IsNotEmpty()
-  userId: string;
-
   @ApiProperty({ description: 'Loan amount requested', example: '1000000' })
   @IsString()
   @IsNotEmpty()
   amount: string;
 
-  @ApiProperty({
-    description: 'Loan start date',
-    example: '2024-01-01T00:00:00.000Z',
-  })
-  @IsDateString()
-  @IsNotEmpty()
-  startDate: string;
+  @Type(() => Date)
+  @IsDate()
+  startDate!: Date;
 
   @ApiProperty({
     description: 'Number of payment months',

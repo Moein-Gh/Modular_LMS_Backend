@@ -10,7 +10,6 @@ import { AccountsService } from './services/accounts.service';
 import { BankFinancialsService } from './services/bank-financials.service';
 import { BankService } from './services/banks.service';
 import { InstallmentsService } from './services/installments.service';
-import { LoanQueueService } from './services/loan-queue.service';
 import { LoanRequestsService } from './services/loan-requests.service';
 import { LoanTypesService } from './services/loan-types.service';
 import { LoansService } from './services/loans.service';
@@ -35,7 +34,6 @@ import { SubscriptionFeesService } from './services/subscription-fees.service';
     SubscriptionFeesService,
     LoanTypesService,
     LoanRequestsService,
-    LoanQueueService,
     BankService,
     BankFinancialsService,
     LoansService,
@@ -48,7 +46,6 @@ import { SubscriptionFeesService } from './services/subscription-fees.service';
     SubscriptionFeesService,
     LoanTypesService,
     LoanRequestsService,
-    LoanQueueService,
     BankService,
     BankFinancialsService,
   ],

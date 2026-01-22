@@ -1,5 +1,4 @@
 import { BaseQueryParams } from '@app/domain/common';
-import { LoanQueue } from '../entities/loan-queue.entity';
 import {
   LoanRequest,
   LoanRequestStatus,
@@ -27,14 +26,3 @@ export type ListLoanRequestQueryInput = BaseQueryParams & {
   loanTypeId?: string;
   status?: LoanRequestStatus;
 };
-
-export type CreateLoanQueueInput = Pick<
-  LoanQueue,
-  'loanRequestId' | 'queueOrder'
-> & {
-  adminNotes?: string;
-};
-
-export type UpdateLoanQueueInput = Partial<
-  Pick<LoanQueue, 'queueOrder' | 'adminNotes'>
->;
