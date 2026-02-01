@@ -1,7 +1,14 @@
 import { NotFoundError } from '@app/application/errors/not-found.error';
 import { UsersService } from '@app/application/user/services/users.service';
 import { ConfigService } from '@app/config';
-import { AccessToken, Payload, RefreshToken, UserStatus } from '@app/domain';
+import {
+  AccessToken,
+  MessageType,
+  Payload,
+  RecipientStatus,
+  RefreshToken,
+  UserStatus,
+} from '@app/domain';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import {
   BadRequestException,
@@ -9,6 +16,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
+import { MessagingService } from '../../messaging/services/messaging.service';
 import { LogoutResult, RequestSmsCodeResult } from '../dtos/auth.responses';
 import type { LogoutDto } from '../dtos/logout.dto';
 import type { RequestSmsCodeDto } from '../dtos/request-sms-code.dto';
@@ -25,6 +33,7 @@ export class AuthService {
     private readonly identityService: IdentitiesService,
     private readonly usersService: UsersService,
     private readonly devicesService: DevicesService,
+    private readonly messagingService: MessagingService,
   ) {}
 
   // 1. Request SMS code
@@ -177,6 +186,17 @@ export class AuthService {
       accessTokenExpiresIn,
     );
 
+    const unreadCount = await this.messagingService.count({
+      type: MessageType.PUSH_NOTIFICATION,
+      recipients: {
+        some: {
+          userId: user.id,
+          status: { not: RecipientStatus.READ },
+        },
+      },
+      isDeleted: false,
+    });
+
     return {
       accessToken: accessTokenVO.value,
       refreshToken: refreshTokenVO.value,
@@ -187,6 +207,7 @@ export class AuthService {
       user,
       sessionId: refreshTokenRecord.id,
       isDeleted: false,
+      hasUnreadPushNotifications: unreadCount > 0,
     };
   }
 
@@ -237,6 +258,17 @@ export class AuthService {
       accessTokenExpiresIn,
     );
 
+    const unreadCount = await this.messagingService.count({
+      type: MessageType.PUSH_NOTIFICATION,
+      recipients: {
+        some: {
+          userId: user.id,
+          status: { not: RecipientStatus.READ },
+        },
+      },
+      isDeleted: false,
+    });
+
     return {
       accessToken: accessTokenVO.value,
       refreshToken: newRefreshTokenVO.value,
@@ -247,6 +279,7 @@ export class AuthService {
       user,
       sessionId: newRefreshTokenRecord.id,
       isDeleted: false,
+      hasUnreadPushNotifications: unreadCount > 0,
     };
   }
 

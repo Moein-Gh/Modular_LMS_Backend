@@ -1,4 +1,5 @@
 import { User } from '@app/domain/user';
+import { MessageTemplate } from './message-template.entity';
 
 export enum MessageType {
   SMS = 'SMS',
@@ -40,7 +41,7 @@ export interface Message {
   updatedAt: Date;
 
   // Relations
-  template?: unknown;
+  template?: MessageTemplate;
   recipients?: MessageRecipient[];
   createdByUser?: User;
 

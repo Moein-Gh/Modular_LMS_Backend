@@ -12,4 +12,5 @@ export interface Payload {
   isDeleted: boolean;
   deletedAt?: Date;
   deletedBy?: string;
+  hasUnreadPushNotifications?: boolean;
 }

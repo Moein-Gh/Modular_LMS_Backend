@@ -4,12 +4,11 @@ import type {
   IMessageRepository,
   Message,
   MessageRecipient,
-  MessageType,
-  RecipientStatus,
   UpdateMessageInput,
   UpdateMessageRecipientInput,
 } from '@app/domain';
-import { MessageStatus } from '@app/domain';
+import { MessageStatus, MessageType, RecipientStatus } from '@app/domain';
+
 import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import { Prisma, type PrismaClient } from '@generated/prisma';
@@ -20,16 +19,36 @@ const messageInclude = {
   recipients: {
     include: {
       user: {
-        select: {
-          id: true,
-          code: true,
-          identityId: true,
-          status: true,
+        include: {
+          identity: true,
         },
       },
     },
   },
 } as const;
+
+type RecipientWithUser =
+  | Prisma.MessageRecipientGetPayload<{
+      include: {
+        user: {
+          select: {
+            id: true;
+            code: true;
+            identityId: true;
+            status: true;
+          };
+        };
+      };
+    }>
+  | Prisma.MessageRecipientGetPayload<{
+      include: {
+        user: {
+          include: {
+            identity: true;
+          };
+        };
+      };
+    }>;
 
 @Injectable()
 export class PrismaMessageRepository implements IMessageRepository {
@@ -163,6 +182,26 @@ export class PrismaMessageRepository implements IMessageRepository {
     return this.toDomain(message);
   }
 
+  async markRecipientsAsRead(
+    userId: string,
+    messageIds: string[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const prisma = tx ?? this.prisma;
+    await prisma.messageRecipient.updateMany({
+      where: {
+        userId,
+        messageId: { in: messageIds },
+        status: { not: RecipientStatus.READ },
+        isDeleted: false,
+      },
+      data: {
+        status: RecipientStatus.READ,
+        readAt: new Date(),
+      },
+    });
+  }
+
   // Recipient operations
   async createRecipient(
     data: CreateMessageRecipientInput,
@@ -277,7 +316,24 @@ export class PrismaMessageRepository implements IMessageRepository {
       createdBy: message.createdBy,
       createdAt: message.createdAt,
       updatedAt: message.updatedAt,
-      template: message.template ?? undefined,
+      template: message.template
+        ? {
+            id: message.template.id,
+            code: message.template.code,
+            name: message.template.name,
+            type: message.template.type as MessageType,
+            subject: message.template.subject,
+            content: message.template.content,
+            variables: message.template.variables,
+            isActive: message.template.isActive,
+            createdBy: message.template.createdBy,
+            createdAt: message.template.createdAt,
+            updatedAt: message.template.updatedAt,
+            isDeleted: message.template.isDeleted,
+            deletedAt: message.template.deletedAt,
+            deletedBy: message.template.deletedBy,
+          }
+        : undefined,
       recipients: message.recipients?.map((r) => this.recipientToDomain(r)),
       isDeleted: message.isDeleted,
       deletedAt: message.deletedAt,
@@ -285,20 +341,7 @@ export class PrismaMessageRepository implements IMessageRepository {
     };
   }
 
-  private recipientToDomain(
-    recipient: Prisma.MessageRecipientGetPayload<{
-      include: {
-        user: {
-          select: {
-            id: true;
-            code: true;
-            identityId: true;
-            status: true;
-          };
-        };
-      };
-    }> & { renderedContent?: string | null },
-  ): MessageRecipient {
+  private recipientToDomain(recipient: RecipientWithUser): MessageRecipient {
     return {
       id: recipient.id,
       code: recipient.code,
@@ -320,6 +363,21 @@ export class PrismaMessageRepository implements IMessageRepository {
             identityId: recipient.user.identityId,
             status: recipient.user
               .status as unknown as import('@app/domain').UserStatus,
+            identity:
+              'identity' in recipient.user && recipient.user.identity
+                ? {
+                    id: recipient.user.identity.id,
+                    phone: recipient.user.identity.phone,
+                    name: recipient.user.identity.name,
+                    countryCode: recipient.user.identity.countryCode,
+                    email: recipient.user.identity.email,
+                    createdAt: recipient.user.identity.createdAt,
+                    updatedAt: recipient.user.identity.updatedAt,
+                    isDeleted: recipient.user.identity.isDeleted,
+                    deletedAt: recipient.user.identity.deletedAt,
+                    deletedBy: recipient.user.identity.deletedBy,
+                  }
+                : undefined,
             isDeleted: false,
           } as import('@app/domain').User)
         : undefined,

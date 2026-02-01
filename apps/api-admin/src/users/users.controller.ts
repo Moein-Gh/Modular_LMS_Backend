@@ -20,6 +20,7 @@ import {
   NotFoundError,
   PaginatedResponseDto,
   PaginationQueryDto,
+  PaymentSummaryDto,
   RegisterUserInput,
   RegisterUserUseCase,
   UpcomingPaymentsResponseDto,
@@ -194,5 +195,22 @@ export class UsersController {
     @Query() query: GetUpcomingPaymentsQueryDto,
   ): Promise<UpcomingPaymentsResponseDto> {
     return this.usersService.getUserUpcomingPayments(id, query);
+  }
+
+  // get user's payment summary
+  @Permissions('user/get')
+  @Get(':id/payment-summary')
+  @ApiOperation({
+    summary: "Get user's payment summary for dashboard",
+    description:
+      "Returns a summary of the user's payment obligations for the current month and overdue payments. " +
+      'Includes only payments due this month plus any past-due payments. ' +
+      'This endpoint provides aggregated counts and amounts without detailed item breakdown, ' +
+      'ideal for dashboard displays.',
+  })
+  getPaymentSummary(
+    @Param('id', UUID_V4_PIPE) id: string,
+  ): Promise<PaymentSummaryDto> {
+    return this.usersService.getUserPaymentSummary(id);
   }
 }

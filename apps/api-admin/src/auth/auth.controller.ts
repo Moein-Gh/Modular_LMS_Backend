@@ -109,6 +109,7 @@ export class AuthController {
       user: result.user,
       userId: result.userId,
       sessionId: result.sessionId,
+      hasUnreadPushNotifications: result.hasUnreadPushNotifications,
     };
   }
 
@@ -143,6 +144,7 @@ export class AuthController {
       user: result.user,
       userId: result.userId,
       sessionId: result.sessionId,
+      hasUnreadPushNotifications: result.hasUnreadPushNotifications,
     };
   }
 

@@ -3,6 +3,7 @@ import { AuthInfraModule } from '@app/infra/auth/auth-infra.module';
 import { PrismaModule } from '@app/infra/prisma/prisma.module';
 import { Module } from '@nestjs/common';
 import { AccessApplicationModule } from '../access/access-application.module';
+import { MessagingApplicationModule } from '../messaging/messaging-application.module';
 import { UserApplicationModule } from '../user/user-application.module';
 import { AccessTokenGuard } from './guards/access-token.guard';
 import { AuthService } from './services/auth.service';
@@ -17,6 +18,7 @@ import { RegisterUserUseCase } from './use-cases/register-user.usecase';
     ConfigModule,
     AuthInfraModule,
     AccessApplicationModule,
+    MessagingApplicationModule,
   ],
   providers: [
     RegisterUserUseCase,

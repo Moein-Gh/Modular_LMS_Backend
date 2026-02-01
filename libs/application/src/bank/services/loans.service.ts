@@ -6,6 +6,7 @@ import {
   AccountStatus,
   CreateTransactionWithJournalEntriesInput,
   DebitCredit,
+  Installment,
   InstallmentStatus,
   JournalEntryTarget,
   LEDGER_ACCOUNT_CODES,
@@ -18,6 +19,7 @@ import {
   User,
   UserStatus,
   type CreateLoanInput,
+  type InstallmentSummary,
   type Loan,
   type UpdateLoanInput,
 } from '@app/domain';
@@ -64,38 +66,52 @@ export class LoansService {
   ) {}
 
   async findAll(query?: ListLoanQueryInput, tx?: Prisma.TransactionClient) {
-    return paginatePrisma<Loan, Prisma.LoanFindManyArgs, Prisma.LoanWhereInput>(
-      {
-        repo: this.loansRepo,
-        query: query ?? {},
-        where: {
-          ...(query?.accountId && { accountId: query.accountId }),
-          ...(query?.loanTypeId && { loanTypeId: query.loanTypeId }),
-          ...(query?.userId && { account: { userId: query.userId } }),
-          ...(query?.isDeleted !== undefined && { isDeleted: query.isDeleted }),
-          ...(query?.status !== undefined && { status: query.status }),
-        },
-        searchFields: ['name'],
-        defaultOrderBy: 'createdAt',
-        defaultOrderDir: 'desc',
-        include: {
-          loanType: { select: { id: true, name: true } },
-          account: {
-            select: {
-              id: true,
-              name: true,
-              user: {
-                select: {
-                  id: true,
-                  identity: { select: { id: true, name: true } },
-                },
+    const result = await paginatePrisma<
+      Loan,
+      Prisma.LoanFindManyArgs,
+      Prisma.LoanWhereInput
+    >({
+      repo: this.loansRepo,
+      query: query ?? {},
+      where: {
+        ...(query?.accountId && { accountId: query.accountId }),
+        ...(query?.loanTypeId && { loanTypeId: query.loanTypeId }),
+        ...(query?.userId && { account: { userId: query.userId } }),
+        ...(query?.isDeleted !== undefined && { isDeleted: query.isDeleted }),
+        ...(query?.status !== undefined && { status: query.status }),
+      },
+      searchFields: ['name'],
+      defaultOrderBy: 'createdAt',
+      defaultOrderDir: 'desc',
+      include: {
+        loanType: { select: { id: true, name: true } },
+        account: {
+          select: {
+            id: true,
+            name: true,
+            user: {
+              select: {
+                id: true,
+                identity: { select: { id: true, name: true } },
               },
             },
           },
         },
-        tx,
       },
+      tx,
+    });
+
+    // Add installment summary to each loan
+    await Promise.all(
+      result.items.map(async (loan: Loan) => {
+        loan.installmentSummary = await this.calculateInstallmentSummary(
+          loan.id,
+          tx,
+        );
+      }),
     );
+
+    return result;
   }
 
   async findById(id: string, tx?: Prisma.TransactionClient): Promise<Loan> {
@@ -130,6 +146,12 @@ export class LoansService {
     );
 
     loan.balanceSummary = balance;
+
+    // Add installment summary
+    loan.installmentSummary = await this.calculateInstallmentSummary(
+      loan.id,
+      tx,
+    );
 
     return loan;
   }
@@ -602,5 +624,103 @@ export class LoansService {
         ),
       ),
     );
+  }
+
+  /**
+   * Calculate comprehensive installment summary for a loan.
+   * Includes counts, amounts, payment progress, and next installment information.
+   */
+  private async calculateInstallmentSummary(
+    loanId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<InstallmentSummary> {
+    const installments = await this.installmentRepo.findAll(
+      {
+        where: { loanId },
+        orderBy: { installmentNumber: 'asc' },
+      },
+      tx,
+    );
+
+    const now = new Date();
+
+    // Initialize counters
+    let paidCount = 0;
+    let overdueCount = 0;
+    let activeCount = 0;
+    let pendingCount = 0;
+    let totalAmount = BigInt(0);
+    let amountPaid = BigInt(0);
+    let amountOverdue = BigInt(0);
+
+    let nextInstallment: Installment | null = null;
+    let lastInstallment: Installment | null = null;
+
+    // Process each installment
+    for (const installment of installments) {
+      const installmentAmount = BigInt(installment.amount);
+      totalAmount += installmentAmount;
+
+      // Count by status
+      if (installment.status === InstallmentStatus.PAID) {
+        paidCount++;
+        amountPaid += installmentAmount;
+      } else if (installment.status === InstallmentStatus.ACTIVE) {
+        activeCount++;
+        // Check if overdue (due date has passed but not paid)
+        if (installment.dueDate < now) {
+          overdueCount++;
+          amountOverdue += installmentAmount;
+        }
+        // Track next unpaid installment
+        if (!nextInstallment) {
+          nextInstallment = installment;
+        }
+      } else if (installment.status === InstallmentStatus.PENDING) {
+        pendingCount++;
+      } else if (installment.status === InstallmentStatus.ALLOCATED) {
+        // ALLOCATED status - count as partially paid or in-progress
+        activeCount++;
+        if (installment.dueDate < now) {
+          overdueCount++;
+          amountOverdue += installmentAmount;
+        }
+        if (!nextInstallment) {
+          nextInstallment = installment;
+        }
+      }
+
+      // Track last installment for completion date
+      if (
+        !lastInstallment ||
+        installment.installmentNumber > lastInstallment.installmentNumber
+      ) {
+        lastInstallment = installment;
+      }
+    }
+
+    const totalCount = installments.length;
+    const amountRemaining = totalAmount - amountPaid;
+    const paymentPercentage =
+      totalAmount > BigInt(0)
+        ? Number((amountPaid * BigInt(10000)) / totalAmount) / 100
+        : 0;
+
+    return {
+      totalCount,
+      paidCount,
+      overdueCount,
+      activeCount,
+      pendingCount,
+      totalAmount: totalAmount.toString(),
+      amountPaid: amountPaid.toString(),
+      amountOverdue: amountOverdue.toString(),
+      amountRemaining: amountRemaining.toString(),
+      paymentPercentage: Math.round(paymentPercentage * 100) / 100,
+      expectedCompletionDate: lastInstallment?.dueDate ?? null,
+      nextInstallmentDate: nextInstallment?.dueDate ?? null,
+      nextInstallmentAmount: nextInstallment?.amount ?? null,
+      nextInstallmentNumber: nextInstallment?.installmentNumber ?? null,
+    };
   }
 }

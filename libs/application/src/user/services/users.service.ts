@@ -24,6 +24,7 @@ import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transact
 import { Prisma } from '@generated/prisma';
 import { Inject, Injectable } from '@nestjs/common';
 import { CreateUserInput } from '../types/create-user.type';
+import { PaymentSummaryDto } from '../types/payment-summary.type';
 import {
   GetUpcomingPaymentsQueryDto,
   MonthlyPaymentDto,
@@ -455,6 +456,114 @@ export class UsersService {
 
     return this.prismaTransactionalRepo.withTransaction((t) =>
       this.getUserUpcomingPayments(userId, query, t),
+    );
+  }
+
+  /**
+   * Get a summary of user's payment obligations for dashboard display.
+   * Returns a simple summary object with this month's upcoming and overdue payment counts and amounts.
+   * Only includes payments due in the current month plus any overdue payments from past months.
+   */
+  async getUserPaymentSummary(
+    userId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<PaymentSummaryDto> {
+    if (tx) {
+      // Verify user exists
+      const user = await this.usersRepo.findById(userId, tx);
+      if (!user) {
+        throw new NotFoundError('User', 'id', userId);
+      }
+
+      const now = new Date();
+      const startOfMonth = this.dateService.startOfMonth(now);
+      const endOfMonth = this.dateService.endOfMonth(now);
+
+      // Fetch all unpaid installments for user's loans
+      const installments = await this.installmentRepo.findAll(
+        {
+          where: {
+            loan: {
+              userId,
+            },
+            status: {
+              in: [InstallmentStatus.ACTIVE, InstallmentStatus.ALLOCATED],
+            },
+          },
+        },
+        tx,
+      );
+
+      // Fetch all unpaid subscription fees for user's accounts
+      const subscriptionFees = await this.subscriptionFeeRepo.findAll(
+        {
+          where: {
+            account: {
+              userId,
+            },
+            status: {
+              in: [SubscriptionFeeStatus.DUE],
+            },
+          },
+        },
+        tx,
+      );
+
+      // Calculate upcoming (this month only) and overdue totals
+      let upcomingAmount = 0;
+      let upcomingCount = 0;
+      let overdueAmount = 0;
+      let overdueCount = 0;
+
+      // Process installments
+      installments.forEach((inst: Installment) => {
+        const amount = parseFloat(inst.amount);
+        const dueDate = inst.dueDate;
+
+        if (dueDate < now) {
+          // Overdue: past due date
+          overdueAmount += amount;
+          overdueCount++;
+        } else if (dueDate >= startOfMonth && dueDate <= endOfMonth) {
+          // Upcoming: due in current month (from now until end of month)
+          upcomingAmount += amount;
+          upcomingCount++;
+        }
+        // Skip payments due in future months
+      });
+
+      // Process subscription fees
+      subscriptionFees.forEach((fee: SubscriptionFee) => {
+        const amount = parseFloat(fee.amount);
+        const dueDate = fee.dueDate ?? fee.periodStart;
+
+        if (dueDate < now) {
+          // Overdue: past due date
+          overdueAmount += amount;
+          overdueCount++;
+        } else if (dueDate >= startOfMonth && dueDate <= endOfMonth) {
+          // Upcoming: due in current month (from now until end of month)
+          upcomingAmount += amount;
+          upcomingCount++;
+        }
+        // Skip payments due in future months
+      });
+
+      const totalDueAmount = upcomingAmount + overdueAmount;
+      const totalDueCount = upcomingCount + overdueCount;
+
+      return {
+        upcomingAmount: this.formatAmount(upcomingAmount),
+        upcomingCount,
+        overdueAmount: this.formatAmount(overdueAmount),
+        overdueCount,
+        totalDueAmount: this.formatAmount(totalDueAmount),
+        totalDueCount,
+      };
+    }
+
+    return this.prismaTransactionalRepo.withTransaction((t) =>
+      this.getUserPaymentSummary(userId, t),
     );
   }
 

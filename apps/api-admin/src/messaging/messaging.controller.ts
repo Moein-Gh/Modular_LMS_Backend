@@ -1,6 +1,7 @@
 import {
   CurrentUserId,
   MessageQueryDto,
+  MessageRecipientResponseDto,
   MessageResponseDto,
   MessagingService,
   PaginatedResponseDto,
@@ -47,32 +48,12 @@ export class MessagingController {
   @ApiOperation({ summary: 'Get all messages with pagination' })
   async findAll(
     @Query() query: MessageQueryDto,
+    @CurrentUserId() currentUserId: string,
   ): Promise<PaginatedResponseDto<MessageResponseDto>> {
-    const where: Record<string, unknown> = {};
-
-    if (query.type) where.type = query.type;
-    if (query.status) where.status = query.status;
-    if (query.templateId) where.templateId = query.templateId;
-    if (query.createdBy) where.createdBy = query.createdBy;
-    if (!query.includeDeleted) where.isDeleted = false;
-
-    const include = query.includeRecipients ? { recipients: true } : undefined;
-
-    const skip = ((query.page || 1) - 1) * (query.pageSize || 20);
-    const take = query.pageSize || 20;
-
-    const [items, totalItems] = await Promise.all([
-      this.messagingService.findAll({
-        where,
-        include,
-        skip,
-        take,
-        orderBy: query.orderBy
-          ? { [query.orderBy]: query.orderDir || 'desc' }
-          : { createdAt: 'desc' },
-      }),
-      this.messagingService.count(where),
-    ]);
+    const { items, totalItems } = await this.messagingService.getMessages(
+      query,
+      currentUserId,
+    );
 
     return PaginatedResponseDto.from({
       items: items.map((item) => this.mapToResponseDto(item)),
@@ -146,19 +127,49 @@ export class MessagingController {
       createdBy: message.createdBy ?? undefined,
       createdAt: message.createdAt,
       updatedAt: message.updatedAt,
+      template: message.template
+        ? {
+            id: message.template.id,
+            code: message.template.code,
+            name: message.template.name,
+            type: message.template.type,
+            subject: message.template.subject ?? undefined,
+            content: message.template.content,
+            variables: message.template.variables,
+            isActive: message.template.isActive,
+          }
+        : undefined,
       recipients: message.recipients?.map((r) => ({
         id: r.id,
         messageId: r.messageId,
         userId: r.userId ?? undefined,
         phone: r.phone ?? undefined,
         email: r.email ?? undefined,
+        renderedContent: r.renderedContent ?? undefined,
         status: r.status,
         deliveredAt: r.deliveredAt ?? undefined,
         readAt: r.readAt ?? undefined,
         errorMessage: r.errorMessage ?? undefined,
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
-      })),
+        user: r.user
+          ? {
+              id: r.user.id,
+              code: r.user.code,
+              identityId: r.user.identityId ?? undefined,
+              status: r.user.status,
+              identity: r.user.identity
+                ? {
+                    id: r.user.identity.id,
+                    phone: r.user.identity.phone,
+                    name: r.user.identity.name,
+                    countryCode: r.user.identity.countryCode,
+                    email: r.user.identity.email,
+                  }
+                : undefined,
+            }
+          : undefined,
+      })) as MessageRecipientResponseDto[],
     };
   }
 }

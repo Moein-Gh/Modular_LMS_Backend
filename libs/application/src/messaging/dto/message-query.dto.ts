@@ -25,6 +25,11 @@ export class MessageQueryDto extends PaginationQueryDto {
   @IsOptional()
   createdBy?: string;
 
+  @ApiPropertyOptional({ description: 'Filter by recipient user ID' })
+  @IsString()
+  @IsOptional()
+  userId?: string;
+
   @ApiPropertyOptional({ description: 'Include recipients in response' })
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()

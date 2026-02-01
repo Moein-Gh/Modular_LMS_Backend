@@ -28,8 +28,8 @@ export interface CreateMessageRecipientInput {
 
 export interface UpdateMessageRecipientInput {
   status?: string;
-  deliveredAt?: Date | null;
   readAt?: Date | null;
+  deliveredAt?: Date | null;
   errorMessage?: string | null;
 }
 
@@ -53,6 +53,11 @@ export interface IMessageRepository {
     data: UpdateMessageRecipientInput,
     tx?: unknown,
   ): Promise<MessageRecipient>;
+  markRecipientsAsRead(
+    userId: string,
+    messageIds: string[],
+    tx?: unknown,
+  ): Promise<void>;
   findRecipientsByMessageId(
     messageId: string,
     tx?: unknown,

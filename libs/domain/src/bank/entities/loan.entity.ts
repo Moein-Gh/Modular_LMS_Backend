@@ -1,5 +1,6 @@
 import { LoanBalanceResult } from '@app/application/ledger/dto/journal-balance.dto';
 import { Account, User } from '@app/domain';
+import type { InstallmentSummary } from '../types/loan.type';
 import type { LoanType } from './loan-type.entity';
 
 export enum LoanStatus {
@@ -34,6 +35,7 @@ export interface Loan {
   createdBy?: string;
 
   balanceSummary?: LoanBalanceResult;
+  installmentSummary?: InstallmentSummary;
   isDeleted: boolean;
   deletedAt?: Date;
   deletedBy?: string;

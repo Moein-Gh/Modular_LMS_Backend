@@ -18,6 +18,7 @@ import { Prisma } from '@generated/prisma';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Inject, Injectable } from '@nestjs/common';
 import { Queue } from 'bullmq';
+import { MessageQueryDto } from '../dto/message-query.dto';
 import { MessageTemplateService } from './message-template.service';
 import { RecipientGroupService } from './recipient-group.service';
 
@@ -62,6 +63,70 @@ export class MessagingService {
     @InjectQueue('messaging') private readonly messagingQueue?: Queue,
     @InjectQueue('scheduled-messages') private readonly scheduledQueue?: Queue,
   ) {}
+
+  async getMessages(
+    query: MessageQueryDto,
+    currentUserId?: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<{ items: Message[]; totalItems: number }> {
+    const run = async (DBtx: Prisma.TransactionClient) => {
+      const where: Prisma.MessageWhereInput = {};
+
+      if (query.type) where.type = query.type;
+      if (query.status) where.status = query.status;
+      if (query.templateId) where.templateId = query.templateId;
+      if (query.createdBy) where.createdBy = query.createdBy;
+      if (query.userId) {
+        where.recipients = {
+          some: {
+            userId: query.userId,
+          },
+        };
+      }
+      if (!query.includeDeleted) where.isDeleted = false;
+
+      const include = query.includeRecipients
+        ? { recipients: true }
+        : undefined;
+
+      const skip = ((query.page || 1) - 1) * (query.pageSize || 20);
+      const take = query.pageSize || 20;
+
+      const [items, totalItems] = await Promise.all([
+        this.findAll(
+          {
+            where,
+            include,
+            skip,
+            take,
+            orderBy: query.orderBy
+              ? { [query.orderBy]: query.orderDir || 'desc' }
+              : { createdAt: 'desc' },
+          },
+          DBtx,
+        ),
+        this.count(where, DBtx),
+      ]);
+
+      if (
+        query.userId &&
+        currentUserId &&
+        query.userId === currentUserId &&
+        items.length > 0
+      ) {
+        await this.markMessagesAsRead(
+          currentUserId,
+          items.map((item) => item.id),
+          DBtx,
+        );
+      }
+
+      return { items, totalItems };
+    };
+
+    if (tx) return run(tx);
+    return this.prismaTransactionalRepo.withTransaction(run);
+  }
 
   async sendMessage(
     input: SendMessageInput,
@@ -224,6 +289,19 @@ export class MessagingService {
       }
 
       return messageWithRecipients;
+    };
+
+    if (tx) return run(tx);
+    return this.prismaTransactionalRepo.withTransaction(run);
+  }
+
+  async markMessagesAsRead(
+    userId: string,
+    messageIds: string[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const run = async (DBtx: Prisma.TransactionClient) => {
+      await this.messageRepo.markRecipientsAsRead(userId, messageIds, DBtx);
     };
 
     if (tx) return run(tx);
