@@ -461,8 +461,7 @@ export class UsersService {
 
   /**
    * Get a summary of user's payment obligations for dashboard display.
-   * Returns a simple summary object with this month's upcoming and overdue payment counts and amounts.
-   * Only includes payments due in the current month plus any overdue payments from past months.
+   * Returns next month's payments and all overdue payments separately.
    */
   async getUserPaymentSummary(
     userId: string,
@@ -476,8 +475,14 @@ export class UsersService {
       }
 
       const now = new Date();
-      const startOfMonth = this.dateService.startOfMonth(now);
-      const endOfMonth = this.dateService.endOfMonth(now);
+
+      // Calculate next month's date range
+      const startOfNextMonth = this.dateService.startOfMonth(
+        this.dateService.addMonths(now, 1),
+      );
+      const endOfNextMonth = this.dateService.endOfMonth(
+        this.dateService.addMonths(now, 1),
+      );
 
       // Fetch all unpaid installments for user's loans
       const installments = await this.installmentRepo.findAll(
@@ -509,11 +514,10 @@ export class UsersService {
         tx,
       );
 
-      // Calculate upcoming (this month only) and overdue totals
+      // Calculate next month's and overdue totals
       let upcomingAmount = 0;
-      let upcomingCount = 0;
       let overdueAmount = 0;
-      let overdueCount = 0;
+      let earliestUpcomingDate: Date | null = null;
 
       // Process installments
       installments.forEach((inst: Installment) => {
@@ -523,13 +527,14 @@ export class UsersService {
         if (dueDate < now) {
           // Overdue: past due date
           overdueAmount += amount;
-          overdueCount++;
-        } else if (dueDate >= startOfMonth && dueDate <= endOfMonth) {
-          // Upcoming: due in current month (from now until end of month)
+        } else if (dueDate >= startOfNextMonth && dueDate <= endOfNextMonth) {
+          // Upcoming: due in next month only
           upcomingAmount += amount;
-          upcomingCount++;
+          if (!earliestUpcomingDate || dueDate < earliestUpcomingDate) {
+            earliestUpcomingDate = dueDate;
+          }
         }
-        // Skip payments due in future months
+        // Skip payments due in other future months
       });
 
       // Process subscription fees
@@ -540,25 +545,23 @@ export class UsersService {
         if (dueDate < now) {
           // Overdue: past due date
           overdueAmount += amount;
-          overdueCount++;
-        } else if (dueDate >= startOfMonth && dueDate <= endOfMonth) {
-          // Upcoming: due in current month (from now until end of month)
+        } else if (dueDate >= startOfNextMonth && dueDate <= endOfNextMonth) {
+          // Upcoming: due in next month only
           upcomingAmount += amount;
-          upcomingCount++;
+          if (!earliestUpcomingDate || dueDate < earliestUpcomingDate) {
+            earliestUpcomingDate = dueDate;
+          }
         }
-        // Skip payments due in future months
+        // Skip payments due in other future months
       });
 
       const totalDueAmount = upcomingAmount + overdueAmount;
-      const totalDueCount = upcomingCount + overdueCount;
 
       return {
         upcomingAmount: this.formatAmount(upcomingAmount),
-        upcomingCount,
+        upcomingDueDate: earliestUpcomingDate,
         overdueAmount: this.formatAmount(overdueAmount),
-        overdueCount,
         totalDueAmount: this.formatAmount(totalDueAmount),
-        totalDueCount,
       };
     }
 

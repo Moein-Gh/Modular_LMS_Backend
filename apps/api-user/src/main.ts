@@ -29,7 +29,8 @@ async function bootstrap(): Promise<void> {
   );
 
   // ProblemDetailsFilter is registered via ProblemDetailsModule
-  await app.listen(process.env.USER_API_PORT ?? 3000, '0.0.0.0');
+  const port = process.env.PORT ?? process.env.USER_API_PORT ?? 3000;
+  await app.listen(Number(port), '0.0.0.0');
 }
 
 void bootstrap();

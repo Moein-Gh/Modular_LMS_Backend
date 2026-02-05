@@ -1,13 +1,11 @@
+/**
+ * User Payment Summary DTO
+ * Provides a high-level overview of user's payment obligations
+ * for dashboard display
+ */
 export interface PaymentSummaryDto {
   upcomingAmount: string;
-
-  upcomingCount: number;
-
+  upcomingDueDate: Date | null;
   overdueAmount: string;
-
-  overdueCount: number;
-
   totalDueAmount: string;
-
-  totalDueCount: number;
 }

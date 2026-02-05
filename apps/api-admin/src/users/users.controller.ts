@@ -203,8 +203,9 @@ export class UsersController {
   @ApiOperation({
     summary: "Get user's payment summary for dashboard",
     description:
-      "Returns a summary of the user's payment obligations for the current month and overdue payments. " +
-      'Includes only payments due this month plus any past-due payments. ' +
+      "Returns a summary of the user's payment obligations separated into next month's payments and overdue payments. " +
+      'Upcoming shows only the next calendar month payments (e.g., if today is February, shows only March). ' +
+      'Overdue shows all past-due payments. Does not include payments due in distant future months. ' +
       'This endpoint provides aggregated counts and amounts without detailed item breakdown, ' +
       'ideal for dashboard displays.',
   })

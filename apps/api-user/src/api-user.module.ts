@@ -20,6 +20,7 @@ import { ApiUserController } from './api-user.controller';
 import { ApiUserService } from './api-user.service';
 import { DeviceController } from './auth/device.controller';
 import { LoanRequestsController } from './loan-requests.controller';
+import { UsersController } from './users/users.contoller';
 
 @Module({
   imports: [
@@ -31,7 +32,12 @@ import { LoanRequestsController } from './loan-requests.controller';
     UserApplicationModule,
     BankApplicationModule,
   ],
-  controllers: [ApiUserController, DeviceController, LoanRequestsController],
+  controllers: [
+    ApiUserController,
+    DeviceController,
+    LoanRequestsController,
+    UsersController,
+  ],
   providers: [
     ApiUserService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
