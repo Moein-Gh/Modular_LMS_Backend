@@ -15,23 +15,19 @@ import {
 import {
   Body,
   Controller,
-  Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
   Param,
-  Patch,
   Post,
   Query,
   UploadedFile,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CreateTransactionDto } from '../../../api-admin/src/transactions/dtos/transactions/create-transaction.dto';
+import { GetTransactionsQueryDto } from '../../../api-admin/src/transactions/dtos/transactions/get-transaction.dto';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
-import { CreateTransactionDto } from './dtos/transactions/create-transaction.dto';
-
-import { CreateTransferTransactionDto } from './dtos/transactions/create-transfer-transaction.dto';
-import { GetTransactionsQueryDto } from './dtos/transactions/get-transaction.dto';
-import { UpdateTransactionDto } from './dtos/transactions/update-transaction.dto';
 
 @ApiTags('Transactions')
 @Controller('transactions')
@@ -42,13 +38,15 @@ export class TransactionsController {
     private readonly transactionImagesService: TransactionImagesService,
   ) {}
 
-  @Permissions('admin/transaction/findAll')
-  @Get()
+  @Permissions('user/transaction/findAll')
+  @Get('/')
   @ApiOperation({ summary: 'Get all transactions with pagination' })
   @ApiResponse({ status: 200, description: 'Returns paginated transactions' })
   async findAll(
     @Query() query: GetTransactionsQueryDto,
+    @CurrentUserId() currentUserId: string,
   ): Promise<PaginatedResponseDto<Transaction>> {
+    query.userId = currentUserId;
     const { items, totalItems, page, pageSize } =
       await this.transactionsService.findAll(query);
     return PaginatedResponseDto.from({
@@ -60,16 +58,22 @@ export class TransactionsController {
     });
   }
 
-  @Permissions('admin/transaction/findById')
   @Get(':id')
+  @Permissions('user/transaction/findById')
   @ApiOperation({ summary: 'Get transaction by ID with images' })
   @ApiResponse({ status: 200, description: 'Returns transaction with images' })
   @ApiResponse({ status: 404, description: 'Transaction not found' })
-  async get(@Param('id', UUID_V4_PIPE) id: string) {
-    return await this.transactionsService.findById(id);
+  async get(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() currentUserId: string,
+  ): Promise<Transaction> {
+    const transaction = await this.transactionsService.findById(id);
+    if (currentUserId !== transaction.userId)
+      throw new ForbiddenException('شما به این تراکنش دسترسی ندارید');
+    return transaction;
   }
 
-  @Permissions('admin/transaction/create')
+  @Permissions('user/transaction/create')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ImageUpload()
@@ -77,7 +81,6 @@ export class TransactionsController {
     @UploadedFile() image: Express.Multer.File | undefined,
     @Body() dto: CreateTransactionDto,
   ) {
-    // If image is present, upload via FilesService (which forwards to UploadThing)
     let fileRecord: import('@app/domain').File | null = null;
     if (image) {
       const payload = {
@@ -110,64 +113,5 @@ export class TransactionsController {
     }
 
     return tx;
-  }
-
-  @Permissions('admin/transaction/createTransfer')
-  @Post('/transfer')
-  @HttpCode(HttpStatus.CREATED)
-  async createTransfer(
-    @CurrentUserId() userId: string | undefined,
-    @Body() dto: CreateTransferTransactionDto,
-  ) {
-    const input = {
-      sourceAccountId: dto.sourceAccountId,
-      destinationAccountId: dto.destinationAccountId,
-      amount: typeof dto.amount === 'string' ? dto.amount : String(dto.amount),
-      description: dto.description ?? null,
-    };
-
-    return await this.transactionsService.createTransferTransaction(
-      input,
-      userId,
-    );
-  }
-
-  @Permissions('admin/transaction/approve')
-  @Post('/approve/:id')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Approve a transaction' })
-  @ApiResponse({
-    status: 200,
-    description: 'Transaction approved successfully',
-  })
-  @ApiResponse({ status: 404, description: 'Transaction not found' })
-  async approve(@Param('id', UUID_V4_PIPE) id: string) {
-    return await this.transactionsService.approve(id);
-  }
-
-  @Permissions('admin/transaction/update')
-  @Patch(':id')
-  @ApiOperation({ summary: 'Update transaction' })
-  @ApiResponse({ status: 200, description: 'Transaction updated successfully' })
-  @ApiResponse({ status: 404, description: 'Transaction not found' })
-  update(
-    @Param('id', UUID_V4_PIPE) id: string,
-    @Body() dto: UpdateTransactionDto,
-  ) {
-    return this.transactionsService.update(id, dto);
-  }
-
-  @Permissions('admin/transaction/softDelete')
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete and reject transaction' })
-  @ApiResponse({ status: 204, description: 'Transaction deleted successfully' })
-  @ApiResponse({ status: 404, description: 'Transaction not found' })
-  async softDelete(
-    @Param('id', UUID_V4_PIPE) id: string,
-    @CurrentUserId() currentUserId: string,
-  ): Promise<void> {
-    await this.transactionsService.reject(id, currentUserId);
-    return;
   }
 }

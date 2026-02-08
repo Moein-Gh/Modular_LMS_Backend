@@ -3,7 +3,7 @@ import { RolePermission } from '../entities/role-permission.entity';
 
 export type CreateRolePermissionInput = Omit<
   RolePermission,
-  'id' | 'code' | 'createdAt' | 'updatedAt'
+  'id' | 'code' | 'createdAt' | 'updatedAt' | 'isDeleted'
 >;
 
 export type UpdateRolePermissionInput = Partial<CreateRolePermissionInput>;

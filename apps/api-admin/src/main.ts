@@ -30,6 +30,9 @@ async function bootstrap(): Promise<void> {
     /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.[0-9]{1,3}\.[0-9]{1,3}(?::\d+)?$/,
   ];
 
+  // Set global prefix for admin API
+  app.setGlobalPrefix('admin');
+
   app.enableCors({
     origin: (
       origin: string | undefined,

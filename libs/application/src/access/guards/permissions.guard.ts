@@ -15,10 +15,18 @@ export class PermissionsGuard implements CanActivate {
     if (required === '*/*' || userPerm === '*/*') return true;
     const up = userPerm.split('/');
     const rp = required.split('/');
-    if (up.length !== rp.length) return false;
-    for (let i = 0; i < up.length; i++) {
-      if (up[i] === '*' || rp[i] === '*') continue;
-      if (up[i] !== rp[i]) return false;
+
+    // Match segment by segment; user perm must cover all required segments
+    const maxLen = Math.max(up.length, rp.length);
+    for (let i = 0; i < maxLen; i++) {
+      const userSeg = up[i] ?? '';
+      const reqSeg = rp[i] ?? '';
+
+      // Wildcard matches anything
+      if (userSeg === '*' || reqSeg === '*') continue;
+
+      // Segments must match exactly if neither is wildcard
+      if (userSeg !== reqSeg) return false;
     }
     return true;
   }

@@ -1,15 +1,19 @@
-import { PaymentSummaryDto, Permissions, UsersService } from '@app/application';
-import { Controller, Get, Param } from '@nestjs/common';
+import {
+  CurrentUserId,
+  PaymentSummaryDto,
+  Permissions,
+  UsersService,
+} from '@app/application';
+import { Controller, Get } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
-import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 
-@Controller('users')
-export class UsersController {
+@Controller('dashboard')
+export class DashboardController {
   constructor(private readonly usersService: UsersService) {}
 
   // get user's payment summary
-  @Permissions('user/get')
-  @Get(':id/payment-summary')
+  @Permissions('user/dashboard/view-payment-summary')
+  @Get('/payment-summary')
   @ApiOperation({
     summary: "Get user's payment summary for dashboard",
     description:
@@ -20,8 +24,9 @@ export class UsersController {
       'ideal for dashboard displays.',
   })
   getPaymentSummary(
-    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() currentUserId: string,
   ): Promise<PaymentSummaryDto> {
-    return this.usersService.getUserPaymentSummary(id);
+    console.log(currentUserId);
+    return this.usersService.getUserPaymentSummary(currentUserId);
   }
 }

@@ -9,15 +9,13 @@ import type {
   UpdateRolePermissionInput,
 } from '../../../../domain/src/access/types/role-permission.type';
 
-const rolePermissionSelect: Prisma.RolePermissionSelect = {
-  id: true,
-  roleId: true,
-  permissionId: true,
-  createdAt: true,
-};
+const rolePermissionInclude = {
+  role: true,
+  permission: true,
+} as const;
 
 type RolePermissionModel = Prisma.RolePermissionGetPayload<{
-  select: typeof rolePermissionSelect;
+  include: typeof rolePermissionInclude;
 }>;
 
 function toDomain(model: RolePermissionModel): RolePermission {
@@ -25,6 +23,30 @@ function toDomain(model: RolePermissionModel): RolePermission {
     id: model.id,
     roleId: model.roleId,
     permissionId: model.permissionId,
+    role: model.role
+      ? {
+          id: model.role.id,
+          code: model.role.code,
+          key: model.role.key,
+          name: model.role.name,
+          description: model.role.description ?? undefined,
+          isDeleted: model.role.isDeleted,
+          createdAt: model.role.createdAt,
+          updatedAt: model.role.updatedAt,
+        }
+      : undefined,
+    permission: model.permission
+      ? {
+          id: model.permission.id,
+          code: model.permission.code,
+          key: model.permission.key,
+          name: model.permission.name,
+          description: model.permission.description ?? undefined,
+          isDeleted: model.permission.isDeleted,
+          createdAt: model.permission.createdAt,
+          updatedAt: model.permission.updatedAt,
+        }
+      : undefined,
     createdAt: model.createdAt,
     isDeleted: false,
     deletedAt: undefined,
@@ -44,7 +66,7 @@ export class PrismaRolePermissionRepository
         roleId: input.roleId,
         permissionId: input.permissionId,
       },
-      select: rolePermissionSelect,
+      include: rolePermissionInclude,
     });
     return toDomain(created as RolePermissionModel);
   }
@@ -52,7 +74,7 @@ export class PrismaRolePermissionRepository
   async findById(id: string): Promise<RolePermission | null> {
     const model = await this.prisma.rolePermission.findUnique({
       where: { id },
-      select: rolePermissionSelect,
+      include: rolePermissionInclude,
     });
     return model ? toDomain(model as RolePermissionModel) : null;
   }
@@ -60,7 +82,7 @@ export class PrismaRolePermissionRepository
   async findByRoleId(roleId: string): Promise<RolePermission[]> {
     const items = await this.prisma.rolePermission.findMany({
       where: { roleId },
-      select: rolePermissionSelect,
+      include: rolePermissionInclude,
     });
     return items.map((m) => toDomain(m as RolePermissionModel));
   }
@@ -68,14 +90,14 @@ export class PrismaRolePermissionRepository
   async findByPermissionId(permissionId: string): Promise<RolePermission[]> {
     const items = await this.prisma.rolePermission.findMany({
       where: { permissionId },
-      select: rolePermissionSelect,
+      include: rolePermissionInclude,
     });
     return items.map((m) => toDomain(m as RolePermissionModel));
   }
 
   async list(): Promise<RolePermission[]> {
     const items = await this.prisma.rolePermission.findMany({
-      select: rolePermissionSelect,
+      include: rolePermissionInclude,
     });
     return items.map((m) => toDomain(m as RolePermissionModel));
   }
@@ -90,7 +112,7 @@ export class PrismaRolePermissionRepository
         roleId: update.roleId ?? undefined,
         permissionId: update.permissionId ?? undefined,
       },
-      select: rolePermissionSelect,
+      include: rolePermissionInclude,
     });
     return toDomain(updated as RolePermissionModel);
   }

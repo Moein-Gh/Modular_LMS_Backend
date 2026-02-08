@@ -1,25 +1,25 @@
+import { GrantType } from '@app/domain';
+import { Type } from 'class-transformer';
 import {
-  IsEnum,
-  IsString,
-  IsOptional,
   IsBoolean,
   IsDate,
+  IsEnum,
+  IsOptional,
+  IsString,
   IsUUID,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { GrantType } from '@app/domain';
 
 export class CreatePermissionGrantDto {
-  @IsEnum([GrantType])
-  granteeType: GrantType;
+  @IsEnum(GrantType)
+  granteeType!: GrantType;
 
   @IsString()
   @IsUUID()
-  granteeId: string;
+  granteeId!: string;
 
   @IsString()
   @IsUUID()
-  permissionId: string;
+  permissionId!: string;
 
   @IsOptional()
   @IsString()
@@ -41,7 +41,7 @@ export class CreatePermissionGrantDto {
 
 export class UpdatePermissionGrantDto {
   @IsOptional()
-  @IsEnum([GrantType])
+  @IsEnum(GrantType)
   granteeType?: GrantType;
 
   @IsOptional()

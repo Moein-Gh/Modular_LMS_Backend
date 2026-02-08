@@ -1,10 +1,14 @@
 import {
+  AccessTokenGuard,
   AuthApplicationModule,
   BankApplicationModule,
+  FileApplicationModule,
   JournalsService,
   LedgerAccountsService,
+  TransactionApplicationModule,
 } from '@app/application';
 import { UserApplicationModule } from '@app/application/user/user-application.module';
+import { ConfigModule } from '@app/config';
 import {
   PrismaJournalEntryRepository,
   PrismaJournalRepository,
@@ -16,11 +20,16 @@ import { ProblemDetailsModule } from '@app/problem-details';
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { AccountsController } from './account/accounts.controller';
 import { ApiUserController } from './api-user.controller';
 import { ApiUserService } from './api-user.service';
 import { DeviceController } from './auth/device.controller';
-import { LoanRequestsController } from './loan-requests.controller';
-import { UsersController } from './users/users.contoller';
+import { DashboardController } from './dashboard/dashboard.contoller';
+import { InstallmentsController } from './installment/installments.controller';
+import { LoanRequestsController } from './loan-request/loan-requests.controller';
+import { LoansController } from './loans/loans.controller';
+import { TransactionsController } from './transaction/transactions.controller';
+import { UsersController } from './user/users.controller';
 
 @Module({
   imports: [
@@ -31,15 +40,24 @@ import { UsersController } from './users/users.contoller';
     AuthApplicationModule,
     UserApplicationModule,
     BankApplicationModule,
+    FileApplicationModule,
+    TransactionApplicationModule,
+    ConfigModule,
   ],
   controllers: [
     ApiUserController,
     DeviceController,
     LoanRequestsController,
+    DashboardController,
     UsersController,
+    TransactionsController,
+    AccountsController,
+    LoansController,
+    InstallmentsController,
   ],
   providers: [
     ApiUserService,
+    { provide: APP_GUARD, useClass: AccessTokenGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     JournalsService,
     LedgerAccountsService,

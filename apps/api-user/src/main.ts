@@ -8,6 +8,9 @@ async function bootstrap(): Promise<void> {
 
   const app = await NestFactory.create(ApiUserModule);
 
+  // Set global prefix for user API
+  app.setGlobalPrefix('user');
+
   // Enable CORS
   app.enableCors({
     origin: process.env.CORS_ORIGIN?.split(',') || [

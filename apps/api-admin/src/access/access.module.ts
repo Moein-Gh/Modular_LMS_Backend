@@ -10,6 +10,7 @@ import { PermissionGrantsController } from './permissionGrants/permissionGrants.
 import { PermissionGrantsModule } from './permissionGrants/permissionGrants.module';
 import { PermissionsController } from './permissions/permissions.controller';
 import { RoleAssignmentsController } from './roleAssignments/roleAssignments.controller';
+import { RolePermissionsController } from './rolePermissions/rolePermissions.controller';
 import { RolesController } from './roles/roles.controller';
 
 @Module({
@@ -22,6 +23,7 @@ import { RolesController } from './roles/roles.controller';
   controllers: [
     RolesController,
     PermissionsController,
+    RolePermissionsController,
     RoleAssignmentsController,
     PermissionGrantsController,
   ],
