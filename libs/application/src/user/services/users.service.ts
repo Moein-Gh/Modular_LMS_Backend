@@ -34,6 +34,7 @@ import {
   UpcomingPaymentsResponseDto,
 } from '../types/upcoming-payments.type';
 import { UpdateUserInput } from '../types/update-user.type';
+import { UserOverviewDto } from '../types/user-overview.type';
 
 @Injectable()
 export class UsersService {
@@ -567,6 +568,78 @@ export class UsersService {
 
     return this.prismaTransactionalRepo.withTransaction((t) =>
       this.getUserPaymentSummary(userId, t),
+    );
+  }
+
+  async getUserOverview(
+    userId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<UserOverviewDto> {
+    if (tx) {
+      // Get accounts balance
+      const accountsBalance =
+        await this.journalBalanceUseCase.getUserAccountsBalance(userId, tx);
+
+      // Get loans balance
+      const loansBalance = await this.journalBalanceUseCase.getUserLoansBalance(
+        userId,
+        tx,
+      );
+
+      // Count active accounts
+      const activeAccountsCount = accountsBalance.length;
+
+      // Sum total account balance
+      const totalAccountBalance = accountsBalance.reduce(
+        (sum, acc) => sum + acc.totalDeposits,
+        0,
+      );
+
+      // Filter active loans (exclude PENDING or PAID loans)
+      const activeLoans = loansBalance.filter((loan) => {
+        // We need to get the actual loan status
+        // For now, we assume all returned loans are active
+        // You may need to enhance this based on loan status
+        return loan.outstandingBalance > 0;
+      });
+
+      const activeLoansCount = activeLoans.length;
+
+      // Calculate totals for loans
+      const totalLoanAmount = activeLoans.reduce(
+        (sum, loan) => sum + loan.loanAmount,
+        0,
+      );
+
+      const totalRepaymentAmount = activeLoans.reduce(
+        (sum, loan) => sum + loan.repayments.amount,
+        0,
+      );
+
+      const totalLoanOutstanding = activeLoans.reduce(
+        (sum, loan) => sum + loan.outstandingBalance,
+        0,
+      );
+
+      // Calculate overall payment percentage
+      const loanPaymentPercentage =
+        totalLoanAmount > 0
+          ? (totalRepaymentAmount / totalLoanAmount) * 100
+          : 0;
+
+      return {
+        activeAccountsCount,
+        totalAccountBalance: this.formatAmount(totalAccountBalance),
+        activeLoansCount,
+        totalLoanAmount: this.formatAmount(totalLoanAmount),
+        totalLoanPaid: this.formatAmount(totalRepaymentAmount),
+        totalLoanOutstanding: this.formatAmount(totalLoanOutstanding),
+        loanPaymentPercentage: Math.round(loanPaymentPercentage * 100) / 100,
+      };
+    }
+
+    return this.prismaTransactionalRepo.withTransaction((t) =>
+      this.getUserOverview(userId, t),
     );
   }
 

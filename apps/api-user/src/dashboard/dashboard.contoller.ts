@@ -2,6 +2,7 @@ import {
   CurrentUserId,
   PaymentSummaryDto,
   Permissions,
+  UserOverviewDto,
   UsersService,
 } from '@app/application';
 import { Controller, Get } from '@nestjs/common';
@@ -28,5 +29,21 @@ export class DashboardController {
   ): Promise<PaymentSummaryDto> {
     console.log(currentUserId);
     return this.usersService.getUserPaymentSummary(currentUserId);
+  }
+
+  @Permissions('user/dashboard/view-overview')
+  @Get('/overview')
+  @ApiOperation({
+    summary: 'Get user overview for dashboard',
+    description:
+      'Returns general information about the user including: ' +
+      'number of active accounts, total balance across all accounts, ' +
+      'number of active loans, total loan amount, total paid amount, ' +
+      'outstanding balance, and overall payment percentage.',
+  })
+  getUserOverview(
+    @CurrentUserId() currentUserId: string,
+  ): Promise<UserOverviewDto> {
+    return this.usersService.getUserOverview(currentUserId);
   }
 }

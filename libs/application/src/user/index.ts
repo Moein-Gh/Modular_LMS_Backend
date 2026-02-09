@@ -4,4 +4,5 @@ export * from './types/create-user.type';
 export * from './types/payment-summary.type';
 export * from './types/upcoming-payments.type';
 export * from './types/update-user.type';
+export * from './types/user-overview.type';
 export * from './user-application.module';
