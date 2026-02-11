@@ -19,6 +19,7 @@ import { LoggerModule } from '@app/logger';
 import { ProblemDetailsModule } from '@app/problem-details';
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AccountsController } from './account/accounts.controller';
 import { ApiUserController } from './api-user.controller';
@@ -43,6 +44,7 @@ import { UsersController } from './user/users.controller';
     FileApplicationModule,
     TransactionApplicationModule,
     ConfigModule,
+    EventEmitterModule.forRoot(),
   ],
   controllers: [
     ApiUserController,

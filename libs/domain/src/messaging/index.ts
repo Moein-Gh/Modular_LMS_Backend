@@ -1,3 +1,4 @@
+export * from './constants/constant-variables';
 export * from './entities/message-template.entity';
 export * from './entities/message.entity';
 export * from './entities/recipient-group.entity';

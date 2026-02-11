@@ -23,6 +23,7 @@ import { ProblemDetailsModule } from '@app/problem-details';
 import { CacheModule } from '@nestjs/cache-manager';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AccessModule } from './access/access.module';
 import { ApiAdminController } from './api-admin.controller';
@@ -56,6 +57,7 @@ import { UsersController } from './users/users.controller';
     ProblemDetailsModule,
     ThrottlerModule.forRoot([{ ttl: 60, limit: 100 }]),
     ConfigModule,
+    EventEmitterModule.forRoot(),
     AuthApplicationModule,
     UserApplicationModule,
     // File application

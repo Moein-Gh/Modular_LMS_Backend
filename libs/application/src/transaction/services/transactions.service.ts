@@ -50,6 +50,7 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SubscriptionFeesService } from '../../bank/services/subscription-fees.service';
 
 @Injectable()
@@ -75,6 +76,7 @@ export class TransactionsService {
     private readonly filesService: FilesService,
     @Inject(forwardRef(() => SubscriptionFeesService))
     private readonly subscriptionFeeService: SubscriptionFeesService,
+    private eventEmitter: EventEmitter2,
   ) {
     // Initialize the use case with required dependencies
     this.createJournalUseCase = new CreateJournalWithEntriesUseCase(

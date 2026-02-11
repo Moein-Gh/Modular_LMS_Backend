@@ -11,6 +11,7 @@ import {
   JournalEntryTarget,
   LEDGER_ACCOUNT_CODES,
   ListLoanQueryInput,
+  LoanApprovedEvent,
   LoanStatus,
   LoanType,
   Transaction,
@@ -44,6 +45,7 @@ import {
   Injectable,
   forwardRef,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { BankFinancialsService } from './bank-financials.service';
 
 @Injectable()
@@ -63,6 +65,7 @@ export class LoansService {
     private readonly journalsRepo: PrismaJournalRepository,
     private readonly journalBalanceUseCase: JournalBalanceUsecase,
     private readonly dateService: DateService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async findAll(query?: ListLoanQueryInput, tx?: Prisma.TransactionClient) {
@@ -204,8 +207,9 @@ export class LoansService {
     };
 
     const result = tx
-      ? run(tx)
-      : this.prismaTransactionalRepo.withTransaction(run);
+      ? await run(tx)
+      : await this.prismaTransactionalRepo.withTransaction(run);
+
     return result;
   }
 
@@ -276,7 +280,13 @@ export class LoansService {
       return updatedLoan;
     };
 
-    return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
+    const result = tx
+      ? run(tx)
+      : this.prismaTransactionalRepo.withTransaction(run);
+
+    this.eventEmitter.emit('loan.approved', new LoanApprovedEvent(id));
+
+    return result;
   }
 
   async softDelete(

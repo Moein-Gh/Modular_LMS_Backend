@@ -1,3 +1,4 @@
+import { MessagingApplicationModule } from '@app/application/messaging';
 import { DateModule } from '@app/date';
 import { BankInfraModule } from '@app/infra/bank/bank.infra.module';
 import { LedgerInfraModule } from '@app/infra/ledger/ledger.infra.module';
@@ -5,6 +6,7 @@ import { PrismaLedgerAccountRepository } from '@app/infra/ledger/repositories/pr
 import { Module } from '@nestjs/common';
 import { LedgerApplicationModule } from '../ledger/ledger-application.module';
 import { TransactionApplicationModule } from '../transaction/transaction-application.module';
+import { LoanApprovedHandler } from './event-handlers/loan-approved-handler';
 import { AccountTypesService } from './services/account-types.service';
 import { AccountsService } from './services/accounts.service';
 import { BankFinancialsService } from './services/bank-financials.service';
@@ -20,6 +22,7 @@ import { SubscriptionFeesService } from './services/subscription-fees.service';
     BankInfraModule,
     LedgerInfraModule,
     TransactionApplicationModule,
+    MessagingApplicationModule,
     LedgerApplicationModule,
     DateModule,
   ],
@@ -37,6 +40,7 @@ import { SubscriptionFeesService } from './services/subscription-fees.service';
     BankService,
     BankFinancialsService,
     LoansService,
+    LoanApprovedHandler,
   ],
   exports: [
     AccountTypesService,
