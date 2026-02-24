@@ -26,7 +26,7 @@ import {
 } from '@app/domain';
 
 import { JournalBalanceUsecase } from '@app/application/ledger/journal-balance.usecase';
-import { DateService } from '@app/date';
+import { DATE_FORMATS, DateService } from '@app/date';
 import {
   PrismaAccountRepository,
   PrismaInstallmentRepository,
@@ -408,10 +408,17 @@ export class LoansService {
 
     for (let i = 0; i < installmentCount; i++) {
       const startDate = new Date(loan.startDate);
-      const dayOfMonth = startDate.getDate();
 
-      // If start date is after 15th, skip to next month
-      const monthsToAdd = dayOfMonth > 15 ? i + 2 : i + 1;
+      // Use Persian (Jalali) day-of-month to determine scheduling behavior.
+      // `formatPersianDate` returns a string like "1403/10/13" (yyyy/MM/dd).
+      const persian = this.dateService.formatPersianDate(
+        startDate,
+        DATE_FORMATS.SHORT,
+      );
+      const persianDay = Number(persian.split('/')[2]);
+
+      // If start date (in Persian calendar) is after 15th, skip to next month
+      const monthsToAdd = persianDay > 15 ? i + 2 : i + 1;
 
       const dueDate = this.dateService.startOfMonth(
         this.dateService.addMonths(startDate, monthsToAdd),
