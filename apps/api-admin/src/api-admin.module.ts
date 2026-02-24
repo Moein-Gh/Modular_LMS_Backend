@@ -114,6 +114,6 @@ import { UsersController } from './users/users.controller';
 })
 export class ApiAdminModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(PermissionLoaderMiddleware).forRoutes('*');
+    consumer.apply(PermissionLoaderMiddleware).forRoutes('*path');
   }
 }

@@ -3,7 +3,7 @@ import {
   CurrentUserId,
   PaginatedResponseDto,
 } from '@app/application';
-import { Account, AccountStatus } from '@app/domain';
+import { Account } from '@app/domain';
 import {
   Body,
   Controller,
@@ -11,7 +11,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  NotFoundException,
   Param,
   Patch,
   Post,
@@ -79,15 +78,7 @@ export class AccountsController {
 
   @Patch(':id/activate')
   @HttpCode(HttpStatus.OK)
-  async activate(@Param('id', UUID_V4_PIPE) id: string): Promise<Account> {
-    const updatedAccount = await this.accounts.update(id, {
-      status: AccountStatus.ACTIVE,
-    });
-
-    if (!updatedAccount) {
-      throw new NotFoundException('Account not found');
-    }
-
-    return updatedAccount;
+  activate(@Param('id', UUID_V4_PIPE) id: string): Promise<Account> {
+    return this.accounts.activate(id);
   }
 }

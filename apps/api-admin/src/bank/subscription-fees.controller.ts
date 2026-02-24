@@ -16,7 +16,9 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiOperation } from '@nestjs/swagger';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
+import { CreateNextSubscriptionFeeDto } from './dtos/subscription-fees/create-next-subscription-fee.dto';
 import { CreateSubscriptionFeeDto } from './dtos/subscription-fees/create-subscription-fee.dto';
 import { GetSubscriptionFeesQueryDto } from './dtos/subscription-fees/list-subscription-fee.dto';
 import { UpdateSubscriptionFeeDto } from './dtos/subscription-fees/update-subscription-fee.dto';
@@ -49,6 +51,23 @@ export class SubscriptionFeesController {
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateSubscriptionFeeDto) {
     return this.subscriptionFees.create(dto);
+  }
+
+  @Post('accounts/:accountId/next')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Generate next subscription fee(s) for an account',
+    description:
+      'Automatically calculates the next period start based on the last existing fee and creates the requested number of consecutive monthly fees.',
+  })
+  createNext(
+    @Param('accountId', UUID_V4_PIPE) accountId: string,
+    @Body() dto: CreateNextSubscriptionFeeDto,
+  ): Promise<SubscriptionFee[]> {
+    return this.subscriptionFees.createNext({
+      accountId,
+      numberOfMonths: dto.numberOfMonths ?? 1,
+    });
   }
 
   @Patch(':id')

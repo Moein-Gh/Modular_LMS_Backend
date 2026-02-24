@@ -145,6 +145,23 @@ export class TransactionsController {
     return await this.transactionsService.approve(id);
   }
 
+  @Permissions('admin/transaction/reject')
+  @Post('/reject/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reject a transaction' })
+  @ApiResponse({
+    status: 200,
+    description: 'Transaction rejected successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Transaction not found' })
+  @ApiResponse({ status: 409, description: 'Transaction cannot be rejected' })
+  async reject(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() currentUserId: string,
+  ) {
+    return await this.transactionsService.reject(id, currentUserId);
+  }
+
   @Permissions('admin/transaction/update')
   @Patch(':id')
   @ApiOperation({ summary: 'Update transaction' })

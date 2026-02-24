@@ -161,4 +161,23 @@ export class PrismaSubscriptionFeeRepository
       },
     });
   }
+
+  async restoreManyByAccountId(
+    accountId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const prisma = tx ?? this.prisma;
+    await prisma.subscriptionFee.updateMany({
+      where: {
+        accountId,
+        isDeleted: true,
+        status: { not: 'PAID' },
+      },
+      data: {
+        isDeleted: false,
+        deletedAt: null,
+        deletedBy: null,
+      },
+    });
+  }
 }

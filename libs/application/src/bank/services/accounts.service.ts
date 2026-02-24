@@ -259,6 +259,23 @@ export class AccountsService {
       );
       if (!account) throw new NotFoundError('Account', 'id', id);
 
+      // Ensure this account does not already have a withdrawal transaction
+      const existingWithdrawal = await this.transactionsService.findAll(
+        {
+          accountId: account.id,
+          kind: TransactionKind.WITHDRAWAL,
+          status: TransactionStatus.PENDING,
+          isDeleted: false,
+        },
+        DBtx,
+      );
+
+      if (existingWithdrawal.items.length > 0) {
+        throw new BadRequestException(
+          'حساب کاربری در حال حاضر دارای تراکنش برداشت در انتظار است',
+        );
+      }
+
       // 2. Ensure account does not have pending/active/approved loans
       await this.ensureNoBlockingLoans(account.id, DBtx);
 
@@ -347,6 +364,29 @@ export class AccountsService {
     return tx ? run(tx) : this.transactionalRepo.withTransaction(run);
   }
 
+  async activate(id: string, tx?: Prisma.TransactionClient): Promise<Account> {
+    const run = async (DBtx: Prisma.TransactionClient) => {
+      // 1. Ensure account exists
+      const account = await this.accountsRepo.findUnique(
+        { where: { id } },
+        DBtx,
+      );
+      if (!account) throw new NotFoundError('Account', 'id', id);
+
+      // 2. Restore any subscription fees that were soft-deleted during buyout
+      await this.subscriptionFeesRepo.restoreManyByAccountId(id, DBtx);
+
+      // 3. Set account status back to ACTIVE
+      return this.accountsRepo.update(
+        id,
+        { status: AccountStatus.ACTIVE },
+        DBtx,
+      );
+    };
+
+    return tx ? run(tx) : this.transactionalRepo.withTransaction(run);
+  }
+
   // Narrowly detect Prisma's "Record not found" without importing Prisma types
   private isPrismaNotFoundError(e: unknown): boolean {
     const code = (e as { code?: unknown })?.code;
@@ -361,6 +401,7 @@ export class AccountsService {
       {
         where: {
           accountId,
+          isDeleted: false,
           status: {
             in: [LoanStatus.PENDING, LoanStatus.ACTIVE],
           },
@@ -369,6 +410,7 @@ export class AccountsService {
       tx,
     );
     if (loans.length > 0) {
+      console.log(loans);
       throw new BadRequestException('Account has pending or active loans');
     }
   }

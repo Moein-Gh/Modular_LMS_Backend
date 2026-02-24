@@ -14,6 +14,7 @@ import {
   PrismaAccountRepository,
   PrismaSubscriptionFeeRepository,
 } from '@app/infra';
+import { PrismaTransactionalRepository } from '@app/infra/prisma/prisma-transactional.repository';
 import { Prisma } from '@generated/prisma';
 import { Injectable } from '@nestjs/common';
 import { BankService } from './banks.service';
@@ -23,6 +24,7 @@ export class SubscriptionFeesService {
   constructor(
     private readonly subscriptionFeesRepo: PrismaSubscriptionFeeRepository,
     private readonly accountsRepo: PrismaAccountRepository,
+    private readonly prismaTransactionalRepo: PrismaTransactionalRepository,
     private readonly bankService: BankService,
     private readonly dateService: DateService,
   ) {}
@@ -125,40 +127,45 @@ export class SubscriptionFeesService {
 
   async createNext(
     input: CreateNextSubscriptionFeeInput,
-    tx: Prisma.TransactionClient,
-  ): Promise<void> {
-    const lastFee = await this.findAll(
-      {
-        accountId: input.accountId,
-        orderBy: 'periodStart',
-        orderDir: OrderDirection.DESC,
-        take: 1,
-      },
-      tx,
-    );
-
-    let nextPeriodStart: Date;
-    if (lastFee.items.length === 0) {
-      nextPeriodStart = this.dateService.startOfMonth(new Date());
-    } else {
-      const lastPeriodStart = lastFee.items[0].periodStart;
-      nextPeriodStart = this.dateService.startOfMonth(
-        this.dateService.addMonths(lastPeriodStart, 1),
-      );
-    }
-
-    for (let i = 0; i < input.numberOfMonths; i++) {
-      const periodStart = this.dateService.startOfMonth(
-        this.dateService.addMonths(nextPeriodStart, i),
-      );
-
-      await this.create(
+    tx?: Prisma.TransactionClient,
+  ): Promise<SubscriptionFee[]> {
+    const run = async (
+      trx: Prisma.TransactionClient,
+    ): Promise<SubscriptionFee[]> => {
+      const lastFee = await this.findAll(
         {
           accountId: input.accountId,
-          periodStart,
+          orderBy: 'periodStart',
+          orderDir: OrderDirection.DESC,
+          take: 1,
         },
-        tx,
+        trx,
       );
-    }
+
+      let nextPeriodStart: Date;
+      if (lastFee.items.length === 0) {
+        nextPeriodStart = this.dateService.startOfMonth(new Date());
+      } else {
+        const lastPeriodStart = lastFee.items[0].periodStart;
+        nextPeriodStart = this.dateService.startOfMonth(
+          this.dateService.addMonths(lastPeriodStart, 1),
+        );
+      }
+
+      const created: SubscriptionFee[] = [];
+      for (let i = 0; i < input.numberOfMonths; i++) {
+        const periodStart = this.dateService.startOfMonth(
+          this.dateService.addMonths(nextPeriodStart, i),
+        );
+        const fee = await this.create(
+          { accountId: input.accountId, periodStart },
+          trx,
+        );
+        created.push(fee);
+      }
+      return created;
+    };
+
+    return tx ? run(tx) : this.prismaTransactionalRepo.withTransaction(run);
   }
 }

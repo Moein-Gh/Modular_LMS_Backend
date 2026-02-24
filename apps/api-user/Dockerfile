@@ -35,12 +35,13 @@ COPY --from=dependencies /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspa
 
 # Copy source code and configuration files
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 COPY tsconfig*.json nest-cli.json webpack.config.js ./
 COPY apps ./apps
 COPY libs ./libs
 
-# Generate Prisma client
-RUN pnpm exec prisma generate
+# Generate Prisma client (DATABASE_URL is not used during generation, only to satisfy prisma.config.ts)
+RUN DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy pnpm exec prisma generate
 
 # Build the api-user application
 RUN pnpm exec nest build api-user
@@ -121,8 +122,8 @@ RUN pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Generate Prisma client (DATABASE_URL not needed for generate, but config requires it)
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm exec prisma generate
+# Generate Prisma client (DATABASE_URL is not used during generation, only to satisfy prisma.config.ts)
+RUN DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy pnpm exec prisma generate
 
 # Set development environment
 ENV NODE_ENV=development \

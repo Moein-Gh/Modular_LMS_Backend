@@ -23,4 +23,5 @@ export interface SubscriptionFeeRepository {
     currentUserId: string,
     tx?: unknown,
   ): Promise<void>;
+  restoreManyByAccountId(accountId: string, tx?: unknown): Promise<void>;
 }

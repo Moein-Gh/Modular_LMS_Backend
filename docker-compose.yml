@@ -111,8 +111,6 @@ services:
     volumes:
       - ./apps/api-user/src:/app/apps/api-user/src:cached
       - ./libs:/app/libs:cached
-      - /app/node_modules
-      - /app/dist
     # Docker Compose Watch configuration for file sync
     develop:
       watch:
@@ -165,8 +163,6 @@ services:
     volumes:
       - ./apps/api-admin/src:/app/apps/api-admin/src:cached
       - ./libs:/app/libs:cached
-      - /app/node_modules
-      - /app/dist
     # Docker Compose Watch configuration for file sync
     develop:
       watch:

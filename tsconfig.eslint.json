@@ -4,6 +4,7 @@
     "noEmit": true
   },
   "include": [
+    "prisma.config.ts",
     "apps/**/*",
     "libs/**/*",
     "prisma/**/*",

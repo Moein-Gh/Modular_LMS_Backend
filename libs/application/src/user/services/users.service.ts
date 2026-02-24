@@ -163,6 +163,7 @@ export class UsersService {
             include: {
               role: { select: { id: true, name: true } },
             },
+            where: { isDeleted: false },
           },
         },
         where,
@@ -393,7 +394,7 @@ export class UsersService {
           lastDayOfMonth,
           lastDayOfMonthPersian: this.dateService.formatPersianDate(
             lastDayOfMonth,
-            'yyyy/MM/dd' as any,
+            'yyyy/MM/dd',
           ),
           items,
           total: this.formatAmount(total),

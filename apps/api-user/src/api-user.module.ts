@@ -27,6 +27,7 @@ import { ApiUserService } from './api-user.service';
 import { DeviceController } from './auth/device.controller';
 import { DashboardController } from './dashboard/dashboard.contoller';
 import { InstallmentsController } from './installment/installments.controller';
+import { JournalsController } from './journal/journals.controller';
 import { LoanRequestsController } from './loan-request/loan-requests.controller';
 import { LoansController } from './loans/loans.controller';
 import { TransactionsController } from './transaction/transactions.controller';
@@ -56,6 +57,7 @@ import { UsersController } from './user/users.controller';
     AccountsController,
     LoansController,
     InstallmentsController,
+    JournalsController,
   ],
   providers: [
     ApiUserService,

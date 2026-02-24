@@ -30,6 +30,7 @@ export interface JournalEntry {
   removable: boolean;
   createdAt: Date;
   accountId?: string;
+  account?: Account;
   journal?: Journal;
   ledgerAccount?: Partial<LedgerAccount>;
   ownerId?: string;
