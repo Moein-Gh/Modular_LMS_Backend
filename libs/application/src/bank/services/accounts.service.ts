@@ -174,8 +174,8 @@ export class AccountsService {
         const firstFeeDate = this.dateService.startOfMonth(
           this.dateService.addMonths(accountCreationDate, 1),
         );
-        // Create 6 months of subscription fees starting from next month
-        for (let i = 0; i < 6; i++) {
+        // Create 12 months of subscription fees starting from next month
+        for (let i = 0; i < 12; i++) {
           const periodStart = this.dateService.addMonths(firstFeeDate, i);
           await this.subscriptionFeesRepo.create(
             {
