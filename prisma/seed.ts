@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { readFile } from 'fs/promises';
 import * as path from 'path';
 import { PrismaPg } from '@prisma/adapter-pg';
