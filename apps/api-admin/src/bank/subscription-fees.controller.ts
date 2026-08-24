@@ -23,7 +23,7 @@ import { CreateSubscriptionFeeDto } from './dtos/subscription-fees/create-subscr
 import { GetSubscriptionFeesQueryDto } from './dtos/subscription-fees/list-subscription-fee.dto';
 import { UpdateSubscriptionFeeDto } from './dtos/subscription-fees/update-subscription-fee.dto';
 
-@Controller('subscription-fees')
+@Controller('admin/subscription-fees')
 export class SubscriptionFeesController {
   constructor(private readonly subscriptionFees: SubscriptionFeesService) {}
 
@@ -38,7 +38,7 @@ export class SubscriptionFeesController {
       totalItems,
       page,
       pageSize,
-      makeUrl: (p, s) => `/subscription-fees?page=${p}&pageSize=${s}`,
+      makeUrl: (p, s) => `/admin/subscription-fees?page=${p}&pageSize=${s}`,
     });
   }
 

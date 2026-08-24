@@ -23,7 +23,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 
 @ApiTags('Message Templates')
-@Controller('message-templates')
+@Controller('admin/message-templates')
 export class MessageTemplateController {
   constructor(
     private readonly messageTemplateService: MessageTemplateService,

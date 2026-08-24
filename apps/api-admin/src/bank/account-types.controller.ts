@@ -20,7 +20,7 @@ import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { CreateAccountTypeDto } from './dtos/account-types/create-account-type.dto';
 import { UpdateAccountTypeDto } from './dtos/account-types/update-account-type.dto';
 
-@Controller('account-types')
+@Controller('admin/account-types')
 export class AccountTypesController {
   constructor(private readonly accountTypes: AccountTypesService) {}
 
@@ -35,7 +35,7 @@ export class AccountTypesController {
       totalItems,
       page,
       pageSize,
-      makeUrl: (p, s) => `/account-types?page=${p}&pageSize=${s}`,
+      makeUrl: (p, s) => `/admin/account-types?page=${p}&pageSize=${s}`,
     });
   }
 

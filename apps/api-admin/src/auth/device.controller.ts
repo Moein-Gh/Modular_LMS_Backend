@@ -14,7 +14,7 @@ import {
   Query,
 } from '@nestjs/common';
 
-@Controller('devices')
+@Controller('user/devices')
 export class DeviceController {
   constructor(private readonly devices: DevicesService) {}
 

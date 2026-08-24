@@ -17,7 +17,7 @@ import {
 import { UUID_V4_PIPE } from '../../common/pipes/UUID.pipe';
 import { CreateRoleAssignmentDto } from './dtos/create-role-assignment.dto';
 
-@Controller('role-assignments')
+@Controller('admin/role-assignments')
 export class RoleAssignmentsController {
   constructor(private readonly roleAssignmentService: RoleAssignmentsService) {}
 

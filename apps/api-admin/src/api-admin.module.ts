@@ -29,6 +29,7 @@ import { AccessModule } from './access/access.module';
 import { ApiAdminController } from './api-admin.controller';
 import { ApiAdminService } from './api-admin.service';
 import { AuthController } from './auth/auth.controller';
+import { DeviceController } from './auth/device.controller';
 import { AccountTypesController } from './bank/account-types.controller';
 import { AccountsController } from './bank/accounts.controller';
 import { BankFinancialsController } from './bank/bank-financials.controller';
@@ -38,6 +39,7 @@ import { LoanTypesController } from './bank/loan-types.controller';
 import { LoansController } from './bank/loans.controller';
 import { SubscriptionFeesController } from './bank/subscription-fees.controller';
 import { PermissionLoaderMiddleware } from './common/middleware/permission-loader.middleware';
+import { DashboardController } from './dashboard/dashboard.controller';
 import { FilesController } from './file/file.controller';
 import { JournalEntriesController } from './ledger/journal-entries.controller';
 import { JournalsController } from './ledger/journals.controller';
@@ -74,6 +76,8 @@ import { UsersController } from './users/users.controller';
     FilesController,
     UsersController,
     AuthController,
+    DeviceController,
+    DashboardController,
     AccountsController,
     LoansController,
     InstallmentsController,

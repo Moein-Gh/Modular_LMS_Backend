@@ -2,7 +2,7 @@ import { Public } from '@app/application';
 import { Controller, Get } from '@nestjs/common';
 import { ApiAdminService } from './api-admin.service';
 
-@Controller()
+@Controller('admin')
 export class ApiAdminController {
   constructor(private readonly apiAdminService: ApiAdminService) {}
 

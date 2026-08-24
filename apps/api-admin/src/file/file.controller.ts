@@ -13,7 +13,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 
-@Controller('files')
+@Controller('admin/files')
 export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 

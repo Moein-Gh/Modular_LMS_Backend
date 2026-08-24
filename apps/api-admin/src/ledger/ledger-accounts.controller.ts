@@ -8,7 +8,7 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('LedgerAccounts')
-@Controller('ledger-accounts')
+@Controller('admin/ledger-accounts')
 export class LedgerAccountsController {
   constructor(private readonly service: LedgerAccountsService) {}
 

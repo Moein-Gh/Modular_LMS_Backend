@@ -33,7 +33,7 @@ import { GetUserDto } from './dtos/get-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 
 @ApiTags('Users')
-@Controller('users')
+@Controller()
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
@@ -63,14 +63,14 @@ export class UsersController {
   }
 
   @Permissions('user/create')
-  @Post()
+  @Post('admin/users')
   @HttpCode(HttpStatus.CREATED)
   registerUser(@Body() body: RegisterUserInput) {
     return this.registerUserUseCase.execute(body);
   }
 
   @Permissions('user/get')
-  @Get()
+  @Get('admin/users')
   async findAll(
     @Query() query: PaginationQueryDto,
   ): Promise<PaginatedResponseDto<User>> {
@@ -81,12 +81,12 @@ export class UsersController {
       totalItems,
       page,
       pageSize,
-      makeUrl: (p, s) => `/users?page=${p}&pageSize=${s}`,
+      makeUrl: (p, s) => `/admin/users?page=${p}&pageSize=${s}`,
     });
   }
 
   @Permissions('user/get')
-  @Get(':id')
+  @Get('admin/users/:id')
   async findOne(@Param('id', UUID_V4_PIPE) id: string): Promise<GetUserDto> {
     const user = await this.findUserAndIdentity(id);
     return {
@@ -108,7 +108,7 @@ export class UsersController {
   }
 
   @Permissions('user/update')
-  @Patch(':id')
+  @Patch('admin/users/:id')
   async update(
     @Param('id', UUID_V4_PIPE) id: string,
     @Body() dto: UpdateUserDto,
@@ -157,7 +157,7 @@ export class UsersController {
 
   // delete user
   @Permissions('user/delete')
-  @Delete(':id')
+  @Delete('admin/users/:id')
   async deleteUser(
     @Param('id', UUID_V4_PIPE) id: string,
     @CurrentUserId() currentUserId: string,
@@ -167,7 +167,7 @@ export class UsersController {
 
   // restore deleted user
   @Permissions('user/restore')
-  @Post(':id/restore')
+  @Post('admin/users/:id/restore')
   async restoreUser(
     @Param('id', UUID_V4_PIPE) id: string,
   ): Promise<GetUserDto> {
@@ -176,7 +176,7 @@ export class UsersController {
 
   // get user's upcoming payments
   @Permissions('user/get')
-  @Get(':id/upcoming-payments')
+  @Get('admin/users/:id/upcoming-payments')
   @ApiOperation({
     summary: "Get user's upcoming payments",
     description:
@@ -199,7 +199,7 @@ export class UsersController {
 
   // get user's payment summary
   @Permissions('user/get')
-  @Get(':id/payment-summary')
+  @Get('admin/users/:id/payment-summary')
   @ApiOperation({
     summary: "Get user's payment summary for dashboard",
     description:
@@ -213,5 +213,28 @@ export class UsersController {
     @Param('id', UUID_V4_PIPE) id: string,
   ): Promise<PaymentSummaryDto> {
     return this.usersService.getUserPaymentSummary(id);
+  }
+
+  // get current user's upcoming payments
+  @Permissions('user/user/get')
+  @Get('user/users/upcoming-payments')
+  @ApiOperation({
+    summary: "Get user's upcoming payments",
+    description:
+      'Returns a list of upcoming loan installments and subscription fees grouped by Persian calendar month. ' +
+      'Includes payment status, transaction details, and monthly totals. ' +
+      'Past unpaid payments are always included. Use includePastPaid query parameter to also retrieve paid past payments.',
+  })
+  @ApiQuery({
+    name: 'includePastPaid',
+    required: false,
+    type: Boolean,
+    description: 'Include fully paid past months in the response',
+  })
+  async getUpcomingPaymentsForUser(
+    @Query() query: GetUpcomingPaymentsQueryDto,
+    @CurrentUserId() currentUserId: string,
+  ): Promise<UpcomingPaymentsResponseDto> {
+    return this.usersService.getUserUpcomingPayments(currentUserId, query);
   }
 }

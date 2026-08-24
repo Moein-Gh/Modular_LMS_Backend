@@ -2,12 +2,14 @@ import {
   AccountsService,
   CurrentUserId,
   PaginatedResponseDto,
+  Permissions,
 } from '@app/application';
 import { Account } from '@app/domain';
 import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -21,11 +23,11 @@ import { CreateAccountDto } from './dtos/accounts/create-account.dto';
 import { GetAccountsQueryDto } from './dtos/accounts/get-accounts-query.dto';
 import { UpdateAccountDto } from './dtos/accounts/update-account.dto';
 
-@Controller('accounts')
+@Controller()
 export class AccountsController {
   constructor(private readonly accounts: AccountsService) {}
 
-  @Get()
+  @Get('admin/accounts')
   async findAll(
     @Query() query: GetAccountsQueryDto,
   ): Promise<PaginatedResponseDto<Account>> {
@@ -36,22 +38,22 @@ export class AccountsController {
       totalItems,
       page,
       pageSize,
-      makeUrl: (p, s) => `/accounts?page=${p}&pageSize=${s}`,
+      makeUrl: (p, s) => `/admin/accounts?page=${p}&pageSize=${s}`,
     });
   }
 
-  @Get(':id')
+  @Get('admin/accounts/:id')
   get(@Param('id', UUID_V4_PIPE) id: string) {
     return this.accounts.findById(id);
   }
 
-  @Post()
+  @Post('admin/accounts')
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateAccountDto) {
     return this.accounts.create(dto);
   }
 
-  @Post(':id/buy-out')
+  @Post('admin/accounts/:id/buy-out')
   @HttpCode(HttpStatus.OK)
   async buyOut(
     @Param('id', UUID_V4_PIPE) id: string,
@@ -61,12 +63,12 @@ export class AccountsController {
     return this.accounts.findById(id);
   }
 
-  @Patch(':id')
+  @Patch('admin/accounts/:id')
   update(@Param('id', UUID_V4_PIPE) id: string, @Body() dto: UpdateAccountDto) {
     return this.accounts.update(id, dto);
   }
 
-  @Delete(':id')
+  @Delete('admin/accounts/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async softDelete(
     @Param('id', UUID_V4_PIPE) id: string,
@@ -76,9 +78,40 @@ export class AccountsController {
     return;
   }
 
-  @Patch(':id/activate')
+  @Patch('admin/accounts/:id/activate')
   @HttpCode(HttpStatus.OK)
   activate(@Param('id', UUID_V4_PIPE) id: string): Promise<Account> {
     return this.accounts.activate(id);
+  }
+
+  @Permissions('user/account/findAll')
+  @Get('user/accounts')
+  async findAllForUser(
+    @Query() query: GetAccountsQueryDto,
+    @CurrentUserId() currentUserId: string,
+  ): Promise<PaginatedResponseDto<Account>> {
+    query.userId = currentUserId;
+    const { items, totalItems, page, pageSize } =
+      await this.accounts.findAll(query);
+    return PaginatedResponseDto.from({
+      items,
+      totalItems,
+      page,
+      pageSize,
+      makeUrl: (p, s) => `/user/accounts?page=${p}&pageSize=${s}`,
+    });
+  }
+
+  @Permissions('user/account/findById')
+  @Get('user/accounts/:id')
+  async getForUser(
+    @Param('id', UUID_V4_PIPE) id: string,
+    @CurrentUserId() currentUserId: string,
+  ) {
+    const account = await this.accounts.findById(id);
+    if (account.userId !== currentUserId) {
+      throw new ForbiddenException('شما به این حساب دسترسی ندارید');
+    }
+    return account;
   }
 }

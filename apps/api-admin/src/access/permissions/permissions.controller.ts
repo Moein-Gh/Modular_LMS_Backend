@@ -17,7 +17,7 @@ import {
 import { UUID_V4_PIPE } from '../../common/pipes/UUID.pipe';
 import { CreatePermissionDto } from './dtos/create-permission.dto';
 
-@Controller('permissions')
+@Controller('admin/permissions')
 export class PermissionsController {
   constructor(private readonly permissionService: PermissionsService) {}
 

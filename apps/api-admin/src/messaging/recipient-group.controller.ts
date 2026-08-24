@@ -23,7 +23,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 
 @ApiTags('Recipient Groups')
-@Controller('recipient-groups')
+@Controller('admin/recipient-groups')
 export class RecipientGroupController {
   constructor(private readonly recipientGroupService: RecipientGroupService) {}
 

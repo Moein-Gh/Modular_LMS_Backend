@@ -4,7 +4,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { InstallmentProjectionsResponseDto } from './dtos/installment-projection-response.dto';
 
 @ApiTags('Reports')
-@Controller('report')
+@Controller('admin/report')
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}
 

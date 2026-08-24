@@ -5,7 +5,7 @@ import { BalanceResponseDto } from './dtos/balance-response.dto';
 import { BankFinancialSummaryDto } from './dtos/bank-financial-summary.dto';
 
 @ApiTags('Bank Financials')
-@Controller('bank/financials')
+@Controller('admin/bank/financials')
 export class BankFinancialsController {
   constructor(private readonly financialsService: BankFinancialsService) {}
 

@@ -1,0 +1,1253 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Admin",
+    "version": "1.0.0",
+    "description": "# 🚀 Get started here\n\nThis template guides you through CRUD operations (GET, POST, PUT, DELETE), variables, and tests.\n\n## 🔖 **How to use this template**\n\n#### **Step 1: Send requests**\n\nRESTful APIs allow you to perform CRUD operations using the POST, GET, PUT, and DELETE HTTP methods.\n\nThis collection contains each of these [request](https://learning.postman.com/docs/sending-requests/requests/) types. Open each request and click \"Send\" to see what happens.\n\n#### **Step 2: View responses**\n\nObserve the response tab for status code (200 OK), response time, and size.\n\n#### **Step 3: Send new Body data**\n\nUpdate or add new data in \"Body\" in the POST request. Typically, Body data is also used in PUT request.\n\n```\n{\n    \"name\": \"Add your name in the body\"\n}\n\n ```\n\n#### **Step 4: Update the variable**\n\nVariables enable you to store and reuse values in Postman. We have created a [variable](https://learning.postman.com/docs/sending-requests/variables/) called `base_url` with the sample request [https://postman-api-learner.glitch.me](https://postman-api-learner.glitch.me). Replace it with your API endpoint to customize this collection.\n\n#### **Step 5: Add tests in the \"Scripts\" tab**\n\nAdding tests to your requests can help you confirm that your API is working as expected. You can write test scripts in JavaScript and view the output in the \"Test Results\" tab.\n\n<img src=\"https://content.pstmn.io/fa30ea0a-373d-4545-a668-e7b283cca343/aW1hZ2UucG5n\" alt=\"\" height=\"1530\" width=\"2162\">\n\n## 💪 Pro tips\n\n- Use folders to group related requests and organize the collection.\n    \n- Add more [scripts](https://learning.postman.com/docs/writing-scripts/intro-to-scripts/) to verify if the API works as expected and execute workflows.\n    \n\n## 💡Related templates\n\n[API testing basics](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9a37a28-055b-49cd-8c7e-97494a21eb54&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[API documentation](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9c28f47-1253-44af-a2f3-20dce4da1f18&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[Authorization methods](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=31a9a6ed-4cdf-4ced-984c-d12c9aec1c27&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)"
+  },
+  "servers": [
+    {
+      "url": "{{admin_base_url}}"
+    }
+  ],
+  "paths": {
+    "/auth/request-sms": {
+      "post": {
+        "summary": "Request SMS",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  },
+                  "purpose": {
+                    "type": "string"
+                  },
+                  "countryCode": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-sms": {
+      "post": {
+        "summary": "Verify SMS",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  },
+                  "code": {
+                    "type": "string",
+                    "format": "color"
+                  },
+                  "purpose": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "summary": "Refresh access token",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {}
+      }
+    },
+    "/roles": {
+      "post": {
+        "summary": "Create Role",
+        "tags": [
+          "Access",
+          "Roles"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roles/9c0897f0-755a-4de4-8bc7-d99d4f075632": {
+      "delete": {
+        "summary": "Delete Role",
+        "tags": [
+          "Access",
+          "Roles"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roles/": {
+      "get": {
+        "summary": "List Roles",
+        "tags": [
+          "Access",
+          "Roles"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roles/9fa1a5e8-f6ae-43e0-8cc1-e70853301041": {
+      "get": {
+        "summary": "Get Role by Id",
+        "tags": [
+          "Access",
+          "Roles"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/permission-grants": {
+      "post": {
+        "summary": "Create Permission Grant",
+        "tags": [
+          "Access",
+          "Permission Grant"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/permission-grants/9c0897f0-755a-4de4-8bc7-d99d4f075632": {
+      "delete": {
+        "summary": "Delete Permission Grant",
+        "tags": [
+          "Access",
+          "Permission Grant"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/permission-grants/": {
+      "get": {
+        "summary": "List Permission Grants",
+        "tags": [
+          "Access",
+          "Permission Grant"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/permission-grants/9fa1a5e8-f6ae-43e0-8cc1-e70853301041": {
+      "get": {
+        "summary": "Get Permission Grant by Id",
+        "tags": [
+          "Access",
+          "Permission Grant"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/permissions": {
+      "post": {
+        "summary": "Create Permission",
+        "tags": [
+          "Access",
+          "Permissions"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/permissions/": {
+      "delete": {
+        "summary": "Delete Permission",
+        "tags": [
+          "Access",
+          "Permissions"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Permissions",
+        "tags": [
+          "Access",
+          "Permissions"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/permissions/89aed28b-686a-4076-bf88-427d638f5852": {
+      "get": {
+        "summary": "Get Permissions by Id",
+        "tags": [
+          "Access",
+          "Permissions"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/role-assignments": {
+      "post": {
+        "summary": "Create Role Assignment",
+        "tags": [
+          "Access",
+          "Role Assignment"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string"
+                  },
+                  "roleId": {
+                    "type": "string"
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "style"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Role Assignment",
+        "tags": [
+          "Access",
+          "Role Assignment"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roleassignment/": {
+      "delete": {
+        "summary": "Delete Role Assignment",
+        "tags": [
+          "Access",
+          "Role Assignment"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roleassignment/89aed28b-686a-4076-bf88-427d638f5853": {
+      "get": {
+        "summary": "Get Role Assignment by Id",
+        "tags": [
+          "Access",
+          "Role Assignment"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/": {
+      "post": {
+        "summary": "Create User",
+        "tags": [
+          "Users"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "countryCode": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  },
+                  "nationalCode": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Users",
+        "tags": [
+          "Users"
+        ],
+        "responses": {}
+      }
+    },
+    "/users/{userId}": {
+      "get": {
+        "summary": "Get User By Id",
+        "tags": [
+          "Users"
+        ],
+        "responses": {}
+      },
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "deprecated": false
+          }
+        }
+      ]
+    },
+    "/users/ba613c5d-1714-4c20-bcae-1f098ce19522": {
+      "patch": {
+        "summary": "Update User",
+        "tags": [
+          "Users"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "isActive": {
+                    "type": "boolean"
+                  },
+                  "identityId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account-types/": {
+      "post": {
+        "summary": "Create Account Type",
+        "tags": [
+          "Bank",
+          "Account Type"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "maxAccounts": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Account Types",
+        "tags": [
+          "Bank",
+          "Account Type"
+        ],
+        "responses": {}
+      }
+    },
+    "/account-types/{account-typeId}": {
+      "get": {
+        "summary": "Get Account Type By Id",
+        "tags": [
+          "Bank",
+          "Account Type"
+        ],
+        "responses": {}
+      },
+      "parameters": [
+        {
+          "name": "account-typeId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "deprecated": false
+          }
+        }
+      ],
+      "patch": {
+        "summary": "Update Account Type",
+        "tags": [
+          "Bank",
+          "Account Type"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/": {
+      "post": {
+        "summary": "Create Account",
+        "tags": [
+          "Bank",
+          "Account"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "accountTypeId": {
+                    "type": "string"
+                  },
+                  "userId": {
+                    "type": "string"
+                  },
+                  "cardNumber": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  },
+                  "bankName": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Accounts",
+        "tags": [
+          "Bank",
+          "Account"
+        ],
+        "responses": {}
+      }
+    },
+    "/accounts/{accountId}": {
+      "get": {
+        "summary": "Get Account By Id",
+        "tags": [
+          "Bank",
+          "Account"
+        ],
+        "responses": {}
+      },
+      "parameters": [
+        {
+          "name": "accountId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "patch": {
+        "summary": "Update Account",
+        "tags": [
+          "Bank",
+          "Account"
+        ],
+        "responses": {}
+      }
+    },
+    "/loan-types/": {
+      "post": {
+        "summary": "Create Loan Type",
+        "tags": [
+          "Bank",
+          "Loan Type"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "commissionPercentage": {
+                    "type": "integer"
+                  },
+                  "defaultInstallments": {
+                    "type": "integer"
+                  },
+                  "maxInstallments": {
+                    "type": "integer"
+                  },
+                  "minInstallments": {
+                    "type": "integer"
+                  },
+                  "creditRequirementPct": {
+                    "type": "integer"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Loan Types",
+        "tags": [
+          "Bank",
+          "Loan Type"
+        ],
+        "responses": {}
+      }
+    },
+    "/loan-types/{loanTypeId}": {
+      "get": {
+        "summary": "Get Loan Type By Id",
+        "tags": [
+          "Bank",
+          "Loan Type"
+        ],
+        "responses": {}
+      },
+      "parameters": [
+        {
+          "name": "loanTypeId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "patch": {
+        "summary": "Update Loan Type",
+        "tags": [
+          "Bank",
+          "Loan Type"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Loan Type",
+        "tags": [
+          "Bank",
+          "Loan Type"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/loans/": {
+      "post": {
+        "summary": "Create Loan",
+        "tags": [
+          "Bank",
+          "Loan"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "accountId": {
+                    "type": "string"
+                  },
+                  "loanTypeId": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string",
+                    "format": "color"
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "paymentMonths": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Loans",
+        "tags": [
+          "Bank",
+          "Loan"
+        ],
+        "responses": {}
+      }
+    },
+    "/loans/approve/{loanId}": {
+      "post": {
+        "summary": "Approve Loan",
+        "tags": [
+          "Bank",
+          "Loan"
+        ],
+        "responses": {}
+      },
+      "parameters": [
+        {
+          "name": "loanId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "deprecated": false
+          }
+        }
+      ]
+    },
+    "/loans/{loanId}": {
+      "get": {
+        "summary": "Get Loan By Id",
+        "tags": [
+          "Bank",
+          "Loan"
+        ],
+        "responses": {}
+      },
+      "parameters": [
+        {
+          "name": "loanId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "patch": {
+        "summary": "Update Loan",
+        "tags": [
+          "Bank",
+          "Loan"
+        ],
+        "responses": {}
+      }
+    },
+    "/installments/": {
+      "post": {
+        "summary": "Create Installment",
+        "tags": [
+          "Bank",
+          "Installment"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "accountId": {
+                    "type": "string"
+                  },
+                  "loanTypeId": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "paymentMonths": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Installments",
+        "tags": [
+          "Bank",
+          "Installment"
+        ],
+        "responses": {}
+      }
+    },
+    "/installment/{InstallmentId}": {
+      "get": {
+        "summary": "Get Installment By Id",
+        "tags": [
+          "Bank",
+          "Installment"
+        ],
+        "responses": {}
+      },
+      "parameters": [
+        {
+          "name": "InstallmentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "/Installments/{InstallmentId}": {
+      "patch": {
+        "summary": "Update Installment",
+        "tags": [
+          "Bank",
+          "Installment"
+        ],
+        "responses": {}
+      },
+      "parameters": [
+        {
+          "name": "InstallmentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "/bank/financials/summary": {
+      "get": {
+        "summary": "Summary",
+        "tags": [
+          "Bank",
+          "Bank Financial"
+        ],
+        "responses": {}
+      }
+    },
+    "/transactions/": {
+      "post": {
+        "summary": "Create Transactions",
+        "tags": [
+          "Transaction",
+          "Transaction"
+        ],
+        "responses": {},
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  },
+                  "externalRef": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Transactions",
+        "tags": [
+          "Transaction",
+          "Transaction"
+        ],
+        "responses": {}
+      }
+    },
+    "/transactions/{transactionId}": {
+      "get": {
+        "summary": "Get Transaction By Id",
+        "tags": [
+          "Transaction",
+          "Transaction"
+        ],
+        "responses": {}
+      },
+      "parameters": [
+        {
+          "name": "transactionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ]
+    },
+    "/transactions/approve/{transactionId}": {
+      "post": {
+        "summary": "Approve Transaction",
+        "tags": [
+          "Transaction",
+          "Transaction"
+        ],
+        "responses": {}
+      },
+      "parameters": [
+        {
+          "name": "transactionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "deprecated": false
+          }
+        }
+      ]
+    },
+    "/ledger-accounts/": {
+      "get": {
+        "summary": "List ledger accounts",
+        "tags": [
+          "Ledger",
+          "Ledger-Account"
+        ],
+        "responses": {}
+      }
+    },
+    "/journals": {
+      "get": {
+        "summary": "List Journals",
+        "tags": [
+          "Ledger",
+          "Journal"
+        ],
+        "parameters": [
+          {
+            "name": "includeEntries",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "deprecated": false
+            }
+          }
+        ],
+        "responses": {}
+      }
+    },
+    "/journals/{journalId}": {
+      "get": {
+        "summary": "Get Journal By Id",
+        "tags": [
+          "Ledger",
+          "Journal"
+        ],
+        "parameters": [
+          {
+            "name": "includeEntries",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "deprecated": false
+            }
+          }
+        ],
+        "responses": {}
+      },
+      "parameters": [
+        {
+          "name": "journalId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "deprecated": false
+          }
+        }
+      ]
+    }
+  }
+}

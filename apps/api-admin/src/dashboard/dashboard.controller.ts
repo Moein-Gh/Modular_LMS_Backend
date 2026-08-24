@@ -8,7 +8,7 @@ import {
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 
-@Controller('dashboard')
+@Controller('user/dashboard')
 export class DashboardController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -27,7 +27,6 @@ export class DashboardController {
   getPaymentSummary(
     @CurrentUserId() currentUserId: string,
   ): Promise<PaymentSummaryDto> {
-    console.log(currentUserId);
     return this.usersService.getUserPaymentSummary(currentUserId);
   }
 

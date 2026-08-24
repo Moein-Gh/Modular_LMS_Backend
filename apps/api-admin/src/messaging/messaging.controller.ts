@@ -27,7 +27,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 
 @ApiTags('Messaging')
-@Controller('messages')
+@Controller('admin/messages')
 export class MessagingController {
   constructor(private readonly messagingService: MessagingService) {}
 

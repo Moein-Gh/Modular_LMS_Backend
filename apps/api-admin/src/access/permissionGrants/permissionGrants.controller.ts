@@ -21,7 +21,7 @@ import {
   UpdatePermissionGrantDto,
 } from './dtos/create-permission-grant.dto';
 
-@Controller('permission-grants')
+@Controller('admin/permission-grants')
 export class PermissionGrantsController {
   constructor(
     private readonly permissionGrantService: PermissionGrantsService,

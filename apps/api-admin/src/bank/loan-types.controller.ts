@@ -20,7 +20,7 @@ import { UUID_V4_PIPE } from '../common/pipes/UUID.pipe';
 import { CreateLoanTypeDto } from './dtos/loan-types/create-loanType.dto';
 import { UpdateLoanTypeDto } from './dtos/loan-types/update-loanType.dto';
 
-@Controller('loan-types')
+@Controller('admin/loan-types')
 export class LoanTypesController {
   constructor(private readonly loanTypes: LoanTypesService) {}
 
@@ -35,7 +35,7 @@ export class LoanTypesController {
       totalItems,
       page,
       pageSize,
-      makeUrl: (p, s) => `/loanTypes?page=${p}&pageSize=${s}`,
+      makeUrl: (p, s) => `/admin/loan-types?page=${p}&pageSize=${s}`,
     });
   }
 

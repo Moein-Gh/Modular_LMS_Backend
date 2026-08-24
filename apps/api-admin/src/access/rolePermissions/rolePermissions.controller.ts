@@ -15,7 +15,7 @@ import { CreateRolePermissionDto } from './dtos/create-role-permission.dto';
 import { UpdateRolePermissionDto } from './dtos/update-role-permission.dto';
 
 @ApiTags('Role Permissions')
-@Controller('role-permissions')
+@Controller('admin/role-permissions')
 export class RolePermissionsController {
   constructor(
     private readonly rolePermissionsService: RolePermissionsService,
