@@ -70,7 +70,7 @@ services:
     image: nginx:alpine
     restart: unless-stopped
     ports:
-      - "${GATEWAY_PORT:-3100}:80"
+      - "${GATEWAY_PORT:-3300}:80"
     networks:
       - backend
     volumes:

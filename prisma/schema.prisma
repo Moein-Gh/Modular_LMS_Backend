@@ -44,6 +44,104 @@ model User {
   @@index([isDeleted], map: "user_is_deleted_idx")
 }
 
+model Identity {
+  id          String    @id @default(uuid()) @db.Uuid
+  phone       String    @unique @db.Text
+  email       String?   @unique @db.Text
+  name        String?   @map("name") @db.Text
+  countryCode String?   @map("country_code") @db.Text
+  lastLoginAt DateTime? @map("last_login_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user User?
+
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "identity_is_deleted_idx")
+  @@map("identity")
+}
+
+model RefreshToken {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  tokenHash         String    @map("token_hash") @db.Text
+  revoked           Boolean   @default(false)
+  expiresAt         DateTime  @map("expires_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  revokedAt         DateTime? @map("revoked_at")
+  replacedByTokenId String?   @map("replaced_by_token_id") @db.Uuid
+  userAgent         String?   @map("user_agent") @db.Text
+  ipAddress         String?   @map("ip_address") @db.Text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@unique([userId, tokenHash], map: "refresh_token_user_hash_unique")
+  @@index([isDeleted], map: "refresh_token_is_deleted_idx")
+  @@index([userId], map: "refresh_token_user_idx")
+  @@map("refresh_token")
+}
+
+// Devices / sessions recorded per user (for session management and revocation)
+model Device {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  deviceId   String   @db.Text
+  deviceName String?  @db.Text
+  ip         String?  @db.Text
+  userAgent  String?  @db.Text
+  lastSeen   DateTime @default(now())
+  createdAt  DateTime @default(now())
+  revoked    Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Audit log for recording changes and important actions
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  actorId   String?  @db.Uuid
+  model     String   @db.Text
+  recordId  String   @db.Text
+  action    String   @db.Text
+  changes   Json?
+  ip        String?  @db.Text
+  userAgent String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([actorId])
+  @@index([model, recordId])
+}
+
+model SmsCode {
+  id          String    @id @default(uuid()) @db.Uuid
+  phone       String    @db.Text
+  code        String    @db.Text
+  purpose     String    @db.Text
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(5) @map("max_attempts")
+  expiresAt   DateTime  @map("expires_at")
+  consumedAt  DateTime? @map("consumed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@index([isDeleted], map: "sms_code_is_deleted_idx")
+  @@index([phone], map: "sms_code_phone_idx")
+  @@index([phone, code], map: "sms_code_phone_code_idx")
+  @@map("sms_code")
+}
+
 model Role {
   id          String  @id @default(uuid()) @db.Uuid
   code        Int     @unique @default(autoincrement())
@@ -147,104 +245,6 @@ model PermissionGrant {
 
   @@index([isDeleted], map: "permission_grant_is_deleted_idx")
   @@map("permission_grant")
-}
-
-model Identity {
-  id          String    @id @default(uuid()) @db.Uuid
-  phone       String    @unique @db.Text
-  email       String?   @unique @db.Text
-  name        String?   @map("name") @db.Text
-  countryCode String?   @map("country_code") @db.Text
-  lastLoginAt DateTime? @map("last_login_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-
-  user User?
-
-  isDeleted Boolean   @default(false) @map("is_deleted")
-  deletedAt DateTime? @map("deleted_at")
-  deletedBy String?   @map("deleted_by") @db.Uuid
-
-  @@index([isDeleted], map: "identity_is_deleted_idx")
-  @@map("identity")
-}
-
-model RefreshToken {
-  id                String    @id @default(uuid()) @db.Uuid
-  userId            String    @map("user_id") @db.Uuid
-  tokenHash         String    @map("token_hash") @db.Text
-  revoked           Boolean   @default(false)
-  expiresAt         DateTime  @map("expires_at")
-  createdAt         DateTime  @default(now()) @map("created_at")
-  revokedAt         DateTime? @map("revoked_at")
-  replacedByTokenId String?   @map("replaced_by_token_id") @db.Uuid
-  userAgent         String?   @map("user_agent") @db.Text
-  ipAddress         String?   @map("ip_address") @db.Text
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  isDeleted Boolean   @default(false) @map("is_deleted")
-  deletedAt DateTime? @map("deleted_at")
-  deletedBy String?   @map("deleted_by") @db.Uuid
-
-  @@unique([userId, tokenHash], map: "refresh_token_user_hash_unique")
-  @@index([isDeleted], map: "refresh_token_is_deleted_idx")
-  @@index([userId], map: "refresh_token_user_idx")
-  @@map("refresh_token")
-}
-
-// Devices / sessions recorded per user (for session management and revocation)
-model Device {
-  id         String   @id @default(uuid()) @db.Uuid
-  userId     String   @db.Uuid
-  deviceId   String   @db.Text
-  deviceName String?  @db.Text
-  ip         String?  @db.Text
-  userAgent  String?  @db.Text
-  lastSeen   DateTime @default(now())
-  createdAt  DateTime @default(now())
-  revoked    Boolean  @default(false)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-// Audit log for recording changes and important actions
-model AuditLog {
-  id        String   @id @default(uuid()) @db.Uuid
-  actorId   String?  @db.Uuid
-  model     String   @db.Text
-  recordId  String   @db.Text
-  action    String   @db.Text
-  changes   Json?
-  ip        String?  @db.Text
-  userAgent String?  @db.Text
-  createdAt DateTime @default(now())
-
-  @@index([actorId])
-  @@index([model, recordId])
-}
-
-model SmsCode {
-  id          String    @id @default(uuid()) @db.Uuid
-  phone       String    @db.Text
-  code        String    @db.Text
-  purpose     String    @db.Text
-  attempts    Int       @default(0)
-  maxAttempts Int       @default(5) @map("max_attempts")
-  expiresAt   DateTime  @map("expires_at")
-  consumedAt  DateTime? @map("consumed_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-
-  isDeleted Boolean   @default(false) @map("is_deleted")
-  deletedAt DateTime? @map("deleted_at")
-  deletedBy String?   @map("deleted_by") @db.Uuid
-
-  @@index([isDeleted], map: "sms_code_is_deleted_idx")
-  @@index([phone], map: "sms_code_phone_idx")
-  @@index([phone, code], map: "sms_code_phone_code_idx")
-  @@map("sms_code")
 }
 
 model AccountType {
