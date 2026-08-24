@@ -47,7 +47,7 @@ export type DeviceMetaType = {
   ip?: string;
 };
 
-@Controller('admin/auth')
+@Controller('auth')
 export class AuthController {
   constructor(
     private readonly auth: AuthService,

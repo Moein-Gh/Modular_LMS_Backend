@@ -1,0 +1,14 @@
+$kind: http-request
+id: 4c55c5ba-9e30-4092-8304-4507f1f7ebee
+url: "{{baseUrl}}/admin/loans/00000000-0000-4000-8000-000000000001"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated Loan Name",
+      "status": "ACTIVE"
+    }
+order: 4000

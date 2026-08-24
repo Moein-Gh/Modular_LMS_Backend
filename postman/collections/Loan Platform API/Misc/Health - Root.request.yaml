@@ -1,0 +1,6 @@
+$kind: http-request
+id: d446d09e-9022-411c-aaaf-c3618b1d489f
+name: Health / Root
+url: "{{baseUrl}}/admin"
+method: GET
+order: 1000

@@ -1,0 +1,5 @@
+$kind: http-request
+id: 27673976-9bd2-44c4-a23b-ae622ed6f5cf
+url: "{{baseUrl}}/admin/users/00000000-0000-4000-8000-000000000001/restore"
+method: POST
+order: 6000

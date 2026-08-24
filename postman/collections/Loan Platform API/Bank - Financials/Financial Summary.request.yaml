@@ -1,0 +1,12 @@
+$kind: http-request
+id: 07fe9fe5-f7da-4504-af64-59336c0c3d1b
+url: "{{baseUrl}}/admin/bank/financials/summary?startDate=&endDate="
+method: GET
+queryParams:
+  - key: startDate
+    value: ""
+    disabled: true
+  - key: endDate
+    value: ""
+    disabled: true
+order: 1000

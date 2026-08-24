@@ -10,8 +10,7 @@ export const envSchema = z.object({
   API_BUILD_TARGET: z.enum(['dev', 'prod']).optional(),
 
   /* ports (strings → numbers) */
-  USER_API_PORT: z.coerce.number().int().positive(),
-  ADMIN_API_PORT: z.coerce.number().int().positive(),
+  API_PORT: z.coerce.number().int().positive(),
   POSTGRES_PORT: z.coerce.number().int().positive().default(5432),
 
   /* Postgres & Prisma */

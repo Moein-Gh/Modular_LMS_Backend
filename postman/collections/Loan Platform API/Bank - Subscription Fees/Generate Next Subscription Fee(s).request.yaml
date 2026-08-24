@@ -1,0 +1,13 @@
+$kind: http-request
+id: caa5ac08-f3ad-4610-b106-74aa7d4cebcf
+url: "{{baseUrl}}/admin/subscription-fees/accounts/00000000-0000-4000-8000-000000000001/next"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "numberOfMonths": 1
+    }
+order: 2000

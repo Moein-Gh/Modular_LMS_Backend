@@ -64,12 +64,12 @@ services:
         max-file: "3"
 
   # =========================================
-  # API Admin Service (Development)
+  # API Service (Development)
   # =========================================
-  api-admin:
+  api:
     build:
       context: .
-      dockerfile: apps/api-admin/Dockerfile
+      dockerfile: apps/api/Dockerfile
       target: ${API_BUILD_TARGET:-dev}
     restart: unless-stopped
     env_file:
@@ -82,7 +82,7 @@ services:
       REDIS_PORT: ${REDIS_PORT:-6379}
       PORT: 3010
     ports:
-      - "${ADMIN_API_PORT:-3010}:3010"
+      - "${API_PORT:-3010}:3010"
     depends_on:
       db:
         condition: service_healthy
@@ -90,14 +90,14 @@ services:
       - backend
     # Volume mounts for hot-reload
     volumes:
-      - ./apps/api-admin/src:/app/apps/api-admin/src:cached
+      - ./apps/api/src:/app/apps/api/src:cached
       - ./libs:/app/libs:cached
     # Docker Compose Watch configuration for file sync
     develop:
       watch:
         - action: sync
-          path: ./apps/api-admin/src
-          target: /app/apps/api-admin/src
+          path: ./apps/api/src
+          target: /app/apps/api/src
           ignore:
             - node_modules/
             - dist/

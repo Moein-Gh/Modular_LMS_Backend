@@ -1,0 +1,5 @@
+$kind: http-request
+id: 17211e6b-3f2c-4498-939a-c13f9e3be497
+url: "{{baseUrl}}/admin/account-types/00000000-0000-4000-8000-000000000001"
+method: GET
+order: 3000

@@ -1,0 +1,14 @@
+$kind: http-request
+id: c626836e-61fd-4ea4-a4fb-e31e4c62ba50
+url: "{{baseUrl}}/admin/role-permissions/00000000-0000-4000-8000-000000000001"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "roleId": "00000000-0000-4000-8000-000000000001",
+      "permissionId": "00000000-0000-4000-8000-000000000002"
+    }
+order: 6000

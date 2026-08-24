@@ -1,0 +1,5 @@
+$kind: http-request
+id: 620191e7-54e8-4a6c-8a67-db087d93a4ca
+url: "{{baseUrl}}/admin/loan-requests/00000000-0000-4000-8000-000000000001"
+method: DELETE
+order: 8000

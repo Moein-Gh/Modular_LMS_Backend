@@ -40,8 +40,8 @@ COPY libs ./libs
 # Generate Prisma client (DATABASE_URL is not used during generation, only to satisfy prisma.config.ts)
 RUN DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy pnpm exec prisma generate
 
-# Build the api-admin application
-RUN pnpm exec nest build api-admin
+# Build the api application
+RUN pnpm exec nest build api
 
 # ============================================
 # Production Dependencies Stage
@@ -75,7 +75,7 @@ COPY --from=prod-dependencies --chown=nestjs:nodejs /app/node_modules ./node_mod
 COPY --from=prod-dependencies --chown=nestjs:nodejs /app/package.json ./
 
 # Copy built application
-COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/api-admin ./dist
+COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/api ./dist
 
 # Copy generated Prisma client with engine binaries
 COPY --from=builder --chown=nestjs:nodejs /app/generated/prisma ./generated/prisma
@@ -130,4 +130,4 @@ ENV NODE_ENV=development \
 EXPOSE 3010
 
 # Start in watch mode
-CMD ["pnpm", "run", "start:admin"]
+CMD ["pnpm", "run", "start:api"]

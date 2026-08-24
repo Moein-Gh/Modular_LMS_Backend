@@ -1,0 +1,5 @@
+$kind: http-request
+id: 3a65fcda-c0eb-4b1e-bf7c-8d6b1e0e5672
+url: "{{baseUrl}}/admin/roles/00000000-0000-4000-8000-000000000001"
+method: GET
+order: 3000

@@ -62,16 +62,16 @@ services:
         max-file: "3"
 
   # =========================================
-  # API Admin Service
+  # API Service
   # =========================================
-  api-admin:
+  api:
     build:
       context: .
-      dockerfile: apps/api-admin/Dockerfile
+      dockerfile: apps/api/Dockerfile
       target: prod
       args:
         NODE_ENV: production
-    image: ${DOCKER_REGISTRY:-}modular-lms-api-admin:${IMAGE_TAG:-latest}
+    image: ${DOCKER_REGISTRY:-}modular-lms-api:${IMAGE_TAG:-latest}
     restart: unless-stopped
     env_file:
       - .env.production
@@ -83,7 +83,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "0.0.0.0:${ADMIN_API_PORT:-3000}:3010"
+      - "0.0.0.0:${API_PORT:-3000}:3010"
     networks:
       - backend
       - frontend

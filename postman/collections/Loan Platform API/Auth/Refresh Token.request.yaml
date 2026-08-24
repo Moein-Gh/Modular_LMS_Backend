@@ -1,0 +1,6 @@
+$kind: http-request
+id: e1241014-126e-4603-aeba-77af6b494f8c
+description: Reads refreshToken from cookies, rotates accessToken/refreshToken cookies.
+url: "{{baseUrl}}/auth/refresh"
+method: POST
+order: 3000

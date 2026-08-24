@@ -1,0 +1,5 @@
+$kind: http-request
+id: 81451c0f-0f47-44ab-9de8-110a1a4b684e
+url: "{{baseUrl}}/admin/bank/financials/cash"
+method: GET
+order: 2000

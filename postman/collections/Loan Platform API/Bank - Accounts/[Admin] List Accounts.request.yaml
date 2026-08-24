@@ -1,0 +1,12 @@
+$kind: http-request
+id: bb366b07-f0cf-493f-8b6b-e66a3e06e666
+url: "{{baseUrl}}/admin/accounts?page=1&pageSize=20"
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+order: 2000

@@ -1,0 +1,15 @@
+$kind: http-request
+id: 71eb52ab-c597-425d-8624-d6a112bbbab8
+url: "{{baseUrl}}/admin/roles"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "key": "manager",
+      "name": "Manager",
+      "description": "Branch manager role"
+    }
+order: 1000

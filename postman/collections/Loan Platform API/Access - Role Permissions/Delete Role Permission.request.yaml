@@ -1,0 +1,5 @@
+$kind: http-request
+id: 2e5b7a24-4eea-4585-84f3-678feba0e0c7
+url: "{{baseUrl}}/admin/role-permissions/00000000-0000-4000-8000-000000000001"
+method: DELETE
+order: 7000

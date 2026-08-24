@@ -1,0 +1,5 @@
+$kind: http-request
+id: c315bdc4-46a6-4077-9d85-ca63824f33db
+url: "{{baseUrl}}/admin/bank/financials/income"
+method: GET
+order: 6000

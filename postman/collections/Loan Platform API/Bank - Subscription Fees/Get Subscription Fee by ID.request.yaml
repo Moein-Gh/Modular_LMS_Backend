@@ -1,0 +1,5 @@
+$kind: http-request
+id: 452fbd1b-6a78-4b9f-85e7-643f36b4807a
+url: "{{baseUrl}}/admin/subscription-fees/00000000-0000-4000-8000-000000000001"
+method: GET
+order: 4000

@@ -1,0 +1,13 @@
+$kind: http-request
+id: c78f6f75-8a9b-4f6a-9d56-7de93f8db633
+url: "{{baseUrl}}/admin/recipient-groups/00000000-0000-4000-8000-000000000001"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated Group Name"
+    }
+order: 4000

@@ -1,0 +1,5 @@
+$kind: http-request
+id: 91c8a2ed-8d19-40e1-8ec1-22d24724704b
+url: "{{baseUrl}}/admin/report/dashboard/summary"
+method: GET
+order: 1000

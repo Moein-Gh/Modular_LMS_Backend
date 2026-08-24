@@ -1,0 +1,18 @@
+$kind: http-request
+id: bf538c99-3510-465d-b836-1ef80858675a
+url: "{{baseUrl}}/admin/accounts"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "accountTypeId": "00000000-0000-4000-8000-000000000001",
+      "userId": "00000000-0000-4000-8000-000000000002",
+      "cardNumber": "12345678",
+      "bankName": "Melli Bank",
+      "bookCode": "BK-001",
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    }
+order: 1000

@@ -1,0 +1,12 @@
+$kind: http-request
+id: fc76b094-8278-4c26-9e72-32517af48891
+url: "{{baseUrl}}/admin/transactions?page=1&pageSize=20"
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+order: 1000

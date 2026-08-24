@@ -1,0 +1,5 @@
+$kind: http-request
+id: 63b6e752-bbcc-490e-bcd7-f85baa0506de
+url: "{{baseUrl}}/admin/accounts/00000000-0000-4000-8000-000000000001/buy-out"
+method: POST
+order: 5000

@@ -26,8 +26,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AccessModule } from './access/access.module';
-import { ApiAdminController } from './api-admin.controller';
-import { ApiAdminService } from './api-admin.service';
+import { ApiController } from './api.controller';
+import { ApiService } from './api.service';
 import { AuthController } from './auth/auth.controller';
 import { DeviceController } from './auth/device.controller';
 import { AccountTypesController } from './bank/account-types.controller';
@@ -71,7 +71,7 @@ import { UsersController } from './users/users.controller';
     AccessModule,
   ],
   controllers: [
-    ApiAdminController,
+    ApiController,
     // File controller
     FilesController,
     UsersController,
@@ -97,7 +97,7 @@ import { UsersController } from './users/users.controller';
     RecipientGroupController,
   ],
   providers: [
-    ApiAdminService,
+    ApiService,
     { provide: APP_GUARD, useClass: AccessTokenGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
 
@@ -116,7 +116,7 @@ import { UsersController } from './users/users.controller';
     },
   ],
 })
-export class ApiAdminModule implements NestModule {
+export class ApiModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(PermissionLoaderMiddleware).forRoutes('*path');
   }

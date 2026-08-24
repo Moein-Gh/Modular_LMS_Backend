@@ -1,0 +1,13 @@
+$kind: http-request
+id: 23b5ded3-5dc2-4fa0-93c7-e7a45ce2926e
+url: "{{baseUrl}}/admin/message-templates/00000000-0000-4000-8000-000000000001"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "content": "Updated content {{name}}"
+    }
+order: 4000

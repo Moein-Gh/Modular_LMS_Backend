@@ -1,0 +1,15 @@
+$kind: http-request
+id: 4f9645be-c886-4f74-87a3-515af50a990e
+url: "{{baseUrl}}/admin/permissions"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "key": "admin/example/create",
+      "name": "Create Example",
+      "description": "Allows creating examples"
+    }
+order: 1000

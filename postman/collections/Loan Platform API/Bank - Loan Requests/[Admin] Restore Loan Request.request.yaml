@@ -1,0 +1,5 @@
+$kind: http-request
+id: aeccae1c-0e3c-49bb-89a1-22eabd8f9821
+url: "{{baseUrl}}/admin/loan-requests/00000000-0000-4000-8000-000000000001/restore"
+method: POST
+order: 9000

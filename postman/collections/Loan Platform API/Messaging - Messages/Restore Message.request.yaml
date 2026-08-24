@@ -1,0 +1,5 @@
+$kind: http-request
+id: 1c404dd9-ef3f-4c82-920d-857d9625281a
+url: "{{baseUrl}}/admin/messages/00000000-0000-4000-8000-000000000001/restore"
+method: POST
+order: 7000

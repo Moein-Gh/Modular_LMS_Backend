@@ -18,16 +18,22 @@ not introduced by it — fix one at a time when ready.
   `ForbiddenException` in `getForUser`, mirroring
   `AccountsController.getForUser` / `LoansController.getForUser`.
 
-## 2. `.github/instructions/*.md` still describe the old two-app architecture
+## 2. Docs/tracking files still describe the old two-app, `api-admin`-named architecture
 
-- **Where:** `.github/instructions/copilot-instructions.md` and
-  `.github/instructions/business-logic.instructions.md`
-- **Issue:** These docs (used as AI agent instructions) still reference
-  `apps/api-user` extensively — as a separate app, with its own controller
-  paths, its own port, its own Docker service — none of which exists anymore
-  after the admin+user merge. `business-logic.instructions.md` alone has
-  ~15 stale references (route tables, ownership-check descriptions, the
-  api-admin vs api-user comparison table, etc.).
-- **Fix:** Rewrite both docs to describe the single merged `api-admin` app,
-  with routes split by `admin/*` vs `user/*` prefix instead of by app. This
-  is a sizable rewrite, not a quick edit — do as its own pass.
+- **Where:**
+  - `.github/instructions/copilot-instructions.md`
+  - `.github/instructions/business-logic.instructions.md` (~15 stale
+    references — route tables, ownership-check descriptions, the
+    api-admin vs api-user comparison table, etc.)
+  - `todos.yaml` (several entries reference `apps/api-admin/...` file paths
+    and an `api-admin` tag)
+  - `apps/api/src/messaging/README.md` (references `apps/api-admin/src/messaging/`
+    and `api-admin.module.ts`)
+- **Issue:** These all predate two changes: (1) merging `apps/api-user` into
+  one app with `admin/*`/`user/*` route prefixes, and (2) renaming
+  `apps/api-admin` → `apps/api` (`ApiAdminModule` → `ApiModule`, etc). None of
+  the old paths/names/comparisons are accurate anymore.
+- **Fix:** Rewrite `copilot-instructions.md` and `business-logic.instructions.md`
+  to describe the single `apps/api` app with routes split by prefix instead of
+  by app (sizable rewrite, do as its own pass). Update the file paths in
+  `todos.yaml` and `messaging/README.md` (quick find/replace).

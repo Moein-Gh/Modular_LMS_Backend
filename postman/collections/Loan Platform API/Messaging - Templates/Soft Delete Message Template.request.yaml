@@ -1,0 +1,5 @@
+$kind: http-request
+id: 9d785ec7-0512-4fb5-9beb-25ca9027fcad
+url: "{{baseUrl}}/admin/message-templates/00000000-0000-4000-8000-000000000001"
+method: DELETE
+order: 5000

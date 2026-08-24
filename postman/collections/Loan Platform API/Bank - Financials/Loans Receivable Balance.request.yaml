@@ -1,0 +1,5 @@
+$kind: http-request
+id: b22fa6fe-f8f7-402b-a222-81c78b269eca
+url: "{{baseUrl}}/admin/bank/financials/loans-receivable"
+method: GET
+order: 4000

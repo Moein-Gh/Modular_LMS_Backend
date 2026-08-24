@@ -1,0 +1,13 @@
+$kind: http-request
+id: defbd6d8-e619-4080-a80b-c94e6745f3a4
+url: "{{baseUrl}}/admin/loan-requests/00000000-0000-4000-8000-000000000001"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "note": "Updated note"
+    }
+order: 7000

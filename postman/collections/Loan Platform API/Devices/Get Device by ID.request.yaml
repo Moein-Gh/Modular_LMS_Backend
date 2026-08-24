@@ -1,0 +1,5 @@
+$kind: http-request
+id: dc4c0b0f-98cd-49b6-bfb0-123487aab4cf
+url: "{{baseUrl}}/devices/00000000-0000-4000-8000-000000000001"
+method: GET
+order: 3000

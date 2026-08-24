@@ -1,0 +1,14 @@
+$kind: http-request
+id: bc4f0852-eb09-4370-ac3a-12a43798c242
+url: "{{baseUrl}}/admin/installments/00000000-0000-4000-8000-000000000001"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "PAID",
+      "paymentDate": "2026-09-01"
+    }
+order: 4000

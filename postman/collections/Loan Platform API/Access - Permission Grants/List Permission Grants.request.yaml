@@ -1,0 +1,12 @@
+$kind: http-request
+id: e08dcc22-1736-4eb7-8ea1-e36110f9a3eb
+url: "{{baseUrl}}/admin/permission-grants?page=1&pageSize=20"
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+order: 2000

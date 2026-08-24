@@ -1,0 +1,12 @@
+$kind: http-request
+id: 180125e8-f216-491f-90d6-a20e92d1c83f
+url: "{{baseUrl}}/admin/ledger-accounts?page=1&pageSize=20"
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+order: 1000

@@ -1,0 +1,5 @@
+$kind: http-request
+id: 2da15126-4072-4fef-9026-25c33602c461
+url: "{{baseUrl}}/user/accounts/00000000-0000-4000-8000-000000000001"
+method: GET
+order: 9000

@@ -1,0 +1,5 @@
+$kind: http-request
+id: 16637b34-822f-42e1-b03f-7fe49c1cd6b1
+url: "{{baseUrl}}/admin/report/dashboard/entities"
+method: GET
+order: 2000

@@ -1,0 +1,14 @@
+$kind: http-request
+id: 6067e185-6f5b-40fb-ba0a-af1c949f0c0e
+url: "{{baseUrl}}/admin/loan-requests/00000000-0000-4000-8000-000000000001/status"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "APPROVED",
+      "note": "Looks good"
+    }
+order: 6000

@@ -1,0 +1,5 @@
+$kind: http-request
+id: 1c3d6594-17d1-4a81-bc02-898f0c52a787
+url: "{{baseUrl}}/admin/permission-grants/00000000-0000-4000-8000-000000000001"
+method: GET
+order: 3000

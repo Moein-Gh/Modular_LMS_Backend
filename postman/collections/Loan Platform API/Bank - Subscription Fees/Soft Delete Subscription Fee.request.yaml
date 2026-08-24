@@ -1,0 +1,5 @@
+$kind: http-request
+id: 1e1d0129-74fb-4736-949f-177e358d6c4b
+url: "{{baseUrl}}/admin/subscription-fees/00000000-0000-4000-8000-000000000001"
+method: DELETE
+order: 6000

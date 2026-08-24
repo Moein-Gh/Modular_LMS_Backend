@@ -1,0 +1,5 @@
+$kind: http-request
+id: 27feb084-2d8f-430c-8029-b409daf04048
+url: "{{baseUrl}}/admin/transactions/reject/00000000-0000-4000-8000-000000000001"
+method: POST
+order: 6000

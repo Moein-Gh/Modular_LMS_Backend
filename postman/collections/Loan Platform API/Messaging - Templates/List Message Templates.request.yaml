@@ -1,0 +1,15 @@
+$kind: http-request
+id: f1e6ac32-e039-4973-9744-6202ae929ddd
+url: "{{baseUrl}}/admin/message-templates?page=1&pageSize=20&search="
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+  - key: search
+    value: ""
+    disabled: true
+order: 2000

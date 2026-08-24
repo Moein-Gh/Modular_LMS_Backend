@@ -1,0 +1,12 @@
+$kind: http-request
+id: ccb64e21-aa9d-487a-9db9-8849a6350d46
+url: "{{baseUrl}}/user/installments?page=1&pageSize=20"
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+order: 6000

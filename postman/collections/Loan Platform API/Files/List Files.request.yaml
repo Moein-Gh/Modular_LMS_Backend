@@ -1,0 +1,5 @@
+$kind: http-request
+id: 7b89b14e-3c00-4d4c-a689-2eb695bdcb9a
+url: "{{baseUrl}}/admin/files"
+method: GET
+order: 2000

@@ -2,12 +2,12 @@ import { AppLogger } from '@app/logger';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class ApiAdminService {
+export class ApiService {
   constructor(private readonly logger: AppLogger) {
-    this.logger.setContext(ApiAdminService.name);
+    this.logger.setContext(ApiService.name);
   }
 
   getHello(): string {
-    return 'Hello from ApiAdminService!';
+    return 'Hello from ApiService!';
   }
 }

@@ -1,0 +1,12 @@
+$kind: http-request
+id: 2cb5af3a-e760-47f3-880e-740ab413e37f
+url: "{{baseUrl}}/admin/role-assignments?page=1&pageSize=20"
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+order: 2000

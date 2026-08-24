@@ -1,22 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ApiAdminController } from './api-admin.controller';
-import { ApiAdminService } from './api-admin.service';
+import { ApiController } from './api.controller';
+import { ApiService } from './api.service';
 
-describe('ApiAdminController', () => {
-  let apiAdminController: ApiAdminController;
+describe('ApiController', () => {
+  let apiController: ApiController;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
-      controllers: [ApiAdminController],
-      providers: [ApiAdminService],
+      controllers: [ApiController],
+      providers: [ApiService],
     }).compile();
 
-    apiAdminController = app.get<ApiAdminController>(ApiAdminController);
+    apiController = app.get<ApiController>(ApiController);
   });
 
   describe('root', () => {
     it('should return "Hello World!"', () => {
-      expect(apiAdminController.getHello()).toBe('Hello World!');
+      expect(apiController.getHello()).toBe('Hello World!');
     });
   });
 });

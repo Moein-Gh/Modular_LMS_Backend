@@ -1,0 +1,5 @@
+$kind: http-request
+id: e8f07f8f-6209-4c99-8204-052128ab6424
+url: "{{baseUrl}}/admin/loan-requests/00000000-0000-4000-8000-000000000001"
+method: GET
+order: 3000

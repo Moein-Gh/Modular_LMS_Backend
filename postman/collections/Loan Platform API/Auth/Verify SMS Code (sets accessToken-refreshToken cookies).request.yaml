@@ -1,0 +1,17 @@
+$kind: http-request
+id: cc11cd85-6877-4ad3-b812-380da123456d
+name: Verify SMS Code (sets accessToken/refreshToken cookies)
+description: On success, Postman's cookie jar stores accessToken/refreshToken for this domain; subsequent authenticated requests reuse them automatically.
+url: "{{baseUrl}}/auth/verify-sms"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "phone": "09120000000",
+      "code": "12345",
+      "purpose": "login"
+    }
+order: 2000

@@ -1,0 +1,14 @@
+$kind: http-request
+id: 8b8dff64-794e-4bb1-9e6d-94b8a973d3e6
+url: "{{baseUrl}}/admin/role-permissions"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "roleId": "00000000-0000-4000-8000-000000000001",
+      "permissionId": "00000000-0000-4000-8000-000000000002"
+    }
+order: 1000

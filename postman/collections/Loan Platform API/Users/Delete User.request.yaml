@@ -1,0 +1,5 @@
+$kind: http-request
+id: 4bd10a03-1b19-462e-853c-e9360a0898e4
+url: "{{baseUrl}}/admin/users/00000000-0000-4000-8000-000000000001"
+method: DELETE
+order: 5000

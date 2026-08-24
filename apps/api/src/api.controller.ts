@@ -1,14 +1,14 @@
 import { Public } from '@app/application';
 import { Controller, Get } from '@nestjs/common';
-import { ApiAdminService } from './api-admin.service';
+import { ApiService } from './api.service';
 
 @Controller('admin')
-export class ApiAdminController {
-  constructor(private readonly apiAdminService: ApiAdminService) {}
+export class ApiController {
+  constructor(private readonly apiService: ApiService) {}
 
   @Public()
   @Get()
   getHello(): string {
-    return this.apiAdminService.getHello();
+    return this.apiService.getHello();
   }
 }

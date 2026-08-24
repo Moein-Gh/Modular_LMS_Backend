@@ -1,0 +1,9 @@
+$kind: http-request
+id: bd9588e8-d67e-47b0-9e6d-022d2cf71d86
+url: "{{baseUrl}}/devices?userId="
+method: GET
+queryParams:
+  - key: userId
+    value: ""
+    disabled: true
+order: 2000

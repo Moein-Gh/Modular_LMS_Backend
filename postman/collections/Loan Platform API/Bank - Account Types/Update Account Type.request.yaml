@@ -1,0 +1,14 @@
+$kind: http-request
+id: 3b60c2d2-fda9-49b5-842b-d143fcc8e3ea
+url: "{{baseUrl}}/admin/account-types/00000000-0000-4000-8000-000000000001"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Premium",
+      "maxAccounts": 5
+    }
+order: 4000

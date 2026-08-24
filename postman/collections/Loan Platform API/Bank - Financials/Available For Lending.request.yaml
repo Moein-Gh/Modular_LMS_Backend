@@ -1,0 +1,5 @@
+$kind: http-request
+id: 94c87ac0-1938-4c8d-b34b-3948bdcd8285
+url: "{{baseUrl}}/admin/bank/financials/available-for-lending"
+method: GET
+order: 5000

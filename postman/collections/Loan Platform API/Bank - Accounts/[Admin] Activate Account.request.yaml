@@ -1,0 +1,5 @@
+$kind: http-request
+id: 3f52486b-0ebb-4dd4-b33e-9ae6334c1a84
+url: "{{baseUrl}}/admin/accounts/00000000-0000-4000-8000-000000000001/activate"
+method: PATCH
+order: 6000

@@ -1,0 +1,14 @@
+$kind: http-request
+id: eb57f63d-8980-4970-a34f-c269d80eed18
+url: "{{baseUrl}}/admin/role-assignments"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "userId": "00000000-0000-4000-8000-000000000001",
+      "roleId": "00000000-0000-4000-8000-000000000002"
+    }
+order: 1000

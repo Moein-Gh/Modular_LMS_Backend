@@ -1,0 +1,18 @@
+$kind: http-request
+id: 87fa361d-aab7-4de8-a439-ec20ae300f16
+url: "{{baseUrl}}/admin/recipient-groups"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Overdue Users",
+      "description": "Users with overdue installments",
+      "criteria": {
+        "status": "OVERDUE"
+      },
+      "isActive": true
+    }
+order: 1000

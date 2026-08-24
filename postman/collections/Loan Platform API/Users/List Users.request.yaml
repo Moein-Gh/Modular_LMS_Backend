@@ -1,0 +1,12 @@
+$kind: http-request
+id: 3733e156-8919-4717-8443-dbf1756e3742
+url: "{{baseUrl}}/admin/users?page=1&pageSize=20"
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+order: 2000

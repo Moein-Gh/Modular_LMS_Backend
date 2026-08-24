@@ -1,0 +1,5 @@
+$kind: http-request
+id: 0f2f58d1-78e3-433c-8ceb-5a15c0728c3c
+url: "{{baseUrl}}/admin/account-types/00000000-0000-4000-8000-000000000001"
+method: DELETE
+order: 5000

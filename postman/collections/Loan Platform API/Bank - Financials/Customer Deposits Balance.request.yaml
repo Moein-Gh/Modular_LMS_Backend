@@ -1,0 +1,5 @@
+$kind: http-request
+id: 6c9dffd7-4ca5-4547-8736-45b87ad1ecbd
+url: "{{baseUrl}}/admin/bank/financials/deposits"
+method: GET
+order: 3000

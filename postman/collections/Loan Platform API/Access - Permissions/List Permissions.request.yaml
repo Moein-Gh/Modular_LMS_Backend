@@ -1,0 +1,15 @@
+$kind: http-request
+id: b355b408-d22f-4b42-b0bc-7093e3dbb5c7
+url: "{{baseUrl}}/admin/permissions?page=1&pageSize=20&search="
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+  - key: search
+    value: ""
+    disabled: true
+order: 2000

@@ -1,0 +1,14 @@
+$kind: http-request
+id: 8bbb14bd-3a5e-48ee-9d84-8028bbe5b4b5
+url: "{{baseUrl}}/admin/permission-grants/00000000-0000-4000-8000-000000000001"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "isGranted": false,
+      "reason": "Revoked manually"
+    }
+order: 4000

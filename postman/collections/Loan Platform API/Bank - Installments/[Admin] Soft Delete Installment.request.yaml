@@ -1,0 +1,5 @@
+$kind: http-request
+id: 396f77ac-781a-4d4a-93f2-ca6d78079e09
+url: "{{baseUrl}}/admin/installments/00000000-0000-4000-8000-000000000001"
+method: DELETE
+order: 5000

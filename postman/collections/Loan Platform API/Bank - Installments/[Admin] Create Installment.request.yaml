@@ -1,0 +1,17 @@
+$kind: http-request
+id: 4e8177f2-fa07-4bf8-bbe5-293a57898619
+url: "{{baseUrl}}/admin/installments"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "loanId": "00000000-0000-4000-8000-000000000001",
+      "installmentNumber": 1,
+      "dueDate": "2026-09-01",
+      "amount": "850000",
+      "status": "PENDING"
+    }
+order: 1000

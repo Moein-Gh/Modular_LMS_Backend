@@ -1,0 +1,5 @@
+$kind: http-request
+id: b7404d04-3fb5-4275-8301-1802d647388c
+url: "{{baseUrl}}/admin/permission-grants/00000000-0000-4000-8000-000000000001"
+method: DELETE
+order: 5000
