@@ -101,7 +101,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-loan_db}?schema=public
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
-      PORT: 3000
+      PORT: 3010
     depends_on:
       db:
         condition: service_healthy
@@ -153,7 +153,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-loan_db}?schema=public
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
-      PORT: 3000
+      PORT: 3010
     depends_on:
       db:
         condition: service_healthy
