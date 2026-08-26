@@ -1,0 +1,5 @@
+$kind: http-request
+id: f30242b7-fbd3-48dd-af30-b529cad771b7
+url: "{{baseUrl}}/admin/files/00000000-0000-4000-8000-000000000001"
+method: DELETE
+order: 4000

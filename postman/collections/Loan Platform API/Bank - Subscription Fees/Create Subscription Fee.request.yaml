@@ -1,0 +1,17 @@
+$kind: http-request
+id: 6e256f69-4b1b-441b-9803-7eb96baf2ec6
+url: "{{baseUrl}}/admin/subscription-fees"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "accountId": "00000000-0000-4000-8000-000000000001",
+      "periodStart": "2026-09-01",
+      "amount": "50000",
+      "dueDate": "2026-09-01",
+      "status": "DUE"
+    }
+order: 1000

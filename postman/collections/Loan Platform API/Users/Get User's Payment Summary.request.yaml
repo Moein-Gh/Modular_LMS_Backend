@@ -1,0 +1,5 @@
+$kind: http-request
+id: ac533e5e-64fb-4afb-b949-8fbaf3320e2e
+url: "{{baseUrl}}/admin/users/00000000-0000-4000-8000-000000000001/payment-summary"
+method: GET
+order: 8000

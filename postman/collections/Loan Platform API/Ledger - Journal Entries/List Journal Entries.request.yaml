@@ -1,0 +1,12 @@
+$kind: http-request
+id: 0734d4c1-417d-401d-a80a-88d9afb3f60d
+url: "{{baseUrl}}/admin/journal-entries?page=1&pageSize=20"
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+order: 1000

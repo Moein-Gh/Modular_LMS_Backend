@@ -1,0 +1,5 @@
+$kind: http-request
+id: 08a51086-b8e9-4b90-a265-d93fa77be513
+url: "{{baseUrl}}/admin/role-permissions"
+method: GET
+order: 2000

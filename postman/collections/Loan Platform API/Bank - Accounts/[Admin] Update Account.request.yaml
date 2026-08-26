@@ -1,0 +1,14 @@
+$kind: http-request
+id: 7d89abe5-a800-465b-8633-0158ab0aea74
+url: "{{baseUrl}}/admin/accounts/00000000-0000-4000-8000-000000000001"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated Account Name",
+      "status": "ACTIVE"
+    }
+order: 4000

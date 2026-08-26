@@ -1,0 +1,5 @@
+$kind: http-request
+id: 873a75a6-d573-486e-903a-b4f43dfc2b1c
+url: "{{baseUrl}}/user/dashboard/payment-summary"
+method: GET
+order: 1000

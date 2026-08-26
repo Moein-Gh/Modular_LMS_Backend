@@ -1,0 +1,5 @@
+$kind: http-request
+id: 12b54e28-17a3-49ce-88bf-6f981a057fb5
+url: "{{baseUrl}}/admin/recipient-groups/00000000-0000-4000-8000-000000000001/restore"
+method: POST
+order: 6000

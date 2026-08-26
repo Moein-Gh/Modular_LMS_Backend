@@ -1,0 +1,5 @@
+$kind: http-request
+id: 41f69b2f-041b-4fce-9eb7-99e7fd873677
+url: "{{baseUrl}}/devices/00000000-0000-4000-8000-000000000001/revoke"
+method: PATCH
+order: 5000

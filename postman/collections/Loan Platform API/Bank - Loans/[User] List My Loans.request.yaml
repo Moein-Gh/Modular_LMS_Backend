@@ -1,0 +1,12 @@
+$kind: http-request
+id: c2b4361e-b5d1-4a51-bd27-450e60b4ed86
+url: "{{baseUrl}}/user/loans?page=1&pageSize=20"
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+order: 7000

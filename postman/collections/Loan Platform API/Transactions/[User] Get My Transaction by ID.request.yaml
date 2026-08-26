@@ -1,0 +1,5 @@
+$kind: http-request
+id: 6cace39c-916b-45dd-960b-2eee7d771780
+url: "{{baseUrl}}/user/transactions/00000000-0000-4000-8000-000000000001"
+method: GET
+order: 10000

@@ -1,0 +1,6 @@
+$kind: collection
+id: a60f5d06-86e2-4a97-bbee-bc5bfabe83b5
+name: Loan Platform API
+description: Auto-generated collection covering the NestJS routes in apps/api/src. Auth is cookie-based (accessToken/refreshToken httpOnly cookies set by /auth/verify-sms), so enable the Postman cookie jar for {{baseUrl}} and run Verify SMS Code once per session - subsequent requests will carry the session cookie automatically.
+variables:
+  baseUrl: http://localhost:3200

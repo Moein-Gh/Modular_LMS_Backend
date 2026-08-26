@@ -1,0 +1,13 @@
+$kind: http-request
+id: 29cf1bd0-fe71-416a-a487-7b4c5b3d6531
+url: "{{baseUrl}}/auth/logout"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "sessionId": "00000000-0000-4000-8000-000000000001"
+    }
+order: 5000

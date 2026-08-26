@@ -1,0 +1,25 @@
+$kind: http-request
+id: ff9c7e2b-111d-405a-af37-67518c91130b
+url: "{{baseUrl}}/admin/journal-entries/multiple"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "journalId": "00000000-0000-4000-8000-000000000001",
+      "allocationType": "LOAN_REPAYMENT",
+      "targetType": "LOAN",
+      "items": [
+        {
+          "targetId": "00000000-0000-4000-8000-000000000002",
+          "amount": 50000
+        },
+        {
+          "targetId": "00000000-0000-4000-8000-000000000001",
+          "amount": 50000
+        }
+      ]
+    }
+order: 3000

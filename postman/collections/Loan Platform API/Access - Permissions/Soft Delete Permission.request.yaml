@@ -1,0 +1,5 @@
+$kind: http-request
+id: ecc5d293-c48a-4c3e-8f03-1be3d6e66b73
+url: "{{baseUrl}}/admin/permissions/00000000-0000-4000-8000-000000000001"
+method: DELETE
+order: 4000

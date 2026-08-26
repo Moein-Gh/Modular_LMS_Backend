@@ -1,0 +1,15 @@
+$kind: http-request
+id: 0696361d-64cd-44fc-a91a-f28d0e7b1615
+url: "{{baseUrl}}/admin/recipient-groups?page=1&pageSize=20&search="
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+  - key: search
+    value: ""
+    disabled: true
+order: 2000

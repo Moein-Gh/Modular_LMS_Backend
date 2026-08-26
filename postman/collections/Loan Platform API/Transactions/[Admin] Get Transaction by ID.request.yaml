@@ -1,0 +1,5 @@
+$kind: http-request
+id: 263b89a1-3733-4fbb-8314-5ab9e4442511
+url: "{{baseUrl}}/admin/transactions/00000000-0000-4000-8000-000000000001"
+method: GET
+order: 2000

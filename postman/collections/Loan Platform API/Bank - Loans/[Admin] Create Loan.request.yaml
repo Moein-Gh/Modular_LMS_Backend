@@ -1,0 +1,19 @@
+$kind: http-request
+id: 078d8e3b-7f86-47c9-8e72-9c9a63c068ea
+url: "{{baseUrl}}/admin/loans"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Personal Loan",
+      "accountId": "00000000-0000-4000-8000-000000000001",
+      "loanTypeId": "00000000-0000-4000-8000-000000000002",
+      "amount": "10000000",
+      "startDate": "2026-09-01T00:00:00.000Z",
+      "paymentMonths": 12,
+      "status": "PENDING"
+    }
+order: 1000

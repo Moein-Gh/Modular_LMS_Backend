@@ -1,0 +1,5 @@
+$kind: http-request
+id: 88d6f78e-d7a3-4453-bdf1-6d9b354c4e46
+url: "{{baseUrl}}/admin/role-assignments/00000000-0000-4000-8000-000000000001"
+method: DELETE
+order: 4000

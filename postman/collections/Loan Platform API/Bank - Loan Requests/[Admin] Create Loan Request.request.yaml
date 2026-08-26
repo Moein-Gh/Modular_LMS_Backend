@@ -1,0 +1,17 @@
+$kind: http-request
+id: 08181e09-3743-49b7-ac56-caec559211ea
+url: "{{baseUrl}}/admin/loan-requests"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "accountId": "00000000-0000-4000-8000-000000000001",
+      "amount": "5000000",
+      "startDate": "2026-09-01T00:00:00.000Z",
+      "paymentMonths": 12,
+      "note": "Requesting a loan"
+    }
+order: 1000

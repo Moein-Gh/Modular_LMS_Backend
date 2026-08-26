@@ -1,0 +1,19 @@
+$kind: http-request
+id: e21bac60-7826-4e21-9e85-ce5664c3903f
+url: "{{baseUrl}}/admin/loan-types"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Short-Term Loan",
+      "commissionPercentage": 2.5,
+      "defaultInstallments": 12,
+      "maxInstallments": 24,
+      "minInstallments": 1,
+      "creditRequirementPct": 10,
+      "description": "A short-term loan product"
+    }
+order: 1000

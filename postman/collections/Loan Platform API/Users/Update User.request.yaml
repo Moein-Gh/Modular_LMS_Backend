@@ -1,0 +1,17 @@
+$kind: http-request
+id: 164abef7-c59a-432c-91f4-3e50310dcec6
+url: "{{baseUrl}}/admin/users/00000000-0000-4000-8000-000000000001"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "ACTIVE",
+      "name": "John Doe",
+      "phone": "09120000000",
+      "countryCode": "+98",
+      "email": "john@example.com"
+    }
+order: 4000

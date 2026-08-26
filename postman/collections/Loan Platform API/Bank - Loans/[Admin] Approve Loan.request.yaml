@@ -1,0 +1,5 @@
+$kind: http-request
+id: 690820a5-2ddc-4b09-969b-609cf0a97db8
+url: "{{baseUrl}}/admin/loans/approve/00000000-0000-4000-8000-000000000001"
+method: POST
+order: 5000

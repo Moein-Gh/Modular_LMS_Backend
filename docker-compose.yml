@@ -64,44 +64,25 @@ services:
         max-file: "3"
 
   # =========================================
-  # Nginx Gateway (Reverse Proxy)
+  # API Service (Development)
   # =========================================
-  nginx:
-    image: nginx:alpine
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: ${API_BUILD_TARGET:-dev}
     restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      POSTGRES_HOST: db
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-loan_db}?schema=public
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      PORT: 3010
     ports:
-      - "${GATEWAY_PORT:-3300}:80"
-    networks:
-      - backend
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - api-admin
-      - api-user
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # =========================================
-  # API User Service (Development)
-  # =========================================
-  api-user:
-    build:
-      context: .
-      dockerfile: apps/api-user/Dockerfile
-      target: ${API_BUILD_TARGET:-dev}
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      POSTGRES_HOST: db
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-loan_db}?schema=public
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
-      PORT: 3010
+      - "${API_PORT:-3010}:3010"
     depends_on:
       db:
         condition: service_healthy
@@ -109,66 +90,14 @@ services:
       - backend
     # Volume mounts for hot-reload
     volumes:
-      - ./apps/api-user/src:/app/apps/api-user/src:cached
+      - ./apps/api/src:/app/apps/api/src:cached
       - ./libs:/app/libs:cached
     # Docker Compose Watch configuration for file sync
     develop:
       watch:
         - action: sync
-          path: ./apps/api-user/src
-          target: /app/apps/api-user/src
-          ignore:
-            - node_modules/
-            - dist/
-        - action: sync
-          path: ./libs
-          target: /app/libs
-          ignore:
-            - node_modules/
-            - dist/
-        - action: rebuild
-          path: package.json
-        - action: rebuild
-          path: pnpm-lock.yaml
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # =========================================
-  # API Admin Service (Development)
-  # =========================================
-  api-admin:
-    build:
-      context: .
-      dockerfile: apps/api-admin/Dockerfile
-      target: ${API_BUILD_TARGET:-dev}
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      POSTGRES_HOST: db
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-loan_db}?schema=public
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
-      PORT: 3010
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - backend
-    # Volume mounts for hot-reload
-    volumes:
-      - ./apps/api-admin/src:/app/apps/api-admin/src:cached
-      - ./libs:/app/libs:cached
-    # Docker Compose Watch configuration for file sync
-    develop:
-      watch:
-        - action: sync
-          path: ./apps/api-admin/src
-          target: /app/apps/api-admin/src
+          path: ./apps/api/src
+          target: /app/apps/api/src
           ignore:
             - node_modules/
             - dist/

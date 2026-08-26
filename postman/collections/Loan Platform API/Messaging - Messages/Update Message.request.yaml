@@ -1,0 +1,13 @@
+$kind: http-request
+id: d34532f7-6e35-4295-b2cb-2e97729d9144
+url: "{{baseUrl}}/admin/messages/00000000-0000-4000-8000-000000000001"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "SENT"
+    }
+order: 4000

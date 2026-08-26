@@ -1,0 +1,19 @@
+$kind: http-request
+id: c85b9127-78b7-48ac-b42b-d5e707a45605
+url: "{{baseUrl}}/admin/messages"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "type": "SMS",
+      "content": "Your payment is due soon.",
+      "userIds": [
+        "00000000-0000-4000-8000-000000000001"
+      ],
+      "phones": [],
+      "emails": []
+    }
+order: 1000

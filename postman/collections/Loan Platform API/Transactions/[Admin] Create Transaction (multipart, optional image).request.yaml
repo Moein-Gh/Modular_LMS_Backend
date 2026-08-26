@@ -1,0 +1,28 @@
+$kind: http-request
+id: 27a35d37-8634-47fa-ad9f-f8b1f0492bf2
+url: "{{baseUrl}}/admin/transactions"
+method: POST
+headers:
+  - key: Content-Type
+    value: multipart/form-data
+    disabled: true
+body:
+  type: formdata
+  content:
+    - type: text
+      key: userId
+      value: 00000000-0000-4000-8000-000000000001
+    - type: text
+      key: kind
+      value: DEPOSIT
+    - type: text
+      key: amount
+      value: "100000.0000"
+    - type: text
+      key: note
+      value: Cash deposit
+    - type: file
+      key: image
+      src: ""
+      disabled: true
+order: 3000

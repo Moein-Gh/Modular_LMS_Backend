@@ -1,0 +1,13 @@
+$kind: http-request
+id: de63f0ab-60d4-4ff1-9962-bab944f32168
+url: "{{baseUrl}}/admin/subscription-fees/00000000-0000-4000-8000-000000000001"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "PAID"
+    }
+order: 5000

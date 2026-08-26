@@ -1,0 +1,15 @@
+$kind: http-request
+id: 1151098f-e5ec-4de4-a9f7-19d478da17c7
+url: "{{baseUrl}}/auth/request-sms"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "phone": "09120000000",
+      "purpose": "login",
+      "countryCode": "+98"
+    }
+order: 1000

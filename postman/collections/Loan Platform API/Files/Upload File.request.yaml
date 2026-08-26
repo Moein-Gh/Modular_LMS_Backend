@@ -1,0 +1,15 @@
+$kind: http-request
+id: cb64b5dd-4b2f-4e4f-8ee7-1630e8a8ae92
+url: "{{baseUrl}}/admin/files"
+method: POST
+headers:
+  - key: Content-Type
+    value: multipart/form-data
+    disabled: true
+body:
+  type: formdata
+  content:
+    - type: file
+      key: file
+      src: ""
+order: 1000

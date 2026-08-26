@@ -1,0 +1,12 @@
+$kind: http-request
+id: 052acac0-49ab-40e2-b328-d713f5b6275d
+url: "{{baseUrl}}/admin/loan-types?page=1&pageSize=20"
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+order: 2000

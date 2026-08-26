@@ -1,0 +1,16 @@
+$kind: http-request
+id: d9302ba9-5cc0-43ad-ad21-b8a7a1a52be5
+url: "{{baseUrl}}/admin/transactions/transfer"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "sourceAccountId": "00000000-0000-4000-8000-000000000001",
+      "destinationAccountId": "00000000-0000-4000-8000-000000000002",
+      "amount": "50000.0000",
+      "description": "Transfer between accounts"
+    }
+order: 4000

@@ -1,0 +1,17 @@
+$kind: http-request
+id: fd0d8056-8098-4218-8616-e6c571ae8e97
+url: "{{baseUrl}}/admin/permission-grants"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "granteeType": "USER",
+      "granteeId": "00000000-0000-4000-8000-000000000001",
+      "permissionId": "00000000-0000-4000-8000-000000000002",
+      "isGranted": true,
+      "reason": "Manual grant"
+    }
+order: 1000

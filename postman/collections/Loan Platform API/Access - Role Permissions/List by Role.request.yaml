@@ -1,0 +1,5 @@
+$kind: http-request
+id: fed0cb66-c9c3-49e8-91b8-bd875b6992c2
+url: "{{baseUrl}}/admin/role-permissions/by-role/00000000-0000-4000-8000-000000000001"
+method: GET
+order: 3000

@@ -1,0 +1,9 @@
+$kind: http-request
+id: b4ccb581-b918-4548-afb8-81b55f5a9ac6
+url: "{{baseUrl}}/admin/journals/00000000-0000-4000-8000-000000000001?includeEntries=true"
+method: GET
+queryParams:
+  - key: includeEntries
+    value: "true"
+    disabled: true
+order: 3000

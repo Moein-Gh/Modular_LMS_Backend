@@ -1,0 +1,12 @@
+$kind: http-request
+id: 09fae905-7ebf-4866-8a8e-b3d88ba13e95
+url: "{{baseUrl}}/admin/subscription-fees?page=1&pageSize=20"
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+order: 3000

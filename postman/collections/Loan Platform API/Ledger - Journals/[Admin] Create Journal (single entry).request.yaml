@@ -1,0 +1,17 @@
+$kind: http-request
+id: 0cadc300-844a-40e6-9b5c-d202ffc7e9f4
+url: "{{baseUrl}}/admin/journals"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "journalId": "00000000-0000-4000-8000-000000000001",
+      "amount": 100000,
+      "targetType": "LOAN",
+      "targetId": "00000000-0000-4000-8000-000000000002",
+      "allocationType": "LOAN_REPAYMENT"
+    }
+order: 1000

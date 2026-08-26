@@ -1,0 +1,13 @@
+$kind: http-request
+id: ff529dec-c72d-41ad-9a28-7d7193d614fc
+url: "{{baseUrl}}/admin/messages/recipients/00000000-0000-4000-8000-000000000001/status"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "DELIVERED"
+    }
+order: 5000

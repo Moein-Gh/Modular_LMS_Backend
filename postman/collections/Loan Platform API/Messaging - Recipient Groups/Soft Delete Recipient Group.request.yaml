@@ -1,0 +1,5 @@
+$kind: http-request
+id: 5d1034bc-74ca-47b6-81ba-0182e8e8d768
+url: "{{baseUrl}}/admin/recipient-groups/00000000-0000-4000-8000-000000000001"
+method: DELETE
+order: 5000

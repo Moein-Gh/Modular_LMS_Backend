@@ -1,0 +1,5 @@
+$kind: http-request
+id: f61abf7b-7401-4c80-afe9-47b5ce9f5f61
+url: "{{baseUrl}}/admin/messages/00000000-0000-4000-8000-000000000001"
+method: GET
+order: 3000

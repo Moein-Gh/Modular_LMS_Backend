@@ -1,0 +1,5 @@
+$kind: http-request
+id: 10a4ff63-aa47-4106-b1b3-3f13671a0dab
+url: "{{baseUrl}}/auth/me"
+method: GET
+order: 4000

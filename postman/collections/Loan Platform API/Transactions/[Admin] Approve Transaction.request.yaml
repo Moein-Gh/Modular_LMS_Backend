@@ -1,0 +1,5 @@
+$kind: http-request
+id: c4c637b8-2d80-4b3f-9c27-e305bdd6bd19
+url: "{{baseUrl}}/admin/transactions/approve/00000000-0000-4000-8000-000000000001"
+method: POST
+order: 5000

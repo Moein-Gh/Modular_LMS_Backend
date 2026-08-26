@@ -1,0 +1,22 @@
+$kind: http-request
+id: 38481e99-c947-4d78-9c21-2df30d4257c6
+url: "{{baseUrl}}/admin/message-templates"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Payment Reminder",
+      "type": "SMS",
+      "subject": null,
+      "content": "Hi {{name}}, your payment of {{amount}} is due on {{dueDate}}.",
+      "variables": [
+        "name",
+        "amount",
+        "dueDate"
+      ],
+      "isActive": true
+    }
+order: 1000

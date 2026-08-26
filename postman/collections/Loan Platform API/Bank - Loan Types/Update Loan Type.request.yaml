@@ -1,0 +1,14 @@
+$kind: http-request
+id: b3117eef-d455-4ac7-a073-2b8ca77e1709
+url: "{{baseUrl}}/admin/loan-types/00000000-0000-4000-8000-000000000001"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated Loan Type",
+      "commissionPercentage": 3
+    }
+order: 4000

@@ -1,0 +1,12 @@
+$kind: http-request
+id: e85e9381-2995-44d3-94e4-afe89f32df88
+url: "{{baseUrl}}/admin/report/projections/installments?page=1&pageSize=20"
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+order: 3000

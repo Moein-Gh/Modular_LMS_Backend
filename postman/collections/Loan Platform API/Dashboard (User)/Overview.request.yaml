@@ -1,0 +1,5 @@
+$kind: http-request
+id: 8c993f24-f251-44b2-8430-710a24d5632d
+url: "{{baseUrl}}/user/dashboard/overview"
+method: GET
+order: 2000

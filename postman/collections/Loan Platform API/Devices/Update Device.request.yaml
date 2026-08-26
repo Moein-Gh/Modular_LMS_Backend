@@ -1,0 +1,13 @@
+$kind: http-request
+id: dcd748d1-a7e0-4ce3-b781-6127edb76435
+url: "{{baseUrl}}/devices/00000000-0000-4000-8000-000000000001"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "deviceName": "iPhone 15 Pro"
+    }
+order: 4000

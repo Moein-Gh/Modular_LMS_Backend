@@ -1,0 +1,5 @@
+$kind: http-request
+id: 10d9d8c5-e366-4231-8720-4323e3857c80
+url: "{{baseUrl}}/admin/transactions/00000000-0000-4000-8000-000000000001"
+method: DELETE
+order: 8000

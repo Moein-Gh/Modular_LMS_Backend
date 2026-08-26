@@ -1,0 +1,9 @@
+$kind: http-request
+id: f77dc54e-94c3-48bb-bf30-234c92353e08
+url: "{{baseUrl}}/user/users/upcoming-payments?includePastPaid=false"
+method: GET
+queryParams:
+  - key: includePastPaid
+    value: "false"
+    disabled: true
+order: 9000

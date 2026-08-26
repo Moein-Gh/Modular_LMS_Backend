@@ -1,0 +1,14 @@
+$kind: http-request
+id: 7203d14e-e368-42d1-aed8-4d82c2e0ef1a
+url: "{{baseUrl}}/admin/account-types"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Standard",
+      "maxAccounts": 3
+    }
+order: 1000

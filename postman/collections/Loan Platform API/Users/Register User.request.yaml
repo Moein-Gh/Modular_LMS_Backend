@@ -1,0 +1,19 @@
+$kind: http-request
+id: 5ae12d45-56e2-4ce9-81d4-e17122a288b2
+url: "{{baseUrl}}/admin/users"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "phone": "09120000000",
+      "email": null,
+      "name": "John Doe",
+      "countryCode": "+98",
+      "roles": [
+        "member"
+      ]
+    }
+order: 1000

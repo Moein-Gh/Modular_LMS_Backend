@@ -1,0 +1,5 @@
+$kind: http-request
+id: 18cdcb60-9f26-4d5b-8b7c-fd06787b96f4
+url: "{{baseUrl}}/admin/journal-entries/00000000-0000-4000-8000-000000000001"
+method: DELETE
+order: 4000

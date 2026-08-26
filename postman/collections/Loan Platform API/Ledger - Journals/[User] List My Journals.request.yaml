@@ -1,0 +1,15 @@
+$kind: http-request
+id: 92a88067-e1df-40ad-87ba-d2bf049eb1dd
+url: "{{baseUrl}}/user/journals?page=1&pageSize=20&includeEntries=false"
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+    disabled: true
+  - key: pageSize
+    value: "20"
+    disabled: true
+  - key: includeEntries
+    value: "false"
+    disabled: true
+order: 4000

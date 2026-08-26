@@ -1,0 +1,18 @@
+$kind: http-request
+id: 449201a4-0f55-446c-a3ea-fcbdff832961
+url: "{{baseUrl}}/devices"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "deviceId": "device-123",
+      "userId": "00000000-0000-4000-8000-000000000001",
+      "deviceName": "iPhone 15",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0",
+      "lastSeen": "2026-09-01T00:00:00.000Z"
+    }
+order: 1000
