@@ -36,6 +36,18 @@ function isSecureRequest(req: Request): boolean {
   return req.secure || req.headers['x-forwarded-proto'] === 'https';
 }
 
+function buildAuthCookieOptions(req: Request) {
+  const secure = process.env.NODE_ENV === 'production' || isSecureRequest(req);
+  return {
+    httpOnly: true,
+    path: '/',
+    secure,
+    // 'None' is required for cross-site (frontend/API on different domains)
+    // requests to carry cookies, but it only works over HTTPS ('secure: true').
+    sameSite: secure ? ('none' as const) : ('lax' as const),
+  };
+}
+
 interface AuthenticatedRequest extends Request {
   user?: User;
 }
@@ -85,14 +97,7 @@ export class AuthController {
     };
     const result = await this.auth.verifySmsCode(body, deviceMeta);
 
-    const isCloudProduction = process.env.NODE_ENV === 'production';
-
-    const cookieOptions = {
-      httpOnly: true,
-      path: '/',
-      secure: isCloudProduction, // False on your machine, True on AWS/Render
-      sameSite: 'lax' as const, // 'Lax' works with secure: false
-    };
+    const cookieOptions = buildAuthCookieOptions(req);
 
     res.cookie('accessToken', result.accessToken, {
       ...cookieOptions,
@@ -125,19 +130,14 @@ export class AuthController {
       throw new BadRequestException('Refresh token cookie not found');
     }
     const result = await this.auth.refresh(refreshToken);
+    const cookieOptions = buildAuthCookieOptions(req);
     res.cookie('accessToken', result.accessToken, {
-      httpOnly: true,
-      secure: isSecureRequest(req),
-      sameSite: 'lax',
+      ...cookieOptions,
       maxAge: result.accessTokenExpiresIn * 1000,
-      path: '/',
     });
     res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: isSecureRequest(req),
-      sameSite: 'lax',
+      ...cookieOptions,
       maxAge: result.refreshTokenExpiresIn * 1000,
-      path: '/',
     });
     return {
       success: true,
@@ -168,20 +168,9 @@ export class AuthController {
       (req.headers['x-device-id'] as string | undefined) ?? undefined;
     const result = await this.auth.logout(body, deviceId);
     // Clear auth cookies
-    res.cookie('accessToken', '', {
-      httpOnly: true,
-      secure: isSecureRequest(req),
-      sameSite: 'lax',
-      maxAge: 0,
-      path: '/',
-    });
-    res.cookie('refreshToken', '', {
-      httpOnly: true,
-      secure: isSecureRequest(req),
-      sameSite: 'lax',
-      maxAge: 0,
-      path: '/',
-    });
+    const cookieOptions = buildAuthCookieOptions(req);
+    res.cookie('accessToken', '', { ...cookieOptions, maxAge: 0 });
+    res.cookie('refreshToken', '', { ...cookieOptions, maxAge: 0 });
     return result;
   }
 }
